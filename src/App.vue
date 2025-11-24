@@ -2,7 +2,625 @@
 </script>
 
 <template>
-  <router-view></router-view>
+  <!-- Header / Navbar -->
+  <header class="navbar">
+    <a href="#" class="logo">
+      <img src="@/assets/Puppy_Racer_Logo.png" alt="PuppyRacer">
+    </a>
+    <nav>
+      <ul>
+        <li><a href="#">main page</a></li>
+        <li><a href="#">doggy profiles</a></li>
+        <li><a href="#">animal shelters</a></li>
+        <li><a href="#">contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <img src="@/assets/Puppy_Racer_Logo.png" alt="Background Image" class="hero-image">
+    <div class="hero-overlay"></div>
+
+    <div class="hero-text">
+      <h1 class="custom-aligned">Welcome to <strong><em>PuppyRacer!</em></strong></h1>
+      <h2 class="custom-aligned">The website that finds every breed you’re looking for!</h2>
+      <h3 class="get-Started">Get Started</h3>
+      <form class="hero-search" @submit.prevent="searchBreed">
+        <input v-model="searchQuery" type="text" placeholder="Search for a breed…" name="breed"/>
+      </form>
+    </div>
+
+    <div class="login-card outline-pink">
+      <div class="stack">
+        <p class="pretitle italic">New here? Register with us!</p>
+        <button class="btn btn-pink" @click="register">Register</button>
+      </div>
+      <div class="stack">
+        <p class="pretitle italic">Already a proud member?</p>
+        <button class="btn btn-outline-pink" @click="signIn">Sign In</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dog Carousel -->
+  <section class="dog-carousel">
+    <div class="dog-profiles">
+      <div class="dog-card" v-for="dog in filteredDogs" :key="dog.id">
+        <img :src="dog.image" :alt="dog.name" />
+        <h6 class="dog-name">{{ dog.name }}</h6>
+      </div>
+    </div>
+  </section>
+
+  <div class="gander-Dogs">
+    <h1>Take a gander at our Dog Profiles and find your Match!</h1>
+  </div>
+
+  <!-- Tierheim Section -->
+  <section class="tierheim">
+    <div class="image-side"></div>
+    <div class="text-side">
+      <h1>Want to adopt?</h1>
+      <h3 class="tierheim_text">
+        Two thirds of every animal shelter in Germany are permanently filled to the brim...
+        <br><br>
+        You can help us and we can help you find a suitable animal shelter to adopt your perfect companion.
+      </h3>
+      <button class="btn btn-outline-pink resized" @click="goToShelters">Animal Shelters this way -></button>
+    </div>
+  </section>
+
+  <!-- Identify Section -->
+  <section class="identify">
+    <div class="text-side">
+      <h1>Not sure what you are looking for in your brand new Companion?</h1>
+      <h3>
+        Don’t sweat it, dogs certainly won’t! (Partly because they pant instead of sweat)
+        <br><br>
+        Just put in a few characteristics like:
+      </h3>
+      <ul class="text-list">
+        <li>Allergyfriendly</li>
+        <li>Familyfriendly</li>
+        <li>Energetic or lazy</li>
+        <li>Big or small</li>
+        <li>and more!</li>
+      </ul>
+    </div>
+    <div class="image-side">
+      <div class="id-search">
+        <input v-model="characteristics" type="text" placeholder="Enter Characteristics..." />
+      </div>
+      <img src="@/assets/Puppy_Racer_Logo.png" alt="logo" class="corner-logo" />
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <a href="#">&copy; 2025 MySite. All rights reserved.</a>
+    <a href="#social">Social Media</a>
+    <a href="#impressum">Impressum</a>
+    <a href="#newsletter">Newsletter</a>
+    <a href="#top">Back to the top</a>
+  </footer>
 </template>
 
-<style scoped></style>
+<script setup>
+import { ref, computed } from 'vue'
+
+// Hundedaten
+const dogs = ref([
+  { id: 1, name: 'Afghan Hound', image: '@/assets/dog_pics/dog1.jpg' },
+  { id: 2, name: 'Finnish Laphund', image: '@/assets/dog_pics/dog2.jpg' },
+  { id: 3, name: 'Shetland Sheepdog', image: '@/assets/dog_pics/dog3.jpg' },
+  { id: 4, name: 'Pomeranian', image: '@/assets/dog_pics/dog4.jpg' },
+  { id: 5, name: 'Bernese Mountain Dog', image: '@/assets/dog_pics/dog5.jpg' },
+  { id: 6, name: 'Chow Chow', image: '@/assets/dog_pics/dog6.jpg' },
+  { id: 7, name: 'Pekingese', image: '@/assets/dog_pics/dog7.jpg' },
+  { id: 8, name: 'Husky', image: '@/assets/dog_pics/dog9.webp' },
+  { id: 9, name: 'Mops', image: '@/assets/dog_pics/dog10.webp' },
+])
+
+const searchQuery = ref('')
+const characteristics = ref('')
+
+// Dynamische Filterung nach Search Input
+const filteredDogs = computed(() => {
+  if (!searchQuery.value) return dogs.value
+  return dogs.value.filter(dog => dog.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
+})
+
+// Button Aktionen
+const register = () => alert('Register clicked')
+const signIn = () => alert('Sign In clicked')
+const searchBreed = () => alert(`Searching for: ${searchQuery.value}`)
+const goToShelters = () => alert('Navigate to Animal Shelters')
+</script>
+
+<style scoped>
+/* Hier kannst du deine style.css Klassen übernehmen */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+b{
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    color:  #2D2121;
+}
+
+
+.custom-aligned {
+    text-align: left;
+}
+
+.get-Started{
+    margin-top: 1.5rem;
+    margin-bottom: 0.2rem;
+}
+/*Stylesheet übernommen hier erstmal*/
+h1 {
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;           /* light */
+    font-size: 2.5rem;
+    padding-bottom: 1rem;
+}
+
+h2 {
+    font-family: "Roboto", sans-serif;
+    font-style: italic;
+    font-weight: 300;           /* normal */
+    font-size: 2rem;
+}
+
+h3 {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 1.75rem;
+}
+
+h4 {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 1.5rem;
+}
+
+h5 {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 1.25rem;
+}
+
+h6 {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 1.125rem;
+}
+
+
+
+.logo img{
+    max-height: 50px;   /* this is the important part */
+    width: auto;
+    display: block;
+}
+/* hier will ich mein logo einfach verkleinern! */
+
+.logo{
+    display: block;
+    position: relative;
+    top: 0.3rem;
+}
+
+body {
+    cursor: url('./dog_pics/pixel_cursor.png'), pointer;
+
+    font-family: "OpenSans", sans-serif;
+    font-size: 1rem;
+    color: #222;
+    background-color: #2D2121;
+}
+
+/* Navbar ganz oben */
+.navbar {
+    position: fixed;
+    /* Soll oben bleiben wenn man scrolled! */
+    top: 0;
+    left: 0;
+    width: 100%;
+
+
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;   /* center items vertically */
+    padding: 2rem 2rem;
+    background: transparent;
+    height: auto;
+
+    z-index: 10;
+    /* versichern dass es über den Image bleibt mit LAYERING*/
+}
+
+.navbar nav {
+    position: absolute;
+    /* detach from flex flow, wir können es irgendwo in der Navbar packen */
+    left: 50%;
+    /* halbwegs in navbar positionieren */
+    transform: translateX(-50%);
+    /* sonst hätten wir das Linke Ende mit geschoben, jetzt siejts richtig aus */
+}
+
+.navbar ul {
+    display: flex;
+    list-style: none;
+    gap: 5rem;
+}
+
+.navbar a {
+    text-decoration: none;
+    color: #EFE1D6;
+    font-weight: 500;
+}
+
+.navbar a:hover {
+    color: #E26191;
+}
+
+/* Hero section */
+.hero {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.hero-text{
+    position: absolute;
+    z-index: 3;
+    color: #EFE1D6;
+    top: 40%;
+    left: 25%;
+    transform: translateY(-50%);
+}
+
+.hero-image{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    opacity: 0.8;
+
+    z-index: 1;
+    /*voll cool, mit dem z-index können wir "layern". Hiermit wäre der Layer ganz unten mit 1, im navbar 10 wäre ganz oben */
+
+}
+
+.hero-overlay{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #2D2121;
+    opacity: 0.4;
+    mix-blend-mode: overlay;              /* blend color with image */
+    z-index: 2;
+
+    /*genau gleich wie hero.image die werte, aber haben halt einfach ein bisschen hue reingebracht, nervig*/
+}
+
+.hero-search {
+    width: 100%;
+    max-width: 800px;
+}
+
+.hero-search input {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.7rem 1rem;
+    border: 0.1rem solid #BB9580;
+    font-size: 1rem;
+    background-color: #EFE1D6;
+    color: #2D2121;
+    transition: box-shadow 0.2s ease;
+}
+
+.hero-search input::placeholder {
+    color: #BB9580;
+    opacity: 0.7;
+}
+
+/*login Bar Section */
+
+.login-card{
+    position: absolute;
+    top: 60%;
+    right: 20%;
+
+    background:#fff;
+    border:2px solid #E26191;
+    border-radius:15px;
+    padding:40px;
+    width:100%;
+    max-width:460px;
+
+    box-shadow:0 10px 30px #2D2121;
+    display:grid;
+
+    gap:26px;
+
+    z-index: 4;
+}
+.pretitle{
+    margin:0 0 8px 0;
+    color: #E26191;
+    font-weight:300;
+    font-size:1.1rem;
+    font-style:italic;
+}
+.stack{
+    display:flex;
+    flex-direction:column;
+    font-style:italic;
+}
+
+.btn-pink{
+    background:#E26191;
+    color:#fff;
+
+    border:2px solid #E26191;
+    padding:.85rem 1.05rem;
+    margin-top:8px;
+    border-radius:10px;
+
+    font-style:normal;
+    font-size: 1rem;
+
+}
+.btn-outline-pink{
+    background:#fff;
+    color:#E26191;
+    border:2px solid #E26191;
+    border-radius:10px;
+    padding:.85rem 1.05rem;
+    margin-top:8px;
+
+    font-style:normal;
+    font-size: 1rem;
+}
+
+.btn-pink:hover {
+    background: #e05ca3;
+    /*müssen hier dunkleres pink benutzen weil sonst sieht man ja schilz*/
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-outline-pink:hover {
+    background: #FADADD;
+    /*müssen hier leichteres pink benutzen weil sonst sieht man ja auch schilz*/
+
+    /*hab hier chat gefragt wie man diese abrupte Farbänderung wegmachen kann, hier ist die Lösung, find ich besser:*/
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+
+/* overall section container */
+.dog-carousel {
+    width: 100%;
+
+    overflow-x: auto;        /* 👈 horizontal scroll */
+    overflow-y: hidden;
+    padding: 1.5rem 0;
+    padding-top: 5rem;
+    background: #2D2121;
+
+    /*man kann wohl kein Infinite scroller machen ohne JavaScript :/ */
+}
+
+.dog-profiles {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0 1.5rem 1rem;
+
+    scroll-snap-type: x mandatory;
+
+
+}
+
+.dog-card {
+    min-width: 400px;
+    min-height: 300px;
+
+    background: #2D2121;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+
+
+    overflow: hidden;
+    text-align: center;
+    scroll-snap-align: start;
+}
+
+.dog-card img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    display: block;
+}
+
+.dog-name {
+    margin: 0.75rem 0 1rem;
+    font-weight: 300;
+    font-size: 1rem;
+    color: #EFE1D6;
+}
+
+.gander-Dogs{
+    color: #EFE1D6;
+    text-align: center;
+    font-style: italic;
+    padding: 2rem;
+    background: #2D2121;
+}
+
+
+/*nächste Section von unserer Webseite, 0.5 Bild und 0.5 Image */
+
+.tierheim {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 50% / 50% also hälfte hälfte */
+    min-height: 60vh;
+    background: #E26191;            
+}
+
+.tierheim .image-side {
+background: url('./dog_pics/Tierheim_image.jpg') center/cover no-repeat;
+}
+
+.tierheim .text-side {
+    background-color: #E26191;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.tierheim h1 {
+    margin-bottom: 20px;
+    font-weight: 300;
+    color: #EFE1D6;
+    font-style: italic;
+
+}
+
+.tierheim h3 {
+    margin-bottom: 20px;
+    font-weight: 300;
+    color: #EFE1D6;
+    max-width: 90%;
+}
+
+.resized{
+    width: 50%;
+    justify-self: flex-end;
+}
+
+
+/*nächste Section, jetzt mahcen wir mal mit den Hunde Identifikator, im Prinzip kann ich eig das von eben
+einfach nochmal machen. */
+.identify {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 50% / 50% also hälfte hälfte */
+    min-height: 60vh;
+    background: #BB9580;
+}
+
+.identify .image-side {
+    display: flex;
+    justify-content: center;
+    align-items: center; /* centers vertically */
+    position: relative;
+    position: relative; /* allows the logo to be positioned absolutely inside */
+}
+
+.id-search {
+    width: 100%;
+    max-width: 800px;
+}
+
+.id-search input {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.7rem 1rem;
+    border: 0.1rem solid #BB9580;
+    font-size: 1rem;
+    background-color: #EFE1D6;
+    color: #2D2121;
+    transition: box-shadow 0.2s ease;
+}
+
+.id-search input::placeholder {
+    color: #BB9580;
+    opacity: 0.7;
+}
+
+.corner-logo {
+    position: absolute;
+    bottom: 100px;
+    right: 150px;   /* distance from right */
+    width: 400px;
+    height: auto;
+    opacity: 0.9;
+    transform: rotate(-20deg);
+    /*kleine coole animation damit sich kopft dreht*/
+    transition: transform 0.9s ease;
+}
+.corner-logo:hover {
+    transform: rotate(0deg) scale(1.05);
+}
+
+.identify .text-side {
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.identify h1 {
+    margin-bottom: 20px;
+    font-weight: 300;
+    color: #EFE1D6;
+    font-style: italic;
+
+}
+
+.identify h3 {
+    margin-bottom: 20px;
+    font-weight: 300;
+    color: #EFE1D6;
+    max-width: 90%;
+}
+
+.text-list{
+    font-family: "Roboto", sans-serif;
+    font-weight: 350;
+    font-size: 1.75rem;
+    margin-left: 40px;
+    color: #EFE1D6;
+}
+
+
+
+/*Zu allerletzt Footer */
+
+footer {
+
+    display: flex;
+    /*nicht vergessen, das macht alle in einer Reihe */
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #B48665;
+    color: white;
+
+}
+
+footer a {
+
+    color: #2D2121;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+footer a:hover {
+    color: #E26191; /* Highlight color on hover */
+}
+</style>
