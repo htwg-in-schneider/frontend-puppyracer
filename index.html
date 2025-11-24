@@ -1,7 +1,22 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Main Page</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap">
+    <!--- OpenSans und Roboto verlinken! Damit ja auch alles lädt --->
+</head>
+
+<body>
+
 <header class="navbar">
     <a href ="Puppy_Racer_Logo.pdf" class="logo">
-        <img src="@/assets/Puppy_Racer_Logo.pdf" alt="PuppyRacer">
+        <img src="src/assets/Puppy_Racer_Logo.pdf" alt="PuppyRacer">
+        <!--- alt ist als alternative da, falls es nicht lädt --->
     </a>
+    <!--- a is an anchor element for links, the more you know, Sie können jetzt sogar PDF runterladen wenn man draufklickt --->
 
     <nav>
         <ul>
@@ -14,34 +29,38 @@
 </header>
 
 <section class="hero">
-    <img src="@/assets/Puppy_Racer_Logo.pdf" alt="Background Image" class="hero-image">
+    <img src="src/assets/Puppy_Racer_Logo.pdf" alt="Background Image" class="hero-image">
     <div class="hero-overlay"></div>
+    <!--- Was mich hier ein bisschen nervt ist dass man nicht einfach ein Hue applyen kann zum Img
+     man muss gleich eine ganz neue div class machen--->
 
     <div class="hero-text">
         <h1 class="custom-aligned">Welcome to <strong><em>PuppyRacer!</em></strong></h1>
+        <!---<strong><em>PuppyRacer</em></strong>! so kann man einzeilen wörter am besten stylen!
+        Gefällt mir, strong is halt bold und em ist emphasis mit italics--->
 
         <h2 class="custom-aligned">The website that finds every breed
             you’re looking for!</h2>
 
         <h3 class="get-Started">Get Started</h3>
-        <form class="hero-search" @submit.prevent>
+        <form class="hero-search">
             <input
                     type="text"
                     placeholder="Search for a breed…"
                     name="breed"
-                    v-model="searchBreed"
             />
         </form>
     </div>
 
+    <!---Glücklicherweise kann ich das aus der ersten Abgabe übernehmen, danke Jonas--->
     <div class="login-card outline-pink">
         <div class="stack">
             <p class="pretitle italic">New here? Register with us!</p>
-            <button class="btn btn-pink" @click="register">Register</button>
+            <button class="btn btn-pink">Register</button>
         </div>
         <div class="stack">
             <p class="pretitle italic">Already a proud member?</p>
-            <button class="btn btn-outline-pink" @click="signIn">Sign In</button>
+            <button class="btn btn-outline-pink">Sign In</button>
         </div>
     </div>
 
@@ -49,12 +68,58 @@
 
 <section class="dog-carousel">
     <div class="dog-profiles">
-        <div class="dog-card" v-for="dog in dogs" :key="dog.id">
-            <img :src="dog.image" :alt="dog.name">
-            <h6 class="dog-name">{{ dog.name }}</h6>
+
+        <!--- Sollen Clickable sein mit <a>, aber ich hatte leider nicht mehr die Geduld es richtig zu machen--->
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog1.jpg" alt="Afghan Hound">
+            <h6 class="dog-name">Afghan Hound</h6>
+        </div>
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog2.jpg" alt="Finnish Laphund">
+            <h6 class="dog-name">Finnish Laphund</h6>
+        </div>
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog3.jpg" alt="Shetland Sheepdog">
+            <h6 class="dog-name">Shetland Sheepdog</h6>
+        </div>
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog4.jpg" alt="Pomeranian">
+            <h6 class="dog-name">Pomeranian</h6>
+        </div>
+
+        <!-- duplicates for seamless loop -->
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog5.jpg" alt="Bernese Mountain Dog">
+            <h6 class="dog-name">Bernese Mountain Dog</h6>
+        </div>
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog6.jpg" alt="Chow Chow">
+            <h6 class="dog-name">Chow Chow</h6>
+        </div>
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog7.jpg" alt="Pekingese">
+            <h6 class="dog-name">Pekingese</h6>
+        </div>
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog9.webp" alt="Husky">
+            <h6 class="dog-name">Husky</h6>
+        </div>
+
+        <div class="dog-card">
+            <img src="/src/assets/dog_pics/dog10.webp" alt="Fetter Mops">
+            <h6 class="dog-name">Mops</h6>
         </div>
     </div>
 </section>
+
+
 
 <div class="gander-Dogs">
     <h1>Take a gander at our Dog Profiles and find your Match!</h1>
@@ -69,6 +134,7 @@
             shelter in Germany are
             permanently filled to the brim...
             <br>
+            <!--- so bricht man ein Paragraph, nicht vergessen--->
             <br>
             You can help us and we can help
             you find a suitable animal shelter
@@ -77,9 +143,10 @@
             are looking for, maybe another
             pet will catch your eye!
         </h3>
-        <button class="btn btn-outline-pink resized" @click="goToShelters">Animal Shelters this way -></button>
+        <button class="btn btn-outline-pink resized">Animal Shelters this way -></button>
     </div>
 </section>
+
 
 <section class="identify">
     <div class="text-side">
@@ -100,9 +167,9 @@
 
     <div class="image-side">
         <div class="id-search">
-            <input type="text" placeholder="Enter Characteristics..." v-model="characteristics" />
+            <input type="text" placeholder="Enter Characteristics..." />
         </div>
-        <img src="@/assets/Puppy_Racer_Logo.pdf" alt="logo" class="corner-logo" />
+        <img src="src/assets/Puppy_Racer_Logo.pdf" alt="logo" class="corner-logo" />
     </div>
 
 </section>
@@ -114,3 +181,7 @@
     <a href="#newsletter">Newsletter</a>
     <a href="#top">Back to the top</a>
 </footer>
+
+
+</body>
+</html>
