@@ -76,7 +76,7 @@ h6 {
 }
 
 body {
-    cursor: url('./pixel_cursor.png'), pointer;
+    cursor: url('./dog_pics/pixel_cursor.png'), pointer;
 
     font-family: "OpenSans", sans-serif;
     font-size: 1rem;
@@ -340,7 +340,7 @@ body {
 }
 
 .tierheim .image-side {
-background: url('./Tierheim_image.jpg') center/cover no-repeat;
+background: url('./dog_pics/Tierheim_image.jpg') center/cover no-repeat;
 }
 
 .tierheim .text-side {

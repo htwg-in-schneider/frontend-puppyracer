@@ -1,15 +1,8 @@
+<script setup>
+</script>
+
 <template>
-  <img :src="logo" alt="Logo">
+  <router-view></router-view>
 </template>
 
-<script>
-import logo from './assets/Puppy_Racer_Logo.svg'
-
-export default {
-  data() {
-    return {
-      logo
-    }
-  }
-}
-</script>
+<style scoped></style>
