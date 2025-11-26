@@ -2,7 +2,14 @@
 </script>
 
 <template>
-  <router-view></router-view>
+  <Navbar />
+  <SpecialBanner />
+  <router-view /> <!-- später für Router -->
+  <AppFooter />
 </template>
 
-<style scoped></style>
+<script setup>
+import Navbar from '@/components/Navbar.vue'
+import SpecialBanner from '@/components/SpecialBanner.vue'
+import AppFooter from '@/components/Footer.vue'
+</script>

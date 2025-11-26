@@ -6,7 +6,7 @@
     <button @click="$emit('details', product)">Details</button>
   </article>
 </template>
-
+<router-link :to="`/product/${product.id}`">Details</router-link>
 <script setup>
 defineProps({ product: Object })
 </script>
