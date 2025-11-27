@@ -1,8 +1,8 @@
 <template>
   <header class="navbar">
-    <img src="@/assets/Puppy_Racer_Logo.svg" alt="Logo" class="logo" />
+    <img src="/src/assets/Puppy_Racer_Logo.pdf" alt="Logo" class="logo" />
     <nav> ... </nav>
   </header>
-</template>
+</template>x
 <script setup></script>
 <style scoped>/* navbar styles */</style>

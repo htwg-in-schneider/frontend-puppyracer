@@ -1,20 +1,23 @@
 <template>
-  <section v-if="product">
-    <h1>{{ product.title }}</h1>
-    <img :src="product.image" alt="">
+  <div v-if="product">
+    <h2>{{ product.title }}</h2>
     <p>{{ product.description }}</p>
-    <p>Preis: €{{ product.price.toFixed(2) }}</p>
-  </section>
+    <p>{{ product.price }} €</p>
+
+    <ProductReviews :productId="product.id" />
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { products } from '@/data/products'
-import { onMounted } from 'vue'
-const props = defineProps({ id: String })
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import ProductReviews from '../components/ProductReviews.vue'
+
+const route = useRoute()
 const product = ref(null)
 
-onMounted(() => {
-  product.value = products.find(p => String(p.id) === String(props.id))
+onMounted(async () => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/product/${route.params.id}`)
+  product.value = await res.json()
 })
 </script>

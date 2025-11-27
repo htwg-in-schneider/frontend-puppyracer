@@ -1,29 +1,35 @@
 <template>
-  <section>
-    <h1>Produkte</h1>
-    <div class="grid">
-      <ProductCard
-        v-for="p in products"
-        :key="p.id"
-        :product="p"
-        @details="showDetails"
-      />
-    </div>
-  </section>
+  <ProductFilter @update:search="onSearch" @update:category="onCategory" />
+  <button @click="$router.push('/product/create')">Neues Produkt</button>
+
+  <div class="product-grid">
+    <ProductCard
+      v-for="p in products"
+      :key="p.id"
+      :product="p"
+      @edit="() => $router.push(`/product/edit/${p.id}`)"
+    />
+  </div>
 </template>
 
 <script setup>
-import { products as localProducts } from '@/data/products'
-import ProductCard from '@/components/ProductCard.vue'
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import ProductCard from '../components/ProductCard.vue'
+import ProductFilter from '../components/ProductFilter.vue'
 
-const products = ref(localProducts)
+const products = ref([])
+const search = ref('')
+const category = ref('')
 
-function showDetails(product) {
-  alert(`${product.title}\n\n${product.description}\nPreis: €${product.price.toFixed(2)}`)
+async function fetchProducts() {
+  const query = new URLSearchParams({ name: search.value, category: category.value })
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/product?${query}`)
+  products.value = await res.json()
 }
-</script>
 
-<style>
-.grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
-</style>
+function onSearch(val) { search.value = val }
+function onCategory(val) { category.value = val }
+
+onMounted(fetchProducts)
+watch([search, category], fetchProducts)
+</script>

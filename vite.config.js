@@ -1,13 +1,18 @@
-import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import path from 'path'
+import dotenv from 'dotenv'
 
-// https://vite.dev/config/
+// Lade die .env-Datei manuell
+dotenv.config()
+
 export default defineConfig({
-  base: '/frontend-puppyracer/',
-  plugins: [vue()]   
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  // Greife auf VITE_BASE aus der env-Datei zu
+  base: process.env.VITE_BASE || '/'
 })
-
-
