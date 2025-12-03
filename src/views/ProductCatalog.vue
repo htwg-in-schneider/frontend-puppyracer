@@ -1,35 +1,69 @@
 <template>
-  <ProductFilter @update:search="onSearch" @update:category="onCategory" />
-  <button @click="$router.push('/product/create')">Neues Produkt</button>
+  <div class="container my-5">
+    <ProductFilter @productUpdate="updateProducts" />
 
-  <div class="product-grid">
-    <ProductCard
-      v-for="p in products"
-      :key="p.id"
-      :product="p"
-      @edit="() => $router.push(`/product/edit/${p.id}`)"
-    />
+    <div v-if="loading" class="text-center py-5">
+      Produkte werden geladen…
+    </div>
+
+    <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
+    <div v-if="products.length" class="row g-4">
+      <div v-for="product in products" :key="product.id" class="col-md-4">
+        <ProductCard :product="product" />
+      </div>
+    </div>
+
+    <div v-else-if="!loading" class="alert alert-light text-center">
+      Keine Produkte gefunden.
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import ProductCard from '../components/ProductCard.vue'
-import ProductFilter from '../components/ProductFilter.vue'
+import { ref, onMounted } from 'vue';
+import ProductCard from '@/components/ProductCard.vue';
+import ProductFilter from '@/components/ProductFilter.vue';
 
-const products = ref([])
-const search = ref('')
-const category = ref('')
+const products = ref([]);
+const loading = ref(true);
+const error = ref(null);
 
-async function fetchProducts() {
-  const query = new URLSearchParams({ name: search.value, category: category.value })
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/product?${query}`)
-  products.value = await res.json()
+// Stelle sicher, dass diese Base-URL auf dein Backend zeigt
+const API_URL = import.meta.env.VITE_API_BASE_URL + '/api/product';
+
+// Funktion, die Produkte lädt
+async function fetchProducts(filters = {}) {
+  loading.value = true;
+  error.value = null;
+  try {
+    let url = API_URL;
+    const params = new URLSearchParams();
+    if (filters.name) params.append('name', filters.name);
+    if (filters.category) params.append('category', filters.category);
+    if ([...params].length) url += `?${params.toString()}`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Fehler beim Laden der Produkte');
+    products.value = await res.json();
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    loading.value = false;
+  }
 }
 
-function onSearch(val) { search.value = val }
-function onCategory(val) { category.value = val }
+// Wird vom Filter aufgerufen
+function updateProducts(filters) {
+  fetchProducts(filters);
+}
 
-onMounted(fetchProducts)
-watch([search, category], fetchProducts)
+// Beim Laden der Komponente die Produkte abrufen
+onMounted(() => fetchProducts());
 </script>
+
+<style scoped>
+.row.g-4 {
+  margin-top: 1rem;
+}
+</style>

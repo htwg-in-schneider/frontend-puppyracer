@@ -1,16 +1,25 @@
 <template>
-  <div v-if="banner.isVisible" class="banner">
-    <span>Special Offer!</span>
-    <button @click="banner.hideBanner()">Close</button>
-  </div>
+<div id="specialbanner" class="text-center py-3">
+  Viele Sonderangebote heute!&nbsp;&nbsp;
+  <Button variant="dark" @click="hideBanner">OK!</Button>
+</div>
 </template>
 
 <script setup>
-import { useBannerStore } from '../stores/banner.js'
+import { ref } from 'vue';
 
-const banner = useBannerStore()
+const bannerVisible = ref(true);
+
+function hideBanner() {
+  bannerVisible.value = false;
+}
 </script>
 
 <style scoped>
-.banner { background: yellow; padding: 1rem; display: flex; justify-content: space-between; }
+#specialbanner {
+    background-color: #ff6600;
+    color: white;
+    text-align: center;
+    padding: 1rem 0;
+}
 </style>

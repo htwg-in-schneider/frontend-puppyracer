@@ -1,17 +1,15 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import ProductCatalog from '../views/ProductCatalog.vue'
-import ProductDetail from '../views/ProductDetail.vue'
-import CreateProduct from '../views/CreateProduct.vue'
-import EditProduct from '../views/EditProduct.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import ProductCatalog from '../views/ProductCatalog.vue';
+import ProductDetail from '../views/ProductDetail.vue';
+
+const routes = [
+  { path: '/', component: ProductCatalog },
+  { path: '/product/view/:id', component: ProductDetail } // Detailseite
+];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.VITE_BASE || '/'),
-  routes: [
-    { path: '/', component: ProductCatalog },
-    { path: '/product/:id', component: ProductDetail, props: true },
-    { path: '/product/create', component: CreateProduct },
-    { path: '/product/edit/:id', component: EditProduct, props: true }
-  ]
-})
+  history: createWebHistory(),
+  routes
+});
 
-export default router
+export default router;
