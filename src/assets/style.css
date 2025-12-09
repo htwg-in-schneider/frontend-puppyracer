@@ -481,3 +481,17 @@ footer a {
 footer a:hover {
     color: #E26191; /* Highlight color on hover */
 }
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+#app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}

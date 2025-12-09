@@ -11,11 +11,11 @@
 
 <script setup>
 const dogs = [
-  { id: 1, name: 'Afghan Hound', image: '/src/assets/dog_pics/dog1.jpg' },
-  { id: 2, name: 'Finnish Laphund', image: '/src/assets/dog_pics/dog2.jpg' },
-  { id: 3, name: 'Shetland Sheepdog', image: '/src/assets/dog_pics/dog3.jpg' },
-  { id: 4, name: 'Pomeranian', image: '/src/assets/dog_pics/dog4.jpg' },
-  { id: 5, name: 'Bernese Mountain Dog', image: '/src/assets/dog_pics/dog5.jpg' },
+  { id: 1, name: 'Leder Leine', image: '/src/assets/dog_pics/Hundeleine-Leder.png' },
+  { id: 2, name: 'Stoff Leine', image: '/src/assets/dog_pics/Hundeleine-Stoff.png' },
+  { id: 3, name: 'Premium Activa', image: '/src/assets/dog_pics/Activa-Gold-Futter.png' },
+  { id: 4, name: 'Pedigree', image: '/src/assets/dog_pics/Pedigree-Futter.png' },
+  { id: 5, name: 'Bernese Mountain Dog', image: '/src/assets/dog_pics/Science-Plan-Futter.png' },
   { id: 6, name: 'Chow Chow', image: '/src/assets/dog_pics/dog6.jpg' },
   { id: 7, name: 'Pekingese', image: '/src/assets/dog_pics/dog7.jpg' },
   { id: 8, name: 'Husky', image: '/src/assets/dog_pics/dog9.webp' },
