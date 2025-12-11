@@ -5,6 +5,8 @@ import LeinenView from '../views/LeinenView.vue'
 import HalsbaenderView from '../views/HalsbaenderView.vue'
 import BekleidungView from '../views/BekleidungView.vue'
 import SnacksView from '../views/SnacksView.vue'
+import AccountView from '@/views/AccountView.vue'
+import WarenkorbView from '@/views/WarenkorbView.vue' 
 
 const routes = [
   { 
@@ -37,6 +39,18 @@ const routes = [
     name: 'snacks',
     component: SnacksView 
   },
+  {
+    path: '/account',
+    name: 'account',
+    component: AccountView
+  },
+  {
+    path: '/warenkorb',
+    name: 'warenkorb',
+    component: WarenkorbView
+
+  },
+
 ]
 
 const router = createRouter({

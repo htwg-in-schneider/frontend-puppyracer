@@ -3,12 +3,6 @@
     <!-- Padding für die fixierte Navbar -->
     <div :style="{ paddingTop: isHomePage ? '20px' : '100px' }"></div>
     
-    <!-- Filter nur auf Kategorie-Seiten oder wenn explizit gewünscht -->
-    <ProductFilter 
-      v-if="!isHomePage" 
-      @productUpdate="updateProducts" 
-    />
-    
     <!-- Homepage-Titel -->
     <div v-if="isHomePage" class="text-center mb-5">
       <h1 class="display-5 fw-bold">Alle Produkte</h1>
@@ -69,7 +63,6 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import ProductCard from '@/components/ProductCard.vue'
-import ProductFilter from '@/components/ProductFilter.vue'
 
 const products = ref([])
 const loading = ref(true)
@@ -79,7 +72,7 @@ const API_URL = import.meta.env.VITE_API_BASE_URL + '/api/product'
 
 const route = useRoute()
 
-// Props für Kategorie
+// WICHTIG: Props für Kategorie definieren
 const props = defineProps({
   category: {
     type: String,
@@ -101,7 +94,8 @@ const categoryNames = {
 }
 
 const currentCategoryName = computed(() => {
-  return props.category ? categoryNames[props.category] : ''
+  // Jetzt aus Props statt route.params
+  return props.category ? categoryNames[props.category] || '' : ''
 })
 
 async function fetchProducts(filters = {}) {
@@ -110,23 +104,31 @@ async function fetchProducts(filters = {}) {
   try {
     let url = API_URL
     const params = new URLSearchParams()
+
+    console.log('=== DEBUG ===')
+    console.log('Route path:', route.path)
+    console.log('Props category:', props.category)
+    console.log('Is Homepage:', isHomePage.value)
     
-    // Auf Homepage keine Kategorie filtern (alle Produkte)
-    // Auf Kategorie-Seiten die Kategorie verwenden
-    const category = isHomePage.value ? '' : (props.category || filters.category)
-    
+    // Bestimme Kategorie: Filter > Prop (aber nicht auf Homepage!)
+    const categoryToUse = isHomePage.value ? '' : (filters.category || props.category)
+
     if (filters.name) params.append('name', filters.name)
-    if (category) params.append('category', category)
+    if (categoryToUse) {
+      params.append('category', categoryToUse)
+      console.log('Filtering by category:', categoryToUse)
+    }
+    
     if ([...params].length) url += `?${params.toString()}`
 
-    console.log('Fetching products from:', url)
-    
+    console.log('Fetching from:', url)
+
     const res = await fetch(url)
     if (!res.ok) throw new Error('Fehler beim Laden der Produkte')
-    
+
     const data = await res.json()
-    console.log('Received products:', data)
-    
+    console.log('Received products:', data.length, 'products')
+
     products.value = data
   } catch (err) {
     console.error('Error fetching products:', err)
@@ -145,27 +147,28 @@ function resetFilters() {
 }
 
 onMounted(() => {
+  console.log('ProductCatalog mounted')
+  console.log('Props:', props)
   fetchProducts()
 })
 
-// Beobachte Änderungen in den Props
+// WICHTIG: Beobachte Änderungen in den PROPS (nicht in route.params!)
 watch(
   () => props.category,
   (newCategory) => {
-    console.log('Category prop changed to:', newCategory)
+    console.log('Props category changed to:', newCategory)
     fetchProducts({ category: newCategory })
   },
   { immediate: true }
 )
 
-// Beobachte Routenänderungen (für Homepage vs Kategorie)
+// Beobachte Routenänderungen (für Homepage)
 watch(
   () => route.path,
   (newPath) => {
     console.log('Route changed to:', newPath)
-    // Wenn wir zur Homepage wechseln, alle Produkte laden
     if (newPath === '/') {
-      fetchProducts()
+      fetchProducts() // Homepage: alle Produkte
     }
   }
 )
@@ -174,9 +177,25 @@ watch(
 <style scoped>
 /* Deine bestehenden Styles bleiben */
 .category-title {
-  color: #333;
-  border-bottom: 2px solid #e0c097;
+  color: #f2e3c6;       
+  border-bottom: 2px solid #d4b08c;
   padding-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.sort-options select {
+  background-color: #d4b08c;
+  border: none;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #3b2f22;
+}
+
+.sort-options select:hover {
+  background-color: #e2c9a9;
 }
 
 .text-accent {

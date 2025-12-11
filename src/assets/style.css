@@ -12,7 +12,6 @@ b{
     color:  #2D2121;
 }
 
-
 .custom-aligned {
     text-align: left;
 }
@@ -60,8 +59,6 @@ h6 {
     font-size: 1.125rem;
 }
 
-
-
 .logo img{
     max-height: 50px;   /* this is the important part */
     width: auto;
@@ -84,51 +81,6 @@ body {
     background-color: #2D2121;
 }
 
-/* Navbar ganz oben */
-.navbar {
-    position: fixed;
-    /* Soll oben bleiben wenn man scrolled! */
-    top: 0;
-    left: 0;
-    width: 100%;
-
-
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;   /* center items vertically */
-    padding: 2rem 2rem;
-    background: transparent;
-    height: auto;
-
-    z-index: 10;
-    /* versichern dass es über den Image bleibt mit LAYERING*/
-}
-
-.navbar nav {
-    position: absolute;
-    /* detach from flex flow, wir können es irgendwo in der Navbar packen */
-    left: 50%;
-    /* halbwegs in navbar positionieren */
-    transform: translateX(-50%);
-    /* sonst hätten wir das Linke Ende mit geschoben, jetzt siejts richtig aus */
-}
-
-.navbar ul {
-    display: flex;
-    list-style: none;
-    gap: 5rem;
-}
-
-.navbar a {
-    text-decoration: none;
-    color: #EFE1D6;
-    font-weight: 500;
-}
-
-.navbar a:hover {
-    color: #E26191;
-}
 
 /* Hero section */
 .hero {
@@ -494,4 +446,17 @@ html, body {
 
 main {
   flex: 1;
+}
+
+.page-content {
+  padding-top: 100px; /* Mehr Abstand nach unten für Produkte */
+}
+
+/* ODER spezifisch für deine Views: */
+.category-view {
+  padding-top: 100px;
+}
+
+.home-view {
+  padding-top: 100px;
 }

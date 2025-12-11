@@ -24,19 +24,15 @@ const props = defineProps({
 // Bildermapping für alle Produkte aus deinem DataLoader
 const productImage = computed(() => {
   const imageMap = {
-    // ALTE Produkte (kannst du behalten oder entfernen)
-    'Spielzeughund': 'Cute_stuffed_Dog.jpg',
-    'Hundespielzeug Ball': 'Dog_Ball.jpg',
-    'Premium Hundefutter': 'Dog_Food.jpg',
     
     // NEUE Produkte - LEINEN & GESCHIRRE
-    'Premium Lederleine': 'leather-leash.jpg',
-    'Flexi-Retractable Leine': 'flexi-leash.jpg',
+    'Premium Lederleine': 'Hundeleine-dunklesLeder.png',
+    'Flexi-Retractable Leine': 'Hundeleine-Stoff.png',
     'Geschirr mit Brustpolster': 'dog-harness.jpg',
     
     // NEUE Produkte - HALSBÄNDER & HALSKETTEN
-    'Reflektor Sicherheitshalsband': 'reflective-collar.jpg',
-    'Lederhalsband mit Gravur': 'leather-collar.jpg',
+    'Hundehalsband Türkis': 'Hundehalsband-Türkis.png',
+    'Lederhalsband mit Gravur': 'Hundehalsband-Leder.png',
     'Halskette mit Charme': 'dog-necklace.jpg',
     
     // NEUE Produkte - HUNDEBEKLEIDUNG
@@ -45,8 +41,8 @@ const productImage = computed(() => {
     'Kapuzenpullover mit Taschen': 'dog-hoodie.jpg',
     
     // NEUE Produkte - LECKERLIS & SNACKS
-    'Rinderhaut-Kausnack': 'beef-snack.jpg',
-    'Trainingsleckerlis Huhn': 'training-treats.jpg',
+    'Pedigree Premium Futter': 'Pedigree-Futter.png',
+    'Active Gold Futter': 'Activa-Gold-Futter.png',
     'Zahnpflege-Kaustange': 'dental-stick.jpg'
   };
   
