@@ -17,6 +17,8 @@
 <script setup>
 import Navbar from './components/Navbar.vue'
 import Footer from './components/Footer.vue'
+import NavButton from './components/NavButton.vue';
 import HeroSection from './components/HeroSection.vue'
 import DogCarousel from './components/DogCarousel.vue'
+import SpecialBanner from './components/SpecialBanner.vue';
 </script>

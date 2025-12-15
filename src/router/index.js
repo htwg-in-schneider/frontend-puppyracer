@@ -1,43 +1,40 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'  // NEU!
+import HomeView from '../views/HomeView.vue'
 import ProductDetail from '../views/ProductDetail.vue'
-import LeinenView from '../views/LeinenView.vue'
-import HalsbaenderView from '../views/HalsbaenderView.vue'
-import BekleidungView from '../views/BekleidungView.vue'
-import SnacksView from '../views/SnacksView.vue'
+import ProductCatalog from '../views/ProductCatalog.vue'
 import AccountView from '@/views/AccountView.vue'
-import WarenkorbView from '@/views/WarenkorbView.vue' 
+import WarenkorbView from '@/views/WarenkorbView.vue'
 
 const routes = [
   { 
     path: '/', 
     name: 'home',
-    component: HomeView  // Jetzt HomeView statt ProductCatalog
+    component: HomeView
   },
   { 
-    path: '/product/view/:id', 
+    path: '/product/:id',
     name: 'product-detail',
-    component: ProductDetail 
+    component: ProductDetail,
+    props: true
   },
   { 
-    path: '/leinen', 
-    name: 'leinen',
-    component: LeinenView 
+    path: '/:category',  // leinen, halsbaender, etc.
+    name: 'product-catalog',
+    component: ProductCatalog,
+    props: (route) => ({ 
+      category: route.params.category,
+      initialSearch: route.query.q || ''  // Suchbegriff übergeben
+    })
   },
+  // NEUE SUCH-ROUTE
   { 
-    path: '/halsbaender', 
-    name: 'halsbaender',
-    component: HalsbaenderView 
-  },
-  { 
-    path: '/bekleidung', 
-    name: 'bekleidung',
-    component: BekleidungView 
-  },
-  { 
-    path: '/snacks', 
-    name: 'snacks',
-    component: SnacksView 
+    path: '/search',
+    name: 'search',
+    component: ProductCatalog,
+    props: (route) => ({ 
+      category: '',  // Keine Kategorie bei Suche
+      searchQuery: route.query.q || ''  // Suchbegriff als Prop
+    })
   },
   {
     path: '/account',
@@ -48,9 +45,7 @@ const routes = [
     path: '/warenkorb',
     name: 'warenkorb',
     component: WarenkorbView
-
-  },
-
+  }
 ]
 
 const router = createRouter({

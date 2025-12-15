@@ -1,119 +1,151 @@
-<script setup>
-import { ref, onMounted } from 'vue';
-import Button from '@/components/NavButton.vue';
-
-const emit = defineEmits(['productUpdate']);
-
-const searchName = ref('');
-const selectedCategory = ref('');
-const categories = ref([]);
-
-const API_URL = import.meta.env.VITE_API_BASE_URL + '/api/category';
-
-onMounted(async () => {
-  try {
-    const res = await fetch(API_URL);
-    if (res.ok) categories.value = await res.json();
-  } catch (err) {
-    console.error(err);
-  }
-});
-
-function onSearch() {
-  // Event an Parent senden, um Produkte zu filtern
-  emit('productUpdate', { name: searchName.value, category: selectedCategory.value });
-}
-
-function onReset() {
-  // Felder zurücksetzen
-  searchName.value = '';
-  selectedCategory.value = '';
-  emit('productUpdate', {}); // Alle Produkte anzeigen
-}
-</script>
-
-<template>
-  <div class="product-filter-container">
-    <div class="filter-inner">
-      <input
-        v-model="searchName"
-        type="text"
-        class="search-input"
-        placeholder="Produktname suchen..."
-        @keyup.enter="onSearch"
-      />
-      <select v-model="selectedCategory" class="category-select" @change="onSearch">
-        <option value="">Alle Kategorien</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-      </select>
-      <!-- Schöne Buttons -->
-      <Button variant="accent" :onClick="onSearch" class="filter-button">Suchen</Button>
-      <Button variant="secondary" :onClick="onReset" class="filter-button">Reset</Button>
+ <template>
+  <div class="filter">
+    <div class="filter-box">
+      <h3><i class="bi bi-funnel"></i> Sortierung</h3>
+      
+      <button class="sort-btn" @click="toggleDropdown">
+        {{ getSortLabel(selectedSort) }} <i class="arrow">▼</i>
+      </button>
+      
+      <div v-if="showDropdown" class="dropdown">
+        <button v-for="opt in options" :key="opt.value" 
+                :class="['option', { active: selectedSort === opt.value }]"
+                @click="selectOption(opt.value)">
+          {{ opt.label }}
+        </button>
+      </div>
+      
+      <button class="reset-btn" @click="reset">
+        <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
+      </button>
     </div>
   </div>
 </template>
 
+<script setup>
+import { ref } from 'vue';
+
+const emit = defineEmits(['filterChange']);
+const showDropdown = ref(false);
+const selectedSort = ref('default');
+
+const options = [
+  { value: 'default', label: 'Standard' },
+  { value: 'newest', label: 'Neueste' },
+  { value: 'price-low', label: 'Preis ↑' },
+  { value: 'price-high', label: 'Preis ↓' }
+];
+
+function getSortLabel(value) {
+  return options.find(o => o.value === value)?.label || 'Standard';
+}
+
+function toggleDropdown() {
+  showDropdown.value = !showDropdown.value;
+}
+
+function selectOption(value) {
+  selectedSort.value = value;
+  showDropdown.value = false;
+  emit('filterChange', { sort: value });
+}
+
+function reset() {
+  selectedSort.value = 'default';
+  showDropdown.value = false;
+  emit('filterChange', {});
+}
+</script>
+
 <style scoped>
-.product-filter-container {
-  display: flex;
-  justify-content: center;
-  margin: 2rem 0;
+.filter {
+  position: sticky;
+  top: 120px;
 }
 
-.filter-inner {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-  max-width: 900px;
-  width: 100%;
-  background-color: #f8f8f8;
-  padding: 1rem 1.5rem;
+.filter-box {
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.search-input {
-  flex: 2 1 250px;
-  padding: 0.6rem 1rem;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+.filter-box h3 {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.category-select {
-  flex: 1 1 200px;
-  padding: 0.6rem 1rem;
-  font-size: 1rem;
+.sort-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-/* Buttons anpassen */
-.filter-button {
-  flex: 0 1 120px;
-  padding: 0.6rem 1rem;
-  font-size: 1rem;
-  border-radius: 8px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   cursor: pointer;
-  text-align: center;
+  font-weight: 600;
 }
 
-.filter-button.btn-accent {
-  background-color: #d8a04c; /* hellbraun / Akzentfarbe */
-  color: #fff;
+.arrow {
+  font-size: 0.8rem;
+  transition: transform 0.3s;
 }
 
-.filter-button.btn-accent:hover {
-  background-color: #c3923f;
+.arrow.open {
+  transform: rotate(180deg);
 }
 
-.filter-button.btn-secondary {
-  background-color: #ccc;
+.dropdown {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.option {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background: none;
   color: #333;
+  text-align: left;
+  cursor: pointer;
 }
 
-.filter-button.btn-secondary:hover {
-  background-color: #bbb;
+.option:hover {
+  background: rgba(226, 97, 145, 0.1);
+}
+
+.option.active {
+  background: rgba(226, 97, 145, 0.2);
+  color: #e26191;
+  font-weight: 600;
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>
