@@ -1,70 +1,74 @@
 <template>
 <footer>
-  <div class="footer-section">
-    <h4>Informationen</h4>
-    <a href="#impressum">Impressum</a>
-    <a href="#datenschutz">Datenschutz</a>
-    <a href="#agb">AGB</a>
-  </div>
-
-  <div class="footer-section">
-    <h4>Kundenservice</h4>
-    <a href="#kontakt">Kontakt</a>
-    <a href="#faq">FAQ</a>
-    <a href="#versand">Versand & Rückgabe</a>
-  </div>
-
-  <div class="footer-section">
-    <h4>Newsletter</h4>
-    <p>Erhalte exklusive Angebote und Produktneuheiten.</p>
-    <a href="#newsletter">Zum Newsletter anmelden</a>
-  </div>
-
-  <div class="footer-section">
-    <h4>© 2025 PuppyRacer</h4>
-    <p>Alle Rechte vorbehalten.</p>
+  <div class="footer-content">
+    <div class="footer-links">
+      <router-link to="/impressum">Impressum</router-link>
+      <router-link to="/datenschutz">Datenschutz</router-link>
+    </div>
+    <div class="footer-copyright">
+      <p>© 2025 PuppyRacer</p>
+    </div>
   </div>
 </footer>
 </template>
 
 <script setup>
+// Kein Script nötig
 </script>
 
 <style scoped>
 footer {
+    background-color: #B48665;
+    color: white;
+    padding: 1.5rem 0;
+    font-family: "Roboto", sans-serif;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
-    background-color: #B48665;
-    color: white;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
-footer a {
+.footer-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.footer-links a {
     color: #2D2121;
     text-decoration: none;
+    font-size: 0.9rem;
     transition: color 0.2s ease;
 }
 
-footer a:hover {
+.footer-links a:hover {
     color: #E26191;
+    text-decoration: underline;
 }
 
-.footer-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.footer-copyright p {
+    color: #2D2121;
+    font-size: 0.9rem;
+    margin: 0;
 }
 
-.footer-section h4 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: white;
-}
-
-.footer-section p {
-  margin: 0;
-  color: #2D2121;
-  font-size: 0.9rem;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .footer-links {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
 }
 </style>

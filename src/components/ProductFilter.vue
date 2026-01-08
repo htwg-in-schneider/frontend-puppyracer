@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="filter">
     <div class="filter-box">
       <h3><i class="bi bi-funnel"></i> Sortierung</h3>
@@ -23,37 +23,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'  // NUR ref - kein onMounted nötig
 
-const emit = defineEmits(['filterChange']);
-const showDropdown = ref(false);
-const selectedSort = ref('default');
+const emit = defineEmits(['filterChange'])
+const showDropdown = ref(false)
+const selectedSort = ref('default')
 
 const options = [
   { value: 'default', label: 'Standard' },
   { value: 'newest', label: 'Neueste' },
   { value: 'price-low', label: 'Preis ↑' },
   { value: 'price-high', label: 'Preis ↓' }
-];
+]
 
 function getSortLabel(value) {
-  return options.find(o => o.value === value)?.label || 'Standard';
+  return options.find(o => o.value === value)?.label || 'Standard'
 }
 
 function toggleDropdown() {
-  showDropdown.value = !showDropdown.value;
+  showDropdown.value = !showDropdown.value
 }
 
 function selectOption(value) {
-  selectedSort.value = value;
-  showDropdown.value = false;
-  emit('filterChange', { sort: value });
+  selectedSort.value = value
+  showDropdown.value = false
+  emit('filterChange', { sort: value })
 }
 
 function reset() {
-  selectedSort.value = 'default';
-  showDropdown.value = false;
-  emit('filterChange', {});
+  selectedSort.value = 'default'
+  showDropdown.value = false
+  emit('filterChange', {})
 }
 </script>
 

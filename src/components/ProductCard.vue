@@ -1,67 +1,107 @@
 <template>
-  <div class="card h-100 shadow-sm product-card">
-    <router-link :to="`/product/view/${product.id}`">
-      <img :src="productImage" class="card-img-top" :alt="product.title">
-    </router-link>
-    <div class="card-body d-flex flex-column">
+  <div class="card product-card" @click="goToProduct">
+    <div class="image-container">
+      <img 
+        :src="imageUrl" 
+        class="card-img" 
+        :alt="product.title"
+        loading="lazy"
+      >
+    </div>
+    
+    <div class="card-body">
       <h5 class="card-title">{{ product.title }}</h5>
-      <p class="card-text text-muted">{{ product.description }}</p>
-      <p class="text-accent fw-bold">{{ product.price.toFixed(2) }} €</p>
-      <NavButton variant="accent" class="mt-auto" :to="`/product/view/${product.id}`">
-        Details
-      </NavButton>
+      <p class="card-description">{{ product.description }}</p>
+      <p class="card-price">{{ formattedPrice }}</p>
+      
+      <div class="card-actions">
+        <router-link 
+          :to="productRoute" 
+          class="btn-details"
+          @click.stop
+        >
+          Details
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   product: { type: Object, required: true }
-});
+})
 
-// Bildermapping für alle Produkte aus deinem DataLoader
-const productImage = computed(() => {
-  const imageMap = {
-    
-    // NEUE Produkte - LEINEN & GESCHIRRE
-    'Premium Lederleine': 'Hundeleine-dunklesLeder.png',
-    'Flexi-Retractable Leine': 'Hundeleine-Stoff.png',
-    'Geschirr mit Brustpolster': 'dog-harness.jpg',
-    
-    // NEUE Produkte - HALSBÄNDER & HALSKETTEN
-    'Hundehalsband Türkis': 'Hundehalsband-Türkis.png',
-    'Lederhalsband mit Gravur': 'Hundehalsband-Leder.png',
-    'Halskette mit Charme': 'dog-necklace.jpg',
-    
-    // NEUE Produkte - HUNDEBEKLEIDUNG
-    'Regenjacke für Hunde': 'rain-jacket.jpg',
-    'Winterpullover für Hunde': 'dog-sweater.jpg',
-    'Kapuzenpullover mit Taschen': 'dog-hoodie.jpg',
-    
-    // NEUE Produkte - LECKERLIS & SNACKS
-    'Pedigree Premium Futter': 'Pedigree-Futter.png',
-    'Active Gold Futter': 'Activa-Gold-Futter.png',
-    'Zahnpflege-Kaustange': 'dental-stick.jpg'
-  };
+const router = useRouter()
+const imageError = ref(false)
+
+// Computed Properties
+const imageUrl = computed(() => {
+  if (imageError.value) return getDefaultImage()
   
-  const filename = imageMap[props.product.title] || 'default.jpg';
-  return new URL(`../assets/product_pics/${filename}`, import.meta.url).href;
-});
+  const imageName = props.product.imageUrl || props.product.imageName
+  if (imageName) {
+    return `/src/assets/product_pics/${imageName}`
+  }
+  return getFallbackImage(props.product.id)
+})
+
+const productRoute = computed(() => `/product/${props.product.id}`)
+const formattedPrice = computed(() => `${props.product.price.toFixed(2)} €`)
+
+// Methods
+const getFallbackImage = (productId) => {
+  const imageMap = {
+    1: '/src/assets/product_pics/Hundeleine-dunklesLeder.png',
+    2: '/src/assets/product_pics/Hundeleine-rot.png',
+    3: '/src/assets/product_pics/Hundeleine-Stoff.png',
+    4: '/src/assets/product_pics/Hundehalsband-Türkis.png',
+    5: '/src/assets/product_pics/Hundehalsband-Leder.png',
+    6: '/src/assets/product_pics/Hundehalsband-premium.png',
+    7: '/src/assets/product_pics/Hundejacke-Blau.png',
+    8: '/src/assets/product_pics/HundePulli.png',
+    9: '/src/assets/product_pics/Hundejacke-Schwarz.png',
+    10: '/src/assets/product_pics/Pedigree-Futter.png',
+    11: '/src/assets/product_pics/Activa-Gold-Futter.png',
+    12: '/src/assets/product_pics/Nutrima-Futter.png'
+  }
+  return imageMap[productId] || getDefaultImage()
+}
+
+const getDefaultImage = () => '/src/assets/product_pics/default.jpg'
+
+const handleImageError = () => {
+  imageError.value = true
+}
+
+const goToProduct = () => {
+  router.push(productRoute.value)
+}
 </script>
 
 <style scoped>
 .product-card {
+  --card-bg: rgba(50, 50, 50, 0.8);
+  --card-text: #f5f1e7;
+  --card-accent: #e0c097;
+  --card-hover: #d4b080;
+  
   width: 100%;
   max-width: 300px;
   margin: 0 auto;
-  background-color: rgba(50, 50, 50, 0.8);
+  background: var(--card-bg);
   border-radius: 10px;
   overflow: hidden;
-  color: #f5f1e7;
+  color: var(--card-text);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .product-card:hover {
@@ -69,59 +109,83 @@ const productImage = computed(() => {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
-.card-img-top {
+.image-container {
   width: 100%;
   height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.card-img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.product-card:hover .card-img-top {
+.product-card:hover .card-img {
   transform: scale(1.05);
 }
 
 .card-body {
   padding: 1rem;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .card-title {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #f5f1e7;
+  color: var(--card-text);
   margin-bottom: 0.5rem;
-  min-height: 2.8rem; /* Für konsistente Höhe bei mehrzeiligen Titeln */
+  min-height: 2.8rem;
+  line-height: 1.3;
 }
 
-.card-text {
+.card-description {
   font-size: 0.95rem;
-  color: #f5f1e7;
+  color: var(--card-text);
   margin-bottom: 0.5rem;
-  flex-grow: 1; /* Nimmt verfügbaren Platz ein */
+  flex-grow: 1;
   opacity: 0.9;
+  line-height: 1.4;
 }
 
-.text-accent {
-  color: #e0c097;
+.card-price {
+  color: var(--card-accent);
   font-weight: 600;
   font-size: 1.2rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.NavButton {
-  margin-top: auto; /* Button bleibt unten */
-  padding: 0.5rem 1rem;
+.card-actions {
+  margin-top: auto;
+}
+
+.btn-details {
+  display: inline-block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--card-accent);
+  color: #333;
+  text-decoration: none;
+  border-radius: 4px;
   font-weight: 600;
+  text-align: center;
   transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
 }
 
-.NavButton:hover {
-  transform: scale(1.05);
+.btn-details:hover {
+  background: var(--card-hover);
+  transform: scale(1.02);
 }
 
-/* Responsive Anpassungen */
+/* Responsive */
 @media (max-width: 768px) {
   .product-card {
     max-width: 100%;
@@ -131,7 +195,27 @@ const productImage = computed(() => {
     font-size: 1.1rem;
   }
   
-  .card-text {
+  .card-description {
+    font-size: 0.9rem;
+  }
+  
+  .image-container {
+    height: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-title {
+    font-size: 1rem;
+    min-height: auto;
+  }
+  
+  .image-container {
+    height: 160px;
+  }
+  
+  .btn-details {
+    padding: 0.6rem 0.8rem;
     font-size: 0.9rem;
   }
 }

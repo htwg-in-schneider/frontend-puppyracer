@@ -1,140 +1,93 @@
 <template>
-  <div class="account-container">
-    <!-- Dekorative Elemente -->
-    <div class="decorative-elements">
-      <div class="bg-paw bg-paw-1"></div>
-      <div class="bg-paw bg-paw-2"></div>
+  <div class="account-page">
+    <!-- Header -->
+    <div class="account-header">
+      <h1><i class="bi bi-person-circle"></i> Mein Profil</h1>
+      <p class="subtitle">Verwalten Sie Ihre persönlichen Daten</p>
     </div>
 
-    <div class="account-spacer"></div>
-    
-    <div class="account-wrapper">
-      <!-- Header -->
-      <div class="account-header-section">
-        <div class="header-content">
-          <div class="avatar-container">
-            <div class="avatar-circle">
-              <i class="bi bi-person-circle avatar-icon"></i>
-            </div>
-          </div>
-          <h1 class="account-title">Mein Konto</h1>
-          <p class="account-subtitle">Verwalten Sie Ihre persönlichen Daten</p>
-        </div>
+    <!-- Content -->
+    <div class="account-content">
+      <!-- Loading -->
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Lade Profildaten...</p>
       </div>
 
-      <!-- Hauptinhalt -->
-      <div class="account-main-content">
-        <div class="form-container">
-          <!-- Loading State -->
-          <div v-if="loading" class="loading-container">
-            <div class="spinner"></div>
-            <p>Lade Ihre persönlichen Daten...</p>
+      <!-- Error -->
+      <div v-else-if="error" class="error-state">
+        <i class="bi bi-exclamation-triangle"></i>
+        <h3>Fehler beim Laden</h3>
+        <p>{{ error }}</p>
+        <button @click="loadUserData" class="btn-primary">Erneut versuchen</button>
+      </div>
+
+      <!-- Success Message -->
+      <div v-if="successMessage" class="success-message">
+        <i class="bi bi-check-circle"></i>
+        <p>{{ successMessage }}</p>
+        <button @click="successMessage = ''" class="btn-close-msg">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <div v-else class="profile-form">
+        <!-- Profile Card -->
+        <div class="form-card">
+          <div class="card-header">
+            <h2><i class="bi bi-person-badge"></i> Persönliche Daten</h2>
           </div>
 
-          <!-- Account Form -->
-          <div v-else class="form-content">
-            <!-- Persönliche Daten Card -->
-            <div class="form-card">
-              <div class="card-header">
-                <i class="bi bi-person-badge header-icon"></i>
-                <div class="header-text">
-                  <h2>Persönliche Daten</h2>
-                  <p>Ihre Kontaktinformationen und Adresse</p>
-                </div>
-              </div>
-
-              <form @submit.prevent="updateUser">
-                <!-- Name -->
-                <div class="form-group">
-                  <label for="name">
-                    <i class="bi bi-person-fill"></i>
-                    Vollständiger Name
-                  </label>
-                  <input 
-                    type="text" 
-                    id="name" 
-                    v-model="currentUser.name"
-                    placeholder="Max Mustermann"
-                    required
-                  >
-                </div>
-
-                <!-- Email und Telefon -->
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="email">
-                      <i class="bi bi-envelope-fill"></i>
-                      E-Mail Adresse
-                    </label>
-                    <input 
-                      type="email" 
-                      id="email" 
-                      v-model="currentUser.email"
-                      placeholder="max@mustermann.de"
-                      required
-                    >
-                  </div>
-
-                  <div class="form-group">
-                    <label for="phone">
-                      <i class="bi bi-telephone-fill"></i>
-                      Telefonnummer
-                    </label>
-                    <input 
-                      type="tel" 
-                      id="phone" 
-                      v-model="currentUser.phone"
-                      placeholder="+49 123 456789"
-                    >
-                  </div>
-                </div>
-
-                <!-- Adresse -->
-                <div class="form-group">
-                  <label for="address">
-                    <i class="bi bi-house-door-fill"></i>
-                    Lieferadresse
-                  </label>
-                  <textarea 
-                    id="address" 
-                    v-model="currentUser.address"
-                    placeholder="Musterstraße 123, 12345 Musterstadt"
-                    rows="3"
-                  ></textarea>
-                </div>
-
-                <!-- Submit Buttons -->
-                <div class="form-actions">
-                  <button type="button" class="btn-secondary" @click="resetForm">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                    Zurücksetzen
-                  </button>
-                  <button type="submit" class="btn-primary">
-                    <i class="bi bi-floppy-fill"></i>
-                    Änderungen speichern
-                  </button>
-                </div>
-              </form>
+          <form @submit.prevent="updateUser">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" v-model="currentUser.name" placeholder="Max Mustermann" required>
             </div>
 
-            <!-- Schnellzugriffe -->
-            <div class="quick-actions">
-              <h3><i class="bi bi-lightning-fill"></i> Schnellzugriff</h3>
-              <div class="quick-buttons">
-                <router-link to="/warenkorb" class="quick-btn">
-                  <i class="bi bi-cart-check-fill"></i>
-                  <span>Warenkorb</span>
-                </router-link>
-                <router-link to="/" class="quick-btn">
-                  <i class="bi bi-house-door-fill"></i>
-                  <span>Startseite</span>
-                </router-link>
-                <button class="quick-btn" @click="logout">
-                  <i class="bi bi-box-arrow-right"></i>
-                  <span>Abmelden</span>
-                </button>
-              </div>
+            <div class="form-group">
+              <label>E-Mail</label>
+              <input type="email" v-model="currentUser.email" placeholder="max@mustermann.de" required>
             </div>
+
+            <div class="form-group">
+              <label>Telefon</label>
+              <input type="tel" v-model="currentUser.phone" placeholder="+49 123 456789">
+            </div>
+
+            <div class="form-group">
+              <label>Adresse</label>
+              <textarea v-model="currentUser.address" placeholder="Musterstraße 123, 12345 Musterstadt" rows="3"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" @click="resetForm" class="btn-secondary">
+                <i class="bi bi-arrow-counterclockwise"></i> Zurücksetzen
+              </button>
+              <button type="submit" class="btn-primary" :disabled="saving">
+                <span v-if="saving"><i class="bi bi-arrow-clockwise spin"></i> Speichern...</span>
+                <span v-else><i class="bi bi-check-lg"></i> Speichern</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h3><i class="bi bi-lightning"></i> Schnellzugriff</h3>
+          <div class="link-grid">
+            <router-link to="/my-orders" class="link-card">
+              <i class="bi bi-receipt"></i>
+              <span>Bestellungen</span>
+            </router-link>
+            <router-link to="/warenkorb" class="link-card">
+              <i class="bi bi-cart"></i>
+              <span>Warenkorb</span>
+            </router-link>
+            <router-link to="/" class="link-card">
+              <i class="bi bi-house"></i>
+              <span>Startseite</span>
+            </router-link>
           </div>
         </div>
       </div>
@@ -142,177 +95,244 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'AccountView',
-  data() {
-    return {
-      loading: true,
-      currentUser: {
-        name: '',
-        email: '',
-        phone: '',
-        address: ''
-      },
-      originalUser: {}
-    };
-  },
-  mounted() {
-    // Simuliere API-Call
-    setTimeout(() => {
-      this.currentUser = {
-        name: 'Max Mustermann',
-        email: 'max.mustermann@example.com',
-        phone: '+49 123 456789',
-        address: 'Hauptstraße 42\n12345 Berlin'
-      };
-      this.originalUser = { ...this.currentUser };
-      this.loading = false;
-    }, 800);
-  },
-  methods: {
-    updateUser() {
-      this.loading = true;
-      setTimeout(() => {
-        alert('Ihre Daten wurden erfolgreich aktualisiert!');
-        this.originalUser = { ...this.currentUser };
-        this.loading = false;
-      }, 600);
-    },
-    resetForm() {
-      this.currentUser = { ...this.originalUser };
-    },
-    logout() {
-      if (confirm('Möchten Sie sich wirklich abmelden?')) {
-        alert('Sie wurden erfolgreich abgemeldet.');
-        // Hier würde normalerweise die Logout-Logik stehen
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useAuth0 } from '@auth0/auth0-vue'
+
+const { getAccessTokenSilently } = useAuth0()
+
+const loading = ref(true)
+const saving = ref(false)
+const error = ref('')
+const successMessage = ref('')
+const currentUser = ref({ 
+  name: '', 
+  email: '', 
+  phone: '', 
+  address: '' 
+})
+const originalUser = ref({})
+
+const loadUserData = async () => {
+  loading.value = true
+  error.value = ''
+  successMessage.value = ''
+  
+  try {
+    const token = await getAccessTokenSilently()
+    console.log('Lade Profildaten mit Token...')
+    
+    const response = await fetch('http://localhost:8081/api/profile', {
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
+    })
+    
+    console.log('Response Status:', response.status)
+    
+    if (response.status === 404) {
+      error.value = 'Profil nicht gefunden. Bitte kontaktieren Sie den Support.'
+      return
     }
+    
+    if (!response.ok) {
+      throw new Error(`Server-Fehler: ${response.status}`)
+    }
+    
+    const userData = await response.json()
+    console.log('Empfangene Daten:', userData)
+    
+    currentUser.value = {
+      name: userData.name || '',
+      email: userData.email || '',
+      phone: userData.phone || '',
+      address: userData.address || ''
+    }
+    originalUser.value = { ...currentUser.value }
+    
+  } catch (err) {
+    console.error('Fehler beim Laden:', err)
+    error.value = err.message || 'Konnte Profildaten nicht laden'
+    
+    // Fallback für Entwicklung
+    currentUser.value = {
+      name: 'Test Benutzer',
+      email: 'test@example.com',
+      phone: '+49 123 456789',
+      address: 'Musterstraße 42, 12345 Berlin'
+    }
+    originalUser.value = { ...currentUser.value }
+  } finally {
+    loading.value = false
   }
-};
+}
+
+const updateUser = async () => {
+  saving.value = true
+  error.value = ''
+  
+  try {
+    const token = await getAccessTokenSilently()
+    console.log('Sende Update mit:', currentUser.value)
+    
+    const response = await fetch('http://localhost:8081/api/profile', {
+      method: 'PUT',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(currentUser.value)
+    })
+    
+    console.log('Update Response Status:', response.status, response.statusText)
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Update fehlgeschlagen:', errorText)
+      throw new Error(`Update fehlgeschlagen: ${response.status}`)
+    }
+    
+    const updatedData = await response.json()
+    console.log('Aktualisierte Daten:', updatedData)
+    
+    currentUser.value = {
+      name: updatedData.name || '',
+      email: updatedData.email || '',
+      phone: updatedData.phone || '',
+      address: updatedData.address || ''
+    }
+    originalUser.value = { ...currentUser.value }
+    
+    successMessage.value = 'Ihre Daten wurden erfolgreich gespeichert!'
+    
+  } catch (err) {
+    console.error('Fehler beim Update:', err)
+    error.value = `Speichern fehlgeschlagen: ${err.message}`
+    
+    // Test-Erfolg für Entwicklung
+    if (import.meta.env.DEV) {
+      console.log('DEV MODE: Simuliere erfolgreiches Update')
+      originalUser.value = { ...currentUser.value }
+      successMessage.value = 'DEV: Daten gespeichert (simuliert)'
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+const resetForm = () => {
+  currentUser.value = { ...originalUser.value }
+  error.value = ''
+  successMessage.value = ''
+}
+
+onMounted(() => {
+  console.log('AccountView mounted')
+  loadUserData()
+})
 </script>
 
 <style scoped>
-/* Grundlayout */
-.account-container {
+/* Erfolgsmeldung */
+.success-message {
+  background: rgba(40, 167, 69, 0.2);
+  border: 1px solid rgba(40, 167, 69, 0.4);
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  position: relative;
+}
+
+.success-message i {
+  color: #28a745;
+  font-size: 1.5rem;
+}
+
+.btn-close-msg {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.btn-close-msg:hover {
+  opacity: 1;
+}
+
+/* Rest des Styles bleibt gleich wie vorher */
+.account-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #8b7355 0%, #a8916d 30%, #cbbf9b 100%);
-  padding-top: 160px;
-  position: relative;
-  overflow-x: hidden;
+  background: linear-gradient(135deg, #8b7355 0%, #a8916d 100%);
+  padding: 100px 20px 40px;
+  color: white;
 }
 
-.account-spacer {
-  height: 40px;
-}
-
-.decorative-elements {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.bg-paw {
-  position: absolute;
-  font-size: 2.5rem;
-  color: rgba(255, 255, 255, 0.07);
-  font-family: "Bootstrap Icons";
-  opacity: 0.5;
-}
-
-.bg-paw-1 {
-  top: 15%;
-  left: 8%;
-  content: "\f6b7";
-  transform: rotate(20deg);
-}
-
-.bg-paw-2 {
-  top: 50%;
-  right: 12%;
-  content: "\f6b7";
-  transform: rotate(-30deg);
-}
-
-.account-wrapper {
-  position: relative;
-  z-index: 1;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-/* Header */
-.account-header-section {
+.account-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
-.header-content {
-  padding: 2rem;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.avatar-circle {
-  display: inline-block;
-}
-
-.avatar-icon {
-  font-size: 4rem;
-  color: white;
-  background: linear-gradient(135deg, #e26191, #ff8fab);
-  width: 100px;
-  height: 100px;
-  line-height: 100px;
-  border-radius: 50%;
-  display: block;
-  box-shadow: 0 10px 25px rgba(226, 97, 145, 0.4);
-  margin: 0 auto 1.5rem;
-}
-
-.account-title {
+.account-header h1 {
   font-size: 2.5rem;
-  font-weight: 700;
-  color: white;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
-.account-subtitle {
-  color: rgba(255, 255, 255, 0.9);
+.subtitle {
+  opacity: 0.9;
   font-size: 1.1rem;
 }
 
-/* Loading */
-.loading-container {
-  text-align: center;
-  padding: 3rem;
-}
-
-.loading-container p {
-  color: white;
-  margin-top: 1rem;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #e26191;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.account-content {
+  max-width: 800px;
   margin: 0 auto;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* Loading & Error */
+.loading-state, .error-state {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 3rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #e26191;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+.error-state i {
+  font-size: 3rem;
+  color: #e26191;
+  margin-bottom: 1rem;
+}
+
+.error-state h3 {
+  margin-bottom: 0.5rem;
+}
+
+.error-state p {
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
 }
 
 /* Form Card */
@@ -320,34 +340,23 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: 20px;
-  padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1.5rem;
   margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  margin-bottom: 2rem;
-  text-align: left;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.header-icon {
-  font-size: 2rem;
-  color: #e26191;
-  margin-right: 1rem;
-}
-
-.header-text h2 {
-  color: white;
-  font-size: 1.5rem;
+.card-header h2 {
   margin: 0;
-}
-
-.header-text p {
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
-  font-size: 0.9rem;
+  font-size: 1.4rem;
 }
 
 /* Form Styles */
@@ -356,16 +365,9 @@ export default {
 }
 
 .form-group label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: white;
+  display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
-}
-
-.form-group label i {
-  color: #e26191;
 }
 
 .form-group input,
@@ -375,8 +377,8 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.9);
-  color: #333;
   font-size: 1rem;
+  color: #333;
   transition: all 0.3s;
 }
 
@@ -385,19 +387,11 @@ export default {
   outline: none;
   border-color: #e26191;
   background: white;
-  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.1);
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 /* Buttons */
@@ -406,32 +400,37 @@ export default {
   gap: 1rem;
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.btn-primary,
-.btn-secondary {
+.btn-primary, .btn-secondary {
   flex: 1;
   padding: 0.75rem 1.5rem;
   border-radius: 10px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: none;
 }
 
 .btn-primary {
-  background: rgba(226, 97, 145, 0.8);
+  background: rgba(226, 97, 145, 0.3);
   color: white;
+  border: 1px solid rgba(226, 97, 145, 0.5);
 }
 
-.btn-primary:hover {
-  background: #e26191;
+.btn-primary:hover:not(:disabled) {
+  background: rgba(226, 97, 145, 0.5);
   transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
@@ -445,74 +444,75 @@ export default {
   transform: translateY(-2px);
 }
 
-/* Quick Actions */
-.quick-actions {
-  text-align: center;
+.spin {
+  animation: spin 1s linear infinite;
 }
 
-.quick-actions h3 {
-  color: white;
-  font-size: 1.3rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.quick-actions h3 i {
-  color: #e26191;
-}
-
-.quick-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.quick-btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  background: rgba(203, 191, 155, 0.25);
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s;
+/* Quick Links */
+.quick-links {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
 }
 
-.quick-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+.quick-links h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.link-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 1.5rem 1rem;
+  text-decoration: none;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s;
+}
+
+.link-card:hover {
+  background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
+  border-color: #e26191;
+}
+
+.link-card i {
+  font-size: 1.8rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .account-container {
-    padding-top: 140px;
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-  
-  .account-title {
+  .account-header h1 {
     font-size: 2rem;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
   .form-actions {
     flex-direction: column;
   }
   
-  .quick-buttons {
-    flex-direction: column;
+  .link-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .quick-btn {
-    width: 100%;
-    justify-content: center;
-  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

@@ -1,4 +1,4 @@
-/* style.css - NUR GLOBALE STYLES */
+/* style.css - Optimierte Version */
 
 * {
     margin: 0;
@@ -11,53 +11,57 @@
     --font-roboto: "Roboto", sans-serif;
     --font-opensans: "OpenSans", sans-serif;
     
-    /* Farbpalette */
-    --color-dark-brown: #2D2121;
-    --color-light-beige: #EFE1D6;
-    --color-brown: #BB9580;
-    --color-pink: #E26191;
-    --color-accent: #B48665;
+    /* Farbpalette - VERBESSERTE BEZEICHNUNGEN */
+    --color-primary-dark: #2D2121;
+    --color-background-light: #EFE1D6;
+    --color-secondary: #BB9580;
+    --color-accent-pink: #E26191;
+    --color-accent-brown: #B48665;
+    --color-navbar: #cbbf9b;
 }
 
-/* Nur generelle Font-Styles, KEINE Farben */
+/* Nur generelle Font-Styles */
 body {
     font-family: var(--font-opensans);
     font-size: 1rem;
     cursor: url('./dog_pics/pixel_cursor.png'), pointer;
 }
 
-/* HEADINGS - Nur Font, keine Farben */
+/* HEADINGS - Standardisiert */
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-roboto);
+    color: var(--color-primary-dark); /* Konsistente Farbe */
 }
 
-h1 { font-weight: 300; font-size: 2.5rem; }
-h2 { font-weight: 300; font-size: 2rem; font-style: italic; }
-h3 { font-weight: 400; font-size: 1.75rem; }
-h4 { font-weight: 400; font-size: 1.5rem; }
-h5 { font-weight: 400; font-size: 1.25rem; }
-h6 { font-weight: 400; font-size: 1.125rem; }
+h1 { font-weight: 300; font-size: clamp(2rem, 5vw, 2.5rem); } /* Responsive */
+h2 { font-weight: 300; font-size: clamp(1.5rem, 4vw, 2rem); font-style: italic; }
+h3 { font-weight: 400; font-size: clamp(1.25rem, 3.5vw, 1.75rem); }
+h4 { font-weight: 400; font-size: clamp(1.1rem, 3vw, 1.5rem); }
+h5 { font-weight: 400; font-size: clamp(1rem, 2.5vw, 1.25rem); }
+h6 { font-weight: 400; font-size: clamp(0.9rem, 2vw, 1.125rem); }
 
-/* Rest deiner CSS bleibt... */
-
-/* AB HIER: ALLE FARBEN ENTFERNEN AUS GLOBALEN SELECTORS! */
-/* Stattdessen: */
-
-/* Globale Utility-Klassen */
+/* Globale Utility-Klassen - VERBESSERT */
 .text-roboto { font-family: var(--font-roboto); }
 .text-opensans { font-family: var(--font-opensans); }
 
-.text-dark-brown { color: var(--color-dark-brown); }
-.text-light-beige { color: var(--color-light-beige); }
-.text-brown { color: var(--color-brown); }
-.text-pink { color: var(--color-pink); }
+.text-primary { color: var(--color-primary-dark); }
+.text-light { color: var(--color-background-light); }
+.text-secondary { color: var(--color-secondary); }
+.text-accent { color: var(--color-accent-pink); }
 
-.bg-dark-brown { background-color: var(--color-dark-brown); }
-.bg-light-beige { background-color: var(--color-light-beige); }
-.bg-brown { background-color: var(--color-brown); }
-.bg-pink { background-color: var(--color-pink); }
+.bg-primary { background-color: var(--color-primary-dark); }
+.bg-light { background-color: var(--color-background-light); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-accent { background-color: var(--color-accent-pink); }
 
-/* Padding für Navbar */
+/* Responsive Padding */
 .page-padding {
     padding-top: 140px;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 768px) {
+    .page-padding {
+        padding-top: 100px;
+    }
 }
