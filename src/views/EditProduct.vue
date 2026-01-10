@@ -1,151 +1,128 @@
 <template>
   <div class="edit-product">
-    <div class="page-header">
-      <div class="header-content">
-        <h1>
-          <i class="bi bi-pencil-square"></i>
-          Produkt bearbeiten
-        </h1>
-        <p class="subtitle">Bearbeiten Sie die Produktdetails</p>
-      </div>
-    </div>
-
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Produkt wird geladen...</p>
-    </div>
-
-    <div v-else-if="error" class="error">
-      <i class="bi bi-exclamation-triangle"></i>
-      <p>{{ error }}</p>
-      <router-link to="/admin/products" class="btn-primary">
-        Zurück zur Produktübersicht
-      </router-link>
-    </div>
-
-    <form v-else-if="product" @submit.prevent="updateProduct" class="edit-form">
-      <div class="form-grid">
-        <!-- Produktname -->
-        <div class="form-group">
-          <label for="title">
-            <i class="bi bi-card-heading"></i>
-            Produktname *
-          </label>
-          <input
-            id="title"
-            v-model="product.name"
-            placeholder="z.B. Premium Lederleine"
-            required
-            class="form-input"
-          />
-          <div class="form-hint">Geben Sie einen klaren Produktnamen ein</div>
-        </div>
-
-        <!-- Preis -->
-        <div class="form-group">
-          <label for="price">
-            <i class="bi bi-tag"></i>
-            Preis (€) *
-          </label>
-          <input
-            id="price"
-            v-model.number="product.price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="29.99"
-            required
-            class="form-input"
-          />
-          <div class="form-hint">Geben Sie den Preis in Euro ein</div>
-        </div>
-
-        <!-- Kategorie -->
-        <div class="form-group">
-          <label for="category">
-            <i class="bi bi-grid"></i>
-            Kategorie *
-          </label>
-          <select
-            id="category"
-            v-model="product.category"
-            required
-            class="form-input"
-          >
-            <option value="">Kategorie wählen</option>
-            <option value="leinen">Leinen & Geschirre</option>
-            <option value="halsbaender">Halsbänder</option>
-            <option value="bekleidung">Bekleidung</option>
-            <option value="snacks">Snacks</option>
-          </select>
-          <div class="form-hint">Wählen Sie die passende Kategorie</div>
-        </div>
-
-        <!-- Lagerbestand -->
-        <div class="form-group">
-          <label for="stock">
-            <i class="bi bi-box"></i>
-            Lagerbestand
-          </label>
-          <input
-            id="stock"
-            v-model.number="product.stock"
-            type="number"
-            min="0"
-            placeholder="50"
-            class="form-input"
-          />
-          <div class="form-hint">Anzahl verfügbarer Einheiten</div>
-        </div>
-
-        <!-- Beschreibung -->
-        <div class="form-group full-width">
-          <label for="description">
-            <i class="bi bi-text-paragraph"></i>
-            Beschreibung *
-          </label>
-          <textarea
-            id="description"
-            v-model="product.description"
-            placeholder="Detaillierte Produktbeschreibung..."
-            required
-            rows="5"
-            class="form-textarea"
-          ></textarea>
-          <div class="form-hint">Beschreiben Sie das Produkt ausführlich</div>
-        </div>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <router-link to="/admin/products" class="btn-secondary">
-          <i class="bi bi-arrow-left"></i>
-          Abbrechen
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <router-link to="/admin/products" class="back-btn">
+          <i class="bi bi-arrow-left"></i> Zurück
         </router-link>
-        <button 
-          type="button" 
-          @click="deleteProduct" 
-          class="btn-delete"
-          :disabled="isDeleting"
-        >
-          <i class="bi bi-x-circle"></i>
-          {{ isDeleting ? 'Löschen...' : 'Produkt löschen' }}
-        </button>
-        <button 
-          type="submit" 
-          class="btn-primary"
-          :disabled="isSubmitting"
-        >
-          <i class="bi bi-check-lg"></i>
-          {{ isSubmitting ? 'Wird gespeichert...' : 'Änderungen speichern' }}
-        </button>
+        <h1><i class="bi bi-pencil-square"></i> Produkt bearbeiten</h1>
       </div>
-    </form>
+
+      <!-- Loading -->
+      <div v-if="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Produkt wird geladen...</p>
+      </div>
+
+      <!-- Error -->
+      <div v-else-if="error" class="error">
+        <i class="bi bi-exclamation-triangle"></i>
+        <h3>Fehler</h3>
+        <p>{{ error }}</p>
+      </div>
+
+      <!-- Form -->
+      <form v-else @submit.prevent="updateProduct" class="form">
+        <!-- Messages -->
+        <div v-if="successMessage" class="success">
+          <i class="bi bi-check-circle"></i>
+          <p>{{ successMessage }}</p>
+        </div>
+
+        <div v-if="submitError" class="error-message">
+          <i class="bi bi-exclamation-triangle"></i>
+          <p>{{ submitError }}</p>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="form-section">
+          <h2><i class="bi bi-info-circle"></i> Produktinformationen</h2>
+          
+          <div class="form-group">
+            <label>Titel *</label>
+            <input
+              v-model="formData.title"
+              type="text"
+              placeholder="Produktname"
+              required
+              :disabled="isSubmitting"
+              maxlength="100"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Preis (€) *</label>
+              <input
+                v-model.number="formData.price"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="29.99"
+                required
+                :disabled="isSubmitting"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Kategorie *</label>
+              <select v-model="formData.category" required :disabled="isSubmitting">
+                <option value="" disabled>Wählen...</option>
+                <option value="leinen">Leinen & Geschirre</option>
+                <option value="halsband">Halsbänder</option>
+                <option value="bekleidung">Bekleidung</option>
+                <option value="snacks">Snacks</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Beschreibung *</label>
+            <textarea
+              v-model="formData.description"
+              placeholder="Produktbeschreibung..."
+              rows="4"
+              required
+              :disabled="isSubmitting"
+              maxlength="500"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Bild-URL *</label>
+            <input
+              v-model="formData.image"
+              type="text"
+              placeholder="/src/assets/product_pics/..."
+              required
+              :disabled="isSubmitting"
+            />
+            <div v-if="formData.image" class="image-preview">
+              <img :src="formData.image" :alt="formData.title" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <button type="button" @click="confirmDelete" class="btn-delete" :disabled="isSubmitting">
+            <i class="bi bi-trash"></i> Löschen
+          </button>
+          
+          <button type="submit" class="btn-save" :disabled="isSubmitting || !hasChanges">
+            <i v-if="isSubmitting" class="bi bi-arrow-clockwise spin"></i>
+            <i v-else class="bi bi-check-lg"></i>
+            {{ isSubmitting ? 'Speichern...' : 'Speichern' }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
@@ -157,315 +134,340 @@ const product = ref(null)
 const loading = ref(true)
 const error = ref('')
 const isSubmitting = ref(false)
-const isDeleting = ref(false)
+const successMessage = ref('')
+const submitError = ref('')
 
-// API URL aus .env oder localhost
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+const formData = reactive({
+  title: '',
+  price: 0,
+  description: '',
+  category: '',
+  image: ''
+})
 
+const originalData = reactive({})
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+
+const hasChanges = computed(() => {
+  return JSON.stringify(formData) !== JSON.stringify(originalData)
+})
+
+// Load product
 onMounted(async () => {
   try {
     const token = await getAccessTokenSilently()
-    const res = await fetch(`${API_URL}/api/product/${route.params.id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+    const response = await fetch(`${API_BASE}/api/product/${route.params.id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     })
     
-    if (!res.ok) throw new Error('Produkt nicht gefunden')
-    product.value = await res.json()
+    if (!response.ok) throw new Error('Produkt nicht gefunden')
+    
+    product.value = await response.json()
+    
+    // Fill form
+    formData.title = product.value.title || ''
+    formData.price = product.value.price || 0
+    formData.description = product.value.description || ''
+    formData.category = product.value.category || ''
+    formData.image = product.value.image || ''
+    
+    // Save original
+    Object.assign(originalData, { ...formData })
+    
   } catch (err) {
-    console.error(err)
-    error.value = 'Fehler beim Laden des Produkts'
+    error.value = err.message
   } finally {
     loading.value = false
   }
 })
 
-async function updateProduct() {
-  if (!product.value) return
-  
+// Update
+const updateProduct = async () => {
   isSubmitting.value = true
+  submitError.value = ''
+  
   try {
     const token = await getAccessTokenSilently()
-    const res = await fetch(`${API_URL}/api/product/${product.value.id}`, {
+    const response = await fetch(`${API_BASE}/api/product/${product.value.id}`, {
       method: 'PUT',
       headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(product.value)
+      body: JSON.stringify(formData)
     })
     
-    if (!res.ok) throw new Error('Update fehlgeschlagen')
+    if (!response.ok) throw new Error('Update fehlgeschlagen')
     
-    alert('Produkt erfolgreich aktualisiert!')
-    router.push('/admin/products')
+    successMessage.value = 'Produkt gespeichert!'
+    Object.assign(originalData, { ...formData })
+    
+    setTimeout(() => router.push('/admin/products'), 1500)
     
   } catch (err) {
-    console.error(err)
-    alert('Fehler beim Aktualisieren des Produkts')
+    submitError.value = err.message
   } finally {
     isSubmitting.value = false
   }
 }
 
-async function deleteProduct() {
-  if (!product.value || !confirm(`Sind Sie sicher, dass Sie das Produkt "${product.value.name}" löschen möchten?`)) {
-    return
-  }
+// Delete
+const confirmDelete = () => {
+  if (!confirm('Produkt wirklich löschen?')) return
   
-  isDeleting.value = true
-  try {
-    const token = await getAccessTokenSilently()
-    const res = await fetch(`${API_URL}/api/product/${product.value.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+  fetch(`${API_BASE}/api/product/${product.value.id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${getAccessTokenSilently()}` }
+  })
+    .then(() => {
+      alert('Produkt gelöscht!')
+      router.push('/admin/products')
     })
-    
-    if (!res.ok) throw new Error('Löschen fehlgeschlagen')
-    
-    alert('Produkt erfolgreich gelöscht!')
-    router.push('/admin/products')
-    
-  } catch (err) {
-    console.error(err)
-    alert('Fehler beim Löschen des Produkts')
-  } finally {
-    isDeleting.value = false
-  }
+    .catch(err => alert('Löschen fehlgeschlagen: ' + err.message))
 }
 </script>
 
 <style scoped>
 .edit-product {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
   min-height: 100vh;
-  background: #EFE1D6;
+  background: #1a1a1a;
+  padding: 80px 20px 40px;
+  color: #fff;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 /* Header */
-.page-header {
-  background: linear-gradient(135deg, #E26191, #B48665);
-  border-radius: 20px;
-  padding: 2.5rem;
+.header {
   margin-bottom: 2.5rem;
-  color: white;
-  box-shadow: 0 8px 32px rgba(226, 97, 145, 0.15);
+  text-align: center;
 }
 
-.header-content h1 {
-  font-size: 2.4rem;
-  margin-bottom: 0.75rem;
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e26191;
+  text-decoration: none;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.back-btn:hover {
+  color: #ff8fab;
+}
+
+.header h1 {
+  font-size: 2rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
-}
-
-.subtitle {
-  font-size: 1.2rem;
-  opacity: 0.9;
-  font-weight: 400;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0;
 }
 
 /* Loading & Error */
 .loading, .error {
   text-align: center;
-  padding: 5rem 2rem;
-  background: white;
-  border-radius: 20px;
-  margin: 2rem 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 3rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
 }
 
-.loading .spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid #EFE1D6;
-  border-top: 4px solid #E26191;
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top: 3px solid #e26191;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 2rem;
+  margin: 0 auto 1rem;
 }
 
 .error i {
-  font-size: 3.5rem;
-  color: #E26191;
-  margin-bottom: 1.5rem;
+  font-size: 2.5rem;
+  color: #ff4757;
+  margin-bottom: 1rem;
 }
 
-.error p {
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 1.5rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.error h3 {
+  color: #ff6b6b;
+  margin: 0 0 0.5rem 0;
 }
 
 /* Form */
-.edit-form {
-  background: white;
-  border-radius: 20px;
-  padding: 2.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+.form {
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+.form-section {
+  margin-bottom: 2rem;
 }
 
-.form-group.full-width {
-  grid-column: 1 / -1;
-}
-
-.form-group label {
+.form-section h2 {
+  font-size: 1.3rem;
+  margin: 0 0 1.5rem 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #fff;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 0.75rem;
-  font-size: 1.1rem;
+  color: rgba(255,255,255,0.9);
 }
 
-.form-group label i {
-  color: #B48665;
-}
-
-.form-input, .form-textarea {
+input, select, textarea {
   width: 100%;
-  padding: 1rem;
-  border: 2px solid #E0E0E0;
-  border-radius: 10px;
+  padding: 0.875rem;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: #fff;
   font-size: 1rem;
-  transition: all 0.3s ease;
-  background: #f9f9f9;
+  transition: all 0.3s;
 }
 
-.form-input:focus, .form-textarea:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #E26191;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.1);
+  border-color: #e26191;
+  background: rgba(255,255,255,0.12);
 }
 
-.form-textarea {
+input:disabled, select:disabled, textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 100px;
+  font-family: inherit;
 }
 
-.form-hint {
-  font-size: 0.85rem;
-  color: #666;
-  margin-top: 0.5rem;
-  font-style: italic;
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
 }
 
-/* Form Actions */
-.form-actions {
+/* Image Preview */
+.image-preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+
+/* Messages */
+.success, .error-message {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 2rem;
-  border-top: 2px solid #EFE1D6;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.btn-primary, .btn-secondary, .btn-delete {
+.success {
+  background: rgba(46, 213, 115, 0.15);
+  border: 1px solid rgba(46, 213, 115, 0.3);
+  color: #2ed573;
+}
+
+.error-message {
+  background: rgba(255, 71, 87, 0.15);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  color: #ff4757;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.btn-delete, .btn-save {
   padding: 0.875rem 1.75rem;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
+  border-radius: 8px;
   font-weight: 600;
+  border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  transition: all 0.3s ease;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background: #E26191;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #d15280;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(226, 97, 145, 0.3);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #B48665;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #9e7354;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(180, 134, 101, 0.3);
+  gap: 0.5rem;
+  transition: all 0.3s;
 }
 
 .btn-delete {
-  background: #dc3545;
-  color: white;
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
 .btn-delete:hover:not(:disabled) {
-  background: #c82333;
+  background: rgba(220, 53, 69, 0.3);
+}
+
+.btn-save {
+  background: #e26191;
+  color: white;
+  border: 1px solid #e26191;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #d05583;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
 }
 
-.btn-delete:disabled {
-  opacity: 0.6;
+.btn-save:disabled, .btn-delete:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .edit-product {
-    padding: 1rem;
-  }
-  
-  .page-header {
-    padding: 1.75rem;
-  }
-  
-  .header-content h1 {
-    font-size: 2rem;
-  }
-  
-  .edit-form {
-    padding: 1.5rem;
-  }
-  
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .btn-primary, .btn-secondary, .btn-delete {
-    width: 100%;
-    justify-content: center;
-  }
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }
 </style>

@@ -2,8 +2,8 @@
 <footer>
   <div class="footer-content">
     <div class="footer-links">
-      <router-link to="/impressum">Impressum</router-link>
-      <router-link to="/datenschutz">Datenschutz</router-link>
+      <router-link to="/impressum" aria-label="Impressum">Impressum</router-link>
+      <router-link to="/datenschutz" aria-label="Datenschutzerklärung">Datenschutz</router-link>
     </div>
     <div class="footer-copyright">
       <p>© 2025 PuppyRacer</p>
@@ -13,15 +13,15 @@
 </template>
 
 <script setup>
-// Kein Script nötig
+// Footer benötigt keine Logik
 </script>
 
 <style scoped>
 footer {
-    background-color: #B48665;
+    background-color: var(--color-accent-brown);
     color: white;
     padding: 1.5rem 0;
-    font-family: "Roboto", sans-serif;
+    font-family: var(--font-roboto);
 }
 
 .footer-content {
@@ -41,24 +41,24 @@ footer {
 }
 
 .footer-links a {
-    color: #2D2121;
+    color: var(--color-primary-dark);
     text-decoration: none;
     font-size: 0.9rem;
     transition: color 0.2s ease;
 }
 
 .footer-links a:hover {
-    color: #E26191;
+    color: var(--color-accent-pink);
     text-decoration: underline;
 }
 
 .footer-copyright p {
-    color: #2D2121;
+    color: var(--color-primary-dark);
     font-size: 0.9rem;
     margin: 0;
 }
 
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 768px) {
     .footer-content {
         flex-direction: column;

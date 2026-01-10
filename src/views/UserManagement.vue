@@ -1,11 +1,9 @@
 <template>
   <div class="admin-container">
-    <!-- Header -->
     <div class="admin-header">
       <h1 class="admin-title">Benutzerverwaltung</h1>
     </div>
 
-    <!-- Control Bar -->
     <div class="control-bar">
       <div class="control-left">
         <div class="search-box">
@@ -14,6 +12,7 @@
             v-model="searchQuery" 
             placeholder="Benutzer suchen..." 
             class="search-input"
+            maxlength="50"
           />
         </div>
         <select v-model="roleFilter" class="filter-select">
@@ -29,13 +28,11 @@
       </button>
     </div>
 
-    <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
       <p>Benutzer werden geladen...</p>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="error" class="error-state">
       <div class="error-icon"><i class="bi bi-shield-exclamation"></i></div>
       <div class="error-content">
@@ -47,7 +44,6 @@
       </div>
     </div>
 
-    <!-- User Table -->
     <div v-else class="user-table-container">
       <div class="table-responsive">
         <table class="user-table">
@@ -71,6 +67,7 @@
                   :disabled="savingUserId === user.id"
                   @blur="saveUser(user)"
                   placeholder="Name"
+                  maxlength="50"
                 />
               </td>
               <td>
@@ -81,6 +78,7 @@
                   :disabled="savingUserId === user.id"
                   @blur="saveUser(user)"
                   placeholder="E-Mail"
+                  @keyup.enter="saveUser(user)"
                 />
               </td>
               <td class="hide-mobile">
@@ -105,7 +103,7 @@
                 <button 
                   @click="saveUser(user)" 
                   class="btn-save"
-                  :disabled="savingUserId === user.id"
+                  :disabled="savingUserId === user.id || !isUserChanged(user)"
                 >
                   <span v-if="savingUserId === user.id" class="save-spinner"></span>
                   <i v-else class="bi bi-check-lg"></i>
@@ -117,7 +115,6 @@
         </table>
       </div>
 
-      <!-- Empty State -->
       <div v-if="filteredUsers.length === 0 && !loading" class="empty-state">
         <i class="bi bi-person-slash"></i>
         <h3>Keine Benutzer gefunden</h3>
@@ -126,7 +123,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="admin-footer">
       <span>Benutzerverwaltung</span>
       <span>{{ filteredUsers.length }}/{{ users.length }} Benutzer</span>
@@ -135,17 +131,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 
-const { getAccessTokenSilently, loginWithRedirect } = useAuth0()
+const { getAccessTokenSilently, loginWithRedirect, isAuthenticated } = useAuth0()
 const users = ref([])
 const loading = ref(true)
 const error = ref('')
 const savingUserId = ref(null)
 const searchQuery = ref('')
 const roleFilter = ref('')
+const originalUsers = ref(new Map()) // Für Änderungsverfolgung
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+
+// Helper: Authentifizierte Fetch
+async function fetchWithAuth(url, options = {}) {
+  const token = await getAccessTokenSilently()
+  const response = await fetch(`${API_BASE}${url}`, {
+    ...options,
+    headers: { 
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`HTTP ${response.status}: ${errorText}`)
+  }
+  return response
+}
+
+// Computed
 const filteredUsers = computed(() => {
   let filtered = users.value
   if (searchQuery.value) {
@@ -155,55 +173,93 @@ const filteredUsers = computed(() => {
       (user.email?.toLowerCase().includes(query))
     )
   }
-  if (roleFilter.value) filtered = filtered.filter(user => user.role === roleFilter.value)
+  if (roleFilter.value) {
+    filtered = filtered.filter(user => user.role === roleFilter.value)
+  }
   return filtered
 })
 
-const truncateOauthId = (oauthId) => oauthId ? `${oauthId.substring(0, 8)}...${oauthId.substring(oauthId.length - 4)}` : ''
+// Funktionen
+const truncateOauthId = (oauthId) => {
+  if (!oauthId) return ''
+  return `${oauthId.substring(0, 8)}...${oauthId.substring(oauthId.length - 4)}`
+}
+
 const getRoleClass = (role) => role.toLowerCase()
 
+const isUserChanged = (user) => {
+  const original = originalUsers.value.get(user.id)
+  if (!original) return false
+  return user.name !== original.name || 
+         user.email !== original.email || 
+         user.role !== original.role
+}
+
+// API Calls
 async function loadUsers() {
+  if (!isAuthenticated.value) {
+    error.value = 'Bitte anmelden'
+    loading.value = false
+    return
+  }
+
   loading.value = true
   error.value = ''
   try {
-    const token = await getAccessTokenSilently()
-    const response = await fetch('http://localhost:8081/api/users', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.status === 403) error.value = 'Zugriff verweigert! Nur Administratoren.'
-    else if (response.status === 401) error.value = 'Bitte anmelden.'
-    else if (!response.ok) throw new Error(`Server-Fehler: ${response.status}`)
-    else users.value = await response.json()
+    const response = await fetchWithAuth('/api/users')
+    const data = await response.json()
+    users.value = data
+    // Originalwerte speichern
+    originalUsers.value = new Map(data.map(user => [user.id, { ...user }]))
   } catch (err) {
-    error.value = err.message.includes('login_required') 
-      ? 'Sitzung abgelaufen. Bitte neu anmelden.'
-      : `Fehler: ${err.message}`
+    if (err.message.includes('403')) {
+      error.value = 'Zugriff verweigert! Nur Administratoren.'
+    } else if (err.message.includes('401')) {
+      error.value = 'Sitzung abgelaufen. Bitte neu anmelden.'
+    } else {
+      error.value = `Fehler: ${err.message}`
+    }
   } finally {
     loading.value = false
   }
 }
 
 async function saveUser(user) {
-  if (!user?.id) return
+  if (!user?.id || !isUserChanged(user)) return
+  
   savingUserId.value = user.id
   try {
-    const token = await getAccessTokenSilently()
-    const response = await fetch(`http://localhost:8081/api/users/${user.id}`, {
+    await fetchWithAuth(`/api/users/${user.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ name: user.name, email: user.email, role: user.role })
+      body: JSON.stringify({ 
+        name: user.name?.trim(), 
+        email: user.email?.trim(), 
+        role: user.role 
+      })
     })
-    if (!response.ok) alert(response.status === 403 
-      ? 'Fehlende Berechtigung! Nur Administratoren.'
-      : 'Speichern fehlgeschlagen.')
+    // Original aktualisieren
+    originalUsers.value.set(user.id, { ...user })
   } catch (err) {
-    alert('Netzwerkfehler.')
+    alert(err.message.includes('403') 
+      ? 'Fehlende Berechtigung! Nur Administratoren.' 
+      : 'Speichern fehlgeschlagen.')
   } finally {
     savingUserId.value = null
   }
 }
 
-onMounted(loadUsers)
+// Watcher
+watch(isAuthenticated, (newVal) => {
+  if (newVal) loadUsers()
+  else {
+    users.value = []
+    error.value = ''
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  if (isAuthenticated.value) loadUsers()
+})
 </script>
 
 <style scoped>
@@ -521,6 +577,7 @@ onMounted(loadUsers)
 .btn-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background: #ccc;
 }
 
 .admin-footer {

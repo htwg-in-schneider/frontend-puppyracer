@@ -3,18 +3,18 @@
     <div class="navbar-container">
       <!-- Logo -->
       <div class="logo">
-        <router-link to="/" class="logo-link">
-          <img src="../assets/Puppy_Racer_Logo.png" alt="Logo" />
+        <router-link to="/" class="logo-link" aria-label="Startseite">
+          <img src="../assets/Puppy_Racer_Logo.png" alt="PuppyRacer Logo" />
           <span class="logo-text">PuppyRacer</span>
         </router-link>
       </div>
 
-      <!-- Desktop Navigation - für größere Bildschirme -->
+      <!-- Desktop Navigation -->
       <div class="desktop-nav" v-if="!isMobile">
-        <!-- Kategorien mit Dropdown auf kleineren Desktops -->
+        <!-- Kategorien -->
         <div class="categories-wrapper">
           <div class="categories-dropdown" v-if="showCategoriesDropdown">
-            <button class="categories-toggle" @click="toggleCategoriesMenu">
+            <button class="categories-toggle" @click="toggleCategoriesMenu" :aria-expanded="categoriesMenuOpen">
               Kategorien
               <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': categoriesMenuOpen }"></i>
             </button>
@@ -35,26 +35,16 @@
             </div>
           </div>
           
-          <!-- Normale Kategorien auf großen Bildschirmen -->
           <div class="categories" v-else>
-            <router-link to="/produkte/leinen" class="category">
-              Leinen
-            </router-link>
-            <router-link to="/produkte/halsbaender" class="category">
-              Halsbänder
-            </router-link>
-            <router-link to="/produkte/bekleidung" class="category">
-              Bekleidung
-            </router-link>
-            <router-link to="/produkte/snacks" class="category">
-              Snacks
+            <router-link v-for="category in categories" :key="category.path" :to="category.path" class="category">
+              {{ category.name }}
             </router-link>
           </div>
         </div>
 
         <!-- Suchleiste -->
         <div class="search">
-          <form @submit.prevent="handleSearch" class="search-form">
+          <form @submit.prevent="handleSearch" class="search-form" role="search">
             <div class="search-wrapper">
               <input 
                 v-model="searchQuery" 
@@ -74,7 +64,6 @@
         <!-- User Actions -->
         <div class="user-actions">
           <div class="auth-section">
-            <!-- Nicht eingeloggt -->
             <div v-if="!isAuthenticated" class="not-logged">
               <button @click="handleLogin" class="auth-btn">
                 <i class="bi bi-person-circle"></i>
@@ -82,12 +71,10 @@
               </button>
             </div>
             
-            <!-- Eingeloggt -->
             <div v-else class="logged">
               <div class="user-info">
-                <!-- Admin Dropdown -->
                 <div v-if="isAdmin" class="admin-menu">
-                  <button class="admin-toggle" @click="toggleAdminMenu">
+                  <button class="admin-toggle" @click="toggleAdminMenu" :aria-expanded="adminMenuOpen">
                     <i class="bi bi-shield-lock"></i>
                     <span class="btn-text" v-if="!showCompactAdmin">Admin</span>
                     <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': adminMenuOpen }"></i>
@@ -109,14 +96,12 @@
                   </div>
                 </div>
                 
-                <!-- Account Button für Nicht-Admins -->
-                <router-link v-else to="/account" class="account-btn">
+                <router-link v-else to="/account" class="account-btn" aria-label="Mein Konto">
                   <i class="bi bi-person-circle"></i>
                   <span class="btn-text" v-if="!showCompactUserInfo">Konto</span>
                 </router-link>
                 
-                <!-- Logout Button -->
-                <button @click="handleLogout" class="logout-btn">
+                <button @click="handleLogout" class="logout-btn" aria-label="Abmelden">
                   <i class="bi bi-box-arrow-right"></i>
                   <span class="btn-text" v-if="!showCompactUserInfo">Logout</span>
                 </button>
@@ -125,20 +110,21 @@
           </div>
           
           <!-- Warenkorb -->
-          <router-link to="/warenkorb" class="cart-btn">
+          <router-link to="/warenkorb" class="cart-btn" aria-label="Warenkorb">
             <i class="bi bi-cart3"></i>
             <span class="btn-text" v-if="!showCompactCart">Warenkorb</span>
-            <span class="badge" v-if="cartCount > 0">{{ cartCount }}</span>
+            <span class="badge" v-if="cartCount > 0" aria-label="Artikel im Warenkorb">{{ cartCount }}</span>
           </router-link>
         </div>
       </div>
 
-      <!-- Burger Menu - für Mobile -->
+      <!-- Burger Menu für Mobile -->
       <button 
         class="burger" 
         @click="toggleMenu" 
         :class="{ 'open': menuOpen }"
-        aria-label="Menü öffnen/schließen"
+        :aria-label="menuOpen ? 'Menü schließen' : 'Menü öffnen'"
+        :aria-expanded="menuOpen"
         v-if="isMobile"
       >
         <span></span>
@@ -147,10 +133,10 @@
       </button>
 
       <!-- Mobile Navigation -->
-      <div class="mobile-nav" v-if="isMobile" :class="{ 'show': menuOpen }">
-        <!-- Suchleiste oben in Mobile -->
+      <div class="mobile-nav" v-if="isMobile" :class="{ 'show': menuOpen }" v-show="menuOpen">
+        <!-- Suchleiste -->
         <div class="mobile-search">
-          <form @submit.prevent="handleSearch" class="search-form">
+          <form @submit.prevent="handleSearch" class="search-form" role="search">
             <div class="search-wrapper">
               <input 
                 v-model="searchQuery" 
@@ -168,21 +154,18 @@
 
         <!-- Kategorien -->
         <div class="mobile-categories">
-          <router-link to="/produkte/leinen" class="category" @click="closeMenu">
-            Leinen
-          </router-link>
-          <router-link to="/produkte/halsbaender" class="category" @click="closeMenu">
-            Halsbänder
-          </router-link>
-          <router-link to="/produkte/bekleidung" class="category" @click="closeMenu">
-            Bekleidung
-          </router-link>
-          <router-link to="/produkte/snacks" class="category" @click="closeMenu">
-            Snacks
+          <router-link 
+            v-for="category in categories" 
+            :key="category.path" 
+            :to="category.path" 
+            class="category" 
+            @click="closeMenu"
+          >
+            {{ category.name }}
           </router-link>
         </div>
 
-        <!-- User Actions in Mobile -->
+        <!-- User Actions -->
         <div class="mobile-user-actions">
           <div v-if="!isAuthenticated" class="mobile-auth">
             <button @click="handleLogin" class="mobile-btn">
@@ -226,7 +209,7 @@
               <i class="bi bi-cart3"></i>
               <span>Warenkorb</span>
             </div>
-            <span class="badge-mobile" v-if="cartCount > 0">{{ cartCount }}</span>
+            <span class="badge-mobile" v-if="cartCount > 0" aria-label="Artikel im Warenkorb">{{ cartCount }}</span>
           </router-link>
         </div>
       </div>
@@ -253,17 +236,23 @@ const searchQuery = ref('')
 const isAdmin = ref(false)
 const windowWidth = ref(window.innerWidth)
 
-// Computed
-const cartCount = computed(() => cartStore.itemCount || 0)
+// Kategorien als Array für DRY-Code
+const categories = [
+  { name: 'Leinen', path: '/produkte/leinen' },
+  { name: 'Halsbänder', path: '/produkte/halsbaender' },
+  { name: 'Bekleidung', path: '/produkte/bekleidung' },
+  { name: 'Snacks', path: '/produkte/snacks' }
+]
 
-// Responsive computed properties
+// Computed Properties
+const cartCount = computed(() => cartStore.itemCount || 0)
 const isMobile = computed(() => windowWidth.value < 900)
 const showCategoriesDropdown = computed(() => windowWidth.value < 1100 && windowWidth.value >= 900)
 const showCompactUserInfo = computed(() => windowWidth.value < 1000)
 const showCompactAdmin = computed(() => windowWidth.value < 950)
 const showCompactCart = computed(() => windowWidth.value < 1000)
 
-// Admin-Check
+// Admin-Check Funktion
 async function checkAdminStatus() {
   if (!isAuthenticated.value) {
     isAdmin.value = false
@@ -287,7 +276,7 @@ async function checkAdminStatus() {
   }
 }
 
-// WATCHER für Authentifizierungsänderungen
+// Watcher für Authentifizierungsänderungen
 watch(isAuthenticated, (newVal) => {
   if (newVal) {
     checkAdminStatus()
@@ -296,12 +285,11 @@ watch(isAuthenticated, (newVal) => {
   }
 })
 
-// Scroll Handler
+// Event Handler
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
 }
 
-// Search Handler
 const handleSearch = () => {
   const query = searchQuery.value.trim()
   if (query) {
@@ -314,7 +302,6 @@ const handleSearch = () => {
   }
 }
 
-// Auth Handler
 const handleLogin = () => {
   loginWithRedirect()
   closeAllMenus()
@@ -341,30 +328,17 @@ const toggleMenu = () => {
 
 const toggleCategoriesMenu = () => {
   categoriesMenuOpen.value = !categoriesMenuOpen.value
-  if (categoriesMenuOpen.value) {
-    adminMenuOpen.value = false
-  }
+  if (categoriesMenuOpen.value) adminMenuOpen.value = false
 }
 
 const toggleAdminMenu = () => {
   adminMenuOpen.value = !adminMenuOpen.value
-  if (adminMenuOpen.value) {
-    categoriesMenuOpen.value = false
-  }
+  if (adminMenuOpen.value) categoriesMenuOpen.value = false
 }
 
-const closeMenu = () => {
-  menuOpen.value = false
-}
-
-const closeCategoriesMenu = () => {
-  categoriesMenuOpen.value = false
-}
-
-// NEUE FUNKTION: Schließt Admin-Dropdown
-const closeAdminMenu = () => {
-  adminMenuOpen.value = false
-}
+const closeMenu = () => menuOpen.value = false
+const closeCategoriesMenu = () => categoriesMenuOpen.value = false
+const closeAdminMenu = () => adminMenuOpen.value = false
 
 const closeAllMenus = () => {
   menuOpen.value = false
@@ -375,16 +349,12 @@ const closeAllMenus = () => {
 // Resize Handler
 const handleResize = () => {
   windowWidth.value = window.innerWidth
-  if (windowWidth.value >= 900) {
-    menuOpen.value = false
-  }
+  if (windowWidth.value >= 900) menuOpen.value = false
 }
 
 // Klick außerhalb schließt Menüs
 const handleClickOutside = (event) => {
-  if (!event.target.closest('.navbar')) {
-    closeAllMenus()
-  }
+  if (!event.target.closest('.navbar')) closeAllMenus()
 }
 
 // Lifecycle
@@ -404,22 +374,20 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Basis Styles */
+/* Basis Styles - Vereinfacht */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  background: #cbbf9b;
+  background: var(--color-navbar);
   padding: 1rem 0;
   z-index: 1000;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: padding 0.3s ease;
 }
 
-.navbar.scrolled {
-  padding: 0.75rem 0;
-}
+.navbar.scrolled { padding: 0.75rem 0; }
 
 .navbar-container {
   max-width: 1400px;
@@ -446,13 +414,248 @@ onUnmounted(() => {
 }
 
 .logo-text {
-  font-family: "Roboto", sans-serif;
+  font-family: var(--font-roboto);
   font-weight: 800;
   font-size: 1.5rem;
-  background: linear-gradient(135deg, #e26191, #d05583);
+  background: linear-gradient(135deg, var(--color-accent-pink), #d05583);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Desktop Navigation */
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Kategorien */
+.categories-wrapper { flex-shrink: 0; }
+
+.categories-dropdown { position: relative; }
+
+.categories-toggle {
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: var(--font-roboto);
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.categories-toggle:hover { background: rgba(226, 97, 145, 0.3); }
+
+.categories-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1002;
+  border: 1px solid #eee;
+}
+
+.categories-dropdown-menu .dropdown-item {
+  display: block;
+  padding: 0.7rem 1rem;
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  font-family: var(--font-roboto);
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.categories-dropdown-menu .dropdown-item:hover {
+  background: #f8f9fa;
+  color: var(--color-accent-pink);
+}
+
+.categories {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.category {
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  text-decoration: none;
+  font-family: var(--font-roboto);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.category:hover { background: rgba(226, 97, 145, 0.3); }
+
+/* Suchleiste */
+.search { 
+  flex: 1; 
+  min-width: 150px; 
+  max-width: 400px; 
+}
+
+.search-wrapper {
+  display: flex;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  height: 40px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0 0.8rem;
+  border: none;
+  font-family: var(--font-roboto);
+  font-size: 0.95rem;
+  min-width: 120px;
+}
+
+.search-input:focus { outline: none; }
+
+.search-btn {
+  padding: 0 1rem;
+  background: var(--color-accent-pink);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 100%;
+}
+
+.search-btn:hover { background: #d05583; }
+
+/* User Actions */
+.user-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.auth-section { display: flex; align-items: center; }
+.user-info { display: flex; gap: 0.4rem; align-items: center; }
+
+/* Admin Menu */
+.admin-menu { position: relative; }
+
+.admin-toggle {
+  padding: 0.4rem 0.6rem;
+  border-radius: 5px;
+  background: rgba(255, 193, 7, 0.25);
+  color: white;
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  font-family: var(--font-roboto);
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.admin-toggle:hover { background: rgba(255, 193, 7, 0.4); }
+
+.dropdown-icon {
+  font-size: 0.7rem;
+  transition: transform 0.3s;
+}
+
+.dropdown-icon.rotate { transform: rotate(180deg); }
+
+.admin-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1002;
+  border: 1px solid #eee;
+}
+
+.admin-dropdown .dropdown-item {
+  display: block;
+  padding: 0.6rem 0.8rem;
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  font-family: var(--font-roboto);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.admin-dropdown .dropdown-item:hover {
+  background: #f8f9fa;
+  color: var(--color-accent-pink);
+}
+
+/* Allgemeine Buttons */
+.auth-btn, .logout-btn, .account-btn, .cart-btn {
+  padding: 0.4rem 0.7rem;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  text-decoration: none;
+  font-family: var(--font-roboto);
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.auth-btn:hover, .logout-btn:hover, .account-btn:hover, .cart-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Warenkorb Badge */
+.cart-btn { position: relative; }
+
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4757;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 2px solid var(--color-navbar);
 }
 
 /* Burger Menu */
@@ -489,286 +692,13 @@ onUnmounted(() => {
   transform: rotate(-45deg) translate(6px, -5px);
 }
 
-/* ===== DESKTOP NAVIGATION ===== */
-.desktop-nav {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-/* Categories */
-.categories-wrapper {
-  flex-shrink: 0;
-}
-
-.categories-dropdown {
-  position: relative;
-}
-
-.categories-toggle {
-  padding: 0.5rem 0.8rem;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-family: "Roboto", sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-}
-
-.categories-toggle:hover {
-  background: rgba(226, 97, 145, 0.3);
-}
-
-.categories-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 0.5rem;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  min-width: 160px;
-  z-index: 1002;
-  overflow: hidden;
-  border: 1px solid #eee;
-}
-
-.categories-dropdown-menu .dropdown-item {
-  display: block;
-  padding: 0.7rem 1rem;
-  color: #333;
-  text-decoration: none;
-  font-family: "Roboto", sans-serif;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.categories-dropdown-menu .dropdown-item:hover {
-  background: #f8f9fa;
-  color: #e26191;
-}
-
-.categories {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
-}
-
-.category {
-  padding: 0.5rem 0.8rem;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  text-decoration: none;
-  font-family: "Roboto", sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.category:hover {
-  background: rgba(226, 97, 145, 0.3);
-}
-
-/* Search */
-.search {
-  flex: 1;
-  min-width: 150px;
-  max-width: 400px;
-}
-
-.search-wrapper {
-  display: flex;
-  background: white;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  height: 40px;
-}
-
-.search-input {
-  flex: 1;
-  padding: 0 0.8rem;
-  border: none;
-  font-family: "Roboto", sans-serif;
-  font-size: 0.95rem;
-  min-width: 120px;
-}
-
-.search-input:focus {
-  outline: none;
-}
-
-.search-btn {
-  padding: 0 1rem;
-  background: #e26191;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-shrink: 0;
-  white-space: nowrap;
-  height: 100%;
-}
-
-.search-btn:hover {
-  background: #d05583;
-}
-
-/* User Actions */
-.user-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.auth-section {
-  display: flex;
-  align-items: center;
-}
-
-.user-info {
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-/* Admin Menu */
-.admin-menu {
-  position: relative;
-}
-
-.admin-toggle {
-  padding: 0.4rem 0.6rem;
-  border-radius: 5px;
-  background: rgba(255, 193, 7, 0.25);
-  color: white;
-  border: 1px solid rgba(255, 193, 7, 0.4);
-  font-family: "Roboto", sans-serif;
-  font-weight: 600;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.admin-toggle:hover {
-  background: rgba(255, 193, 7, 0.4);
-}
-
-.dropdown-icon {
-  font-size: 0.7rem;
-  transition: transform 0.3s;
-}
-
-.dropdown-icon.rotate {
-  transform: rotate(180deg);
-}
-
-.admin-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 0.5rem;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  min-width: 160px;
-  z-index: 1002;
-  overflow: hidden;
-  border: 1px solid #eee;
-}
-
-.admin-dropdown .dropdown-item {
-  display: block;
-  padding: 0.6rem 0.8rem;
-  color: #333;
-  text-decoration: none;
-  font-family: "Roboto", sans-serif;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.admin-dropdown .dropdown-item:hover {
-  background: #f8f9fa;
-  color: #e26191;
-}
-
-/* Buttons */
-.auth-btn, .logout-btn, .account-btn, .cart-btn {
-  padding: 0.4rem 0.7rem;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  text-decoration: none;
-  font-family: "Roboto", sans-serif;
-  font-weight: 600;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.auth-btn:hover, .logout-btn:hover, .account-btn:hover, .cart-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* Cart Badge */
-.cart-btn {
-  position: relative;
-}
-
-.badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ff4757;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 800;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 3px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid #cbbf9b;
-}
-
-/* ===== MOBILE NAVIGATION ===== */
+/* Mobile Navigation */
 .mobile-nav {
   position: fixed;
   top: 70px;
   left: 0;
   right: 0;
-  background: #cbbf9b;
+  background: var(--color-navbar);
   padding: 1.5rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   transform: translateY(-100%);
@@ -786,17 +716,7 @@ onUnmounted(() => {
   visibility: visible;
 }
 
-.mobile-search {
-  margin-bottom: 1.5rem;
-}
-
-.mobile-search .search-wrapper {
-  width: 100%;
-}
-
-.mobile-search .search-btn span {
-  display: none;
-}
+.mobile-search { margin-bottom: 1.5rem; }
 
 .mobile-categories {
   display: grid;
@@ -815,9 +735,8 @@ onUnmounted(() => {
   border-radius: 8px;
   text-decoration: none;
   color: white;
-  font-family: "Roboto", sans-serif;
+  font-family: var(--font-roboto);
   font-weight: 600;
-  font-size: 0.9rem;
   transition: all 0.3s ease;
 }
 
@@ -831,28 +750,6 @@ onUnmounted(() => {
   gap: 1rem;
 }
 
-.mobile-auth .mobile-btn {
-  width: 100%;
-  padding: 1rem;
-  background: rgba(226, 97, 145, 0.3);
-  border: 1px solid rgba(226, 97, 145, 0.5);
-  border-radius: 8px;
-  color: white;
-  font-family: "Roboto", sans-serif;
-  font-weight: 600;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mobile-auth .mobile-btn:hover {
-  background: rgba(226, 97, 145, 0.5);
-}
-
 .mobile-nav-item {
   display: flex;
   align-items: center;
@@ -862,25 +759,13 @@ onUnmounted(() => {
   border-radius: 6px;
   text-decoration: none;
   color: white;
-  font-family: "Roboto", sans-serif;
+  font-family: var(--font-roboto);
   font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
   transition: all 0.3s ease;
+  margin-bottom: 0.5rem;
 }
 
-.mobile-nav-item:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.mobile-nav-item i {
-  margin-right: 0.75rem;
-}
-
-.cart-info {
-  display: flex;
-  align-items: center;
-}
+.mobile-nav-item:hover { background: rgba(255, 255, 255, 0.2); }
 
 .badge-mobile {
   background: #ff4757;
@@ -894,7 +779,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 5px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .admin-section {
@@ -911,9 +795,8 @@ onUnmounted(() => {
   gap: 0.75rem;
   padding: 0.5rem 0;
   color: white;
-  font-family: "Roboto", sans-serif;
+  font-family: var(--font-roboto);
   font-weight: 600;
-  font-size: 1rem;
   margin-bottom: 0.5rem;
 }
 
@@ -923,229 +806,70 @@ onUnmounted(() => {
   padding-left: 2rem;
   text-decoration: none;
   color: white;
-  font-family: "Roboto", sans-serif;
+  font-family: var(--font-roboto);
   font-size: 0.9rem;
   border-radius: 4px;
   margin-bottom: 0.25rem;
   transition: all 0.3s ease;
 }
 
-.mobile-nav-subitem:hover {
-  background: rgba(255, 255, 255, 0.1);
+.mobile-nav-subitem:hover { background: rgba(255, 255, 255, 0.1); }
+
+.mobile-btn {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(226, 97, 145, 0.3);
+  border: 1px solid rgba(226, 97, 145, 0.5);
+  border-radius: 8px;
+  color: white;
+  font-family: var(--font-roboto);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.mobile-btn.logout {
-  margin-top: 1rem;
+.mobile-btn:hover { background: rgba(226, 97, 145, 0.5); }
+.mobile-btn.logout { 
   background: rgba(45, 33, 33, 0.3);
   border: 1px solid rgba(45, 33, 33, 0.5);
 }
+.mobile-btn.logout:hover { background: rgba(45, 33, 33, 0.5); }
 
-.mobile-btn.logout:hover {
-  background: rgba(45, 33, 33, 0.5);
+/* Responsive Design - Vereinfacht */
+@media (min-width: 900px) {
+  .burger { display: none; }
+  .mobile-nav { display: none; }
 }
 
-/* ===== RESPONSIVE BREAKPOINTS ===== */
-@media (min-width: 1400px) {
-  .navbar-container {
-    padding: 0 2rem;
-  }
+@media (max-width: 899px) {
+  .burger { display: flex; }
+  .desktop-nav { display: none; }
+  .mobile-nav.show { top: 65px; }
   
-  .category {
-    padding: 0.6rem 1.2rem;
-  }
-  
-  .search {
-    max-width: 500px;
-  }
+  .logo img { height: 35px; }
+  .logo-text { font-size: 1.3rem; }
 }
 
-@media (max-width: 1399px) and (min-width: 1200px) {
-  .navbar-container {
-    padding: 0 1.5rem;
-  }
-  
-  .category {
-    padding: 0.5rem 1rem;
-  }
-  
-  .search {
-    max-width: 450px;
-  }
+@media (max-width: 768px) {
+  .mobile-nav.show { padding: 1.25rem; }
 }
 
-@media (max-width: 1199px) and (min-width: 1100px) {
-  .category {
-    padding: 0.5rem 0.8rem;
-  }
+@media (max-width: 599px) {
+  .mobile-categories { grid-template-columns: 1fr; }
+  .navbar-container { padding: 0 0.5rem; }
   
-  .search {
-    max-width: 400px;
-  }
-}
-
-@media (max-width: 1099px) and (min-width: 1000px) {
-  .category {
-    padding: 0.4rem 0.7rem;
-    font-size: 0.85rem;
-  }
-  
-  .search {
-    max-width: 350px;
-  }
-}
-
-@media (max-width: 999px) and (min-width: 950px) {
-  .category {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.82rem;
-  }
-  
-  .search {
-    max-width: 300px;
-  }
-  
-  .search-text {
-    display: none;
-  }
-}
-
-@media (max-width: 949px) and (min-width: 900px) {
-  .category {
-    padding: 0.4rem 0.5rem;
-    font-size: 0.8rem;
-  }
-  
-  .search {
-    max-width: 250px;
-  }
-  
-  .search-text, .btn-text {
-    display: none;
-  }
-  
-  .admin-toggle .btn-text {
-    display: none;
-  }
-}
-
-@media (max-width: 899px) and (min-width: 768px) {
-  .burger {
-    display: flex;
-  }
-  
-  .desktop-nav {
-    display: none;
-  }
-  
-  .logo img {
-    height: 35px;
-  }
-  
-  .logo-text {
-    font-size: 1.3rem;
-  }
-  
-  .mobile-nav.show {
-    top: 65px;
-    padding: 1.25rem;
-  }
-}
-
-@media (max-width: 767px) and (min-width: 600px) {
-  .burger {
-    display: flex;
-  }
-  
-  .desktop-nav {
-    display: none;
-  }
-  
-  .navbar-container {
-    padding: 0 0.75rem;
-  }
-  
-  .logo img {
-    height: 35px;
-  }
-  
-  .logo-text {
-    font-size: 1.3rem;
-  }
-  
-  .mobile-nav.show {
-    top: 65px;
-    padding: 1.25rem;
-  }
-}
-
-@media (max-width: 599px) and (min-width: 480px) {
-  .burger {
-    display: flex;
-  }
-  
-  .desktop-nav {
-    display: none;
-  }
-  
-  .navbar-container {
-    padding: 0 0.5rem;
-  }
-  
-  .logo img {
-    height: 32px;
-  }
-  
-  .logo-text {
-    font-size: 1.2rem;
-  }
-  
-  .mobile-nav.show {
-    top: 60px;
-    padding: 1rem;
-  }
-  
-  .mobile-categories {
-    gap: 0.5rem;
-  }
-  
-  .mobile-categories .category {
-    padding: 0.75rem;
-  }
+  .logo img { height: 32px; }
+  .logo-text { font-size: 1.2rem; }
 }
 
 @media (max-width: 479px) {
-  .burger {
-    display: flex;
-  }
-  
-  .desktop-nav {
-    display: none;
-  }
-  
-  .navbar-container {
-    padding: 0 0.5rem;
-  }
-  
-  .logo img {
-    height: 30px;
-  }
-  
-  .logo-text {
-    font-size: 1.1rem;
-  }
-  
-  .mobile-nav.show {
-    top: 58px;
-    padding: 1rem;
-  }
-  
-  .mobile-categories {
-    grid-template-columns: 1fr;
-  }
-  
-  .mobile-nav-item {
-    padding: 0.7rem 0.9rem;
-    font-size: 0.95rem;
-  }
+  .logo img { height: 30px; }
+  .logo-text { font-size: 1.1rem; }
+  .mobile-nav.show { padding: 1rem; }
+  .mobile-nav-item { padding: 0.7rem 0.9rem; }
 }
 </style>

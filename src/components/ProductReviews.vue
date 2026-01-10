@@ -1,40 +1,47 @@
 <template>
-  <div class="product-reviews">
-    <h3 class="reviews-title">Kundenbewertungen</h3>
+  <section class="product-reviews" aria-labelledby="reviews-heading">
+    <h3 id="reviews-heading" class="reviews-title">Kundenbewertungen</h3>
     
     <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
+    <div v-if="loading" class="loading-state" aria-live="polite" aria-busy="true">
       <div class="spinner"></div>
       <span>Bewertungen werden geladen...</span>
     </div>
     
     <!-- Reviews List -->
-    <div v-else-if="reviews.length > 0" class="reviews-list">
-      <div v-for="review in reviews" :key="review.id" class="review-item">
+    <div v-else-if="reviews.length > 0" class="reviews-list" role="feed">
+      <article 
+        v-for="review in reviews" 
+        :key="review.id" 
+        class="review-item"
+        role="article"
+        aria-labelledby="review-author"
+      >
         <div class="review-header">
           <div class="review-author-rating">
-            <span class="review-author">{{ review.author || 'Anonym' }}</span>
-            <div class="review-stars">
+            <span id="review-author" class="review-author">{{ review.author || 'Anonym' }}</span>
+            <div class="review-stars" aria-label="Bewertung: {{ review.rating }} von 5 Sternen">
               <span 
                 v-for="n in 5" 
                 :key="n"
                 class="star"
                 :class="{ filled: n <= review.rating }"
+                aria-hidden="true"
               >
                 ★
               </span>
               <span class="rating-value">{{ review.rating.toFixed(1) }}/5</span>
             </div>
           </div>
-          <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+          <time class="review-date" :datetime="review.createdAt">{{ formatDate(review.createdAt) }}</time>
         </div>
         <p class="review-text">{{ review.text }}</p>
-      </div>
+      </article>
     </div>
     
     <!-- No Reviews -->
-    <div v-else class="no-reviews">
-      <i class="bi bi-chat-square-text"></i>
+    <div v-else class="no-reviews" aria-live="polite">
+      <i class="bi bi-chat-square-text" aria-hidden="true"></i>
       <p>Noch keine Bewertungen. Seien Sie der Erste!</p>
     </div>
     
@@ -42,19 +49,19 @@
     <div class="add-review">
       <h4 class="form-title">Bewertung schreiben</h4>
       
-      <div v-if="submitError" class="error-message">
+      <div v-if="submitError" class="error-message" role="alert">
         {{ submitError }}
       </div>
       
-      <div v-if="submitSuccess" class="success-message">
+      <div v-if="submitSuccess" class="success-message" role="alert" aria-live="polite">
         Vielen Dank für Ihre Bewertung!
       </div>
       
-      <form @submit.prevent="submitReview" class="review-form">
+      <form @submit.prevent="submitReview" class="review-form" novalidate>
         <div class="form-group">
           <label class="form-label">Ihre Bewertung:</label>
           <div class="rating-input">
-            <div class="stars">
+            <div class="stars" role="radiogroup" aria-label="Produktbewertung">
               <button
                 v-for="n in 5"
                 :key="n"
@@ -63,6 +70,8 @@
                 :class="{ active: newReview.rating >= n }"
                 @click="newReview.rating = n"
                 :aria-label="`${n} von 5 Sternen`"
+                :aria-checked="newReview.rating === n"
+                role="radio"
               >
                 ★
               </button>
@@ -72,7 +81,7 @@
         </div>
         
         <div class="form-group">
-          <label for="review-text" class="form-label">Ihre Bewertung:</label>
+          <label for="review-text" class="form-label">Ihr Kommentar:</label>
           <textarea
             id="review-text"
             v-model="newReview.text"
@@ -81,8 +90,11 @@
             required
             :disabled="submitting"
             :class="{ error: fieldErrors.text }"
+            aria-describedby="text-error"
+            minlength="10"
+            maxlength="1000"
           ></textarea>
-          <div v-if="fieldErrors.text" class="field-error">{{ fieldErrors.text }}</div>
+          <div v-if="fieldErrors.text" id="text-error" class="field-error">{{ fieldErrors.text }}</div>
         </div>
         
         <div class="form-group">
@@ -93,6 +105,7 @@
             type="text"
             placeholder="Ihr Name"
             :disabled="submitting"
+            maxlength="50"
           >
         </div>
         
@@ -100,13 +113,14 @@
           type="submit" 
           class="submit-btn"
           :disabled="submitting || !isFormValid"
+          aria-label="Bewertung absenden"
         >
           <span v-if="submitting">Wird gesendet...</span>
           <span v-else>Bewertung absenden</span>
         </button>
       </form>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup>
@@ -143,6 +157,8 @@ const validateForm = () => {
     fieldErrors.value.text = 'Bitte geben Sie eine Bewertung ein'
   } else if (newReview.value.text.trim().length < 10) {
     fieldErrors.value.text = 'Bewertung muss mindestens 10 Zeichen lang sein'
+  } else if (newReview.value.text.trim().length > 1000) {
+    fieldErrors.value.text = 'Bewertung darf maximal 1000 Zeichen lang sein'
   }
   
   return Object.keys(fieldErrors.value).length === 0
@@ -159,6 +175,7 @@ const loadReviews = async () => {
     }
   } catch (error) {
     console.error('Netzwerkfehler:', error)
+    submitError.value = 'Bewertungen konnten nicht geladen werden'
   } finally {
     loading.value = false
   }
@@ -180,7 +197,10 @@ const submitReview = async () => {
     
     const response = await fetch(`http://localhost:8081/api/product/${props.productId}/reviews`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body: JSON.stringify(reviewData)
     })
     
@@ -193,16 +213,17 @@ const submitReview = async () => {
       newReview.value = { text: '', author: '', rating: 5 }
       fieldErrors.value = {}
       
-      // Erfolgsmeldung nach 3 Sekunden ausblenden
+      // Erfolgsmeldung nach 5 Sekunden ausblenden
       setTimeout(() => {
         submitSuccess.value = false
-      }, 3000)
+      }, 5000)
     } else {
-      throw new Error('Serverfehler beim Speichern der Bewertung')
+      const errorText = await response.text()
+      throw new Error(`Serverfehler: ${response.status} - ${errorText}`)
     }
   } catch (error) {
-    submitError.value = 'Entschuldigung, Ihre Bewertung konnte nicht gespeichert werden. Bitte versuchen Sie es später erneut.'
     console.error('Fehler beim Absenden:', error)
+    submitError.value = 'Entschuldigung, Ihre Bewertung konnte nicht gespeichert werden. Bitte versuchen Sie es später erneut.'
   } finally {
     submitting.value = false
   }
@@ -210,23 +231,29 @@ const submitReview = async () => {
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
-  return new Date(dateString).toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+  try {
+    return new Date(dateString).toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  } catch {
+    return dateString
+  }
 }
 
-onMounted(loadReviews)
+onMounted(() => {
+  loadReviews()
+})
 </script>
 
 <style scoped>
 .product-reviews {
   --reviews-bg: rgba(255, 255, 255, 0.05);
   --reviews-text: white;
-  --reviews-accent: #e26191;
+  --reviews-accent: var(--color-accent-pink);
   --reviews-star: #ffd700;
-  --reviews-error: #ff4757;
+  --reviews-error: var(--color-danger);
   --reviews-success: #2ed573;
   
   margin: 2rem 0;
@@ -374,15 +401,15 @@ onMounted(loadReviews)
 }
 
 .error-message {
-  background: rgba(var(--reviews-error), 0.1);
+  background: rgba(255, 71, 87, 0.1);
   color: var(--reviews-error);
-  border: 1px solid rgba(var(--reviews-error), 0.3);
+  border: 1px solid rgba(255, 71, 87, 0.3);
 }
 
 .success-message {
-  background: rgba(var(--reviews-success), 0.1);
+  background: rgba(46, 213, 115, 0.1);
   color: var(--reviews-success);
-  border: 1px solid rgba(var(--reviews-success), 0.3);
+  border: 1px solid rgba(46, 213, 115, 0.3);
 }
 
 /* Form Elements */
@@ -419,14 +446,20 @@ onMounted(loadReviews)
   transition: color 0.2s, transform 0.2s;
   padding: 0;
   line-height: 1;
+  border-radius: 4px;
 }
 
 .star-btn.active {
   color: var(--reviews-star);
 }
 
-.star-btn:hover {
+.star-btn:hover:not(:disabled) {
   transform: scale(1.2);
+}
+
+.star-btn:focus {
+  outline: 2px solid var(--reviews-accent);
+  outline-offset: 2px;
 }
 
 .rating-text {
@@ -449,6 +482,7 @@ textarea, input[type="text"] {
 textarea:focus, input[type="text"]:focus {
   outline: none;
   border-color: var(--reviews-accent);
+  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.1);
 }
 
 textarea.error {
@@ -501,6 +535,11 @@ input:disabled {
   transform: translateY(0);
 }
 
+.submit-btn:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .product-reviews {
@@ -522,6 +561,14 @@ input:disabled {
   
   .add-review {
     padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .rating-input {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
 </style>

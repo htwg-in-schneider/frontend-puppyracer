@@ -1,107 +1,266 @@
 <template>
   <div class="checkout">
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <router-link to="/warenkorb" class="breadcrumb-link">Warenkorb</router-link>
+      <span class="separator">/</span>
+      <span class="current">Kasse</span>
+    </nav>
+
+    <!-- Header -->
     <div class="header">
-      <h1><i class="bi bi-cart-check"></i> Kasse</h1>
-      <p class="subtitle">{{ itemCount }} Artikel • {{ total.toFixed(2) }}€</p>
+      <h1><i class="bi bi-cart-check" aria-hidden="true"></i> Kasse</h1>
+      <p class="subtitle">{{ itemCount }} Artikel • {{ total.toFixed(2) }} €</p>
     </div>
 
+    <!-- Content -->
     <div class="checkout-content">
       <!-- Bestellte Produkte -->
-      <div class="section">
-        <h2><i class="bi bi-box"></i> Ihre Bestellung</h2>
-        <div class="products">
-          <div v-for="item in cartItems" :key="item.id" class="product">
-            <img :src="item.image" :alt="item.name" class="product-img">
+      <section class="section" aria-labelledby="order-title">
+        <h2 id="order-title"><i class="bi bi-box" aria-hidden="true"></i> Ihre Bestellung</h2>
+        <div class="products" role="list">
+          <div v-for="item in cartItems" :key="item.id" class="product" role="listitem">
+            <img :src="item.image" :alt="`Bild von ${item.name}`" class="product-img">
             <div class="product-info">
               <h3>{{ item.name }}</h3>
-              <p>{{ item.quantity }} × {{ item.price.toFixed(2) }}€</p>
+              <p>{{ item.quantity }} × {{ item.price.toFixed(2) }} €</p>
             </div>
-            <div class="product-total">{{ (item.price * item.quantity).toFixed(2) }}€</div>
+            <div class="product-total">{{ (item.price * item.quantity).toFixed(2) }} €</div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Formulare -->
       <div class="forms-grid">
         <!-- Persönliche Daten -->
-        <div class="form-section">
-          <h3><i class="bi bi-person"></i> Persönliche Daten</h3>
+        <section class="form-section" aria-labelledby="personal-title">
+          <h3 id="personal-title"><i class="bi bi-person" aria-hidden="true"></i> Persönliche Daten</h3>
           <div class="form-group">
-            <input v-model="form.firstName" placeholder="Vorname *" class="input" required>
-            <input v-model="form.lastName" placeholder="Nachname *" class="input" required>
+            <div class="input-wrapper">
+              <label for="first-name" class="sr-only">Vorname</label>
+              <input 
+                id="first-name"
+                v-model="form.firstName" 
+                placeholder="Vorname *" 
+                class="input" 
+                required
+                aria-required="true"
+                :disabled="loading"
+              >
+            </div>
+            <div class="input-wrapper">
+              <label for="last-name" class="sr-only">Nachname</label>
+              <input 
+                id="last-name"
+                v-model="form.lastName" 
+                placeholder="Nachname *" 
+                class="input" 
+                required
+                aria-required="true"
+                :disabled="loading"
+              >
+            </div>
           </div>
-          <input v-model="form.email" type="email" placeholder="E-Mail *" class="input full" required>
-          <input v-model="form.phone" placeholder="Telefon" class="input full">
-        </div>
+          <div class="input-wrapper">
+            <label for="email" class="sr-only">E-Mail</label>
+            <input 
+              id="email"
+              v-model="form.email" 
+              type="email" 
+              placeholder="E-Mail *" 
+              class="input full" 
+              required
+              aria-required="true"
+              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+              :disabled="loading"
+            >
+          </div>
+          <div class="input-wrapper">
+            <label for="phone" class="sr-only">Telefon</label>
+            <input 
+              id="phone"
+              v-model="form.phone" 
+              placeholder="Telefon (optional)" 
+              class="input full"
+              type="tel"
+              pattern="[0-9+\s\-()]+"
+              :disabled="loading"
+            >
+          </div>
+        </section>
 
         <!-- Adresse -->
-        <div class="form-section">
-          <h3><i class="bi bi-house"></i> Lieferadresse</h3>
-          <input v-model="form.street" placeholder="Straße und Hausnummer *" class="input full" required>
-          <div class="form-group">
-            <input v-model="form.zip" placeholder="PLZ *" class="input" required>
-            <input v-model="form.city" placeholder="Stadt *" class="input" required>
+        <section class="form-section" aria-labelledby="address-title">
+          <h3 id="address-title"><i class="bi bi-house" aria-hidden="true"></i> Lieferadresse</h3>
+          <div class="input-wrapper">
+            <label for="street" class="sr-only">Straße und Hausnummer</label>
+            <input 
+              id="street"
+              v-model="form.street" 
+              placeholder="Straße und Hausnummer *" 
+              class="input full" 
+              required
+              aria-required="true"
+              :disabled="loading"
+            >
           </div>
-          <select v-model="form.country" class="input full" required>
-            <option value="">Land wählen</option>
-            <option value="de">Deutschland</option>
-            <option value="at">Österreich</option>
-            <option value="ch">Schweiz</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <label for="zip" class="sr-only">PLZ</label>
+              <input 
+                id="zip"
+                v-model="form.zip" 
+                placeholder="PLZ *" 
+                class="input" 
+                required
+                aria-required="true"
+                pattern="[0-9]{5}"
+                :disabled="loading"
+              >
+            </div>
+            <div class="input-wrapper">
+              <label for="city" class="sr-only">Stadt</label>
+              <input 
+                id="city"
+                v-model="form.city" 
+                placeholder="Stadt *" 
+                class="input" 
+                required
+                aria-required="true"
+                :disabled="loading"
+              >
+            </div>
+          </div>
+          <div class="input-wrapper">
+            <label for="country" class="sr-only">Land</label>
+            <select 
+              id="country"
+              v-model="form.country" 
+              class="input full" 
+              required
+              aria-required="true"
+              :disabled="loading"
+            >
+              <option value="" disabled>Land wählen *</option>
+              <option value="de">Deutschland</option>
+              <option value="at">Österreich</option>
+              <option value="ch">Schweiz</option>
+            </select>
+          </div>
+        </section>
 
         <!-- Zahlung -->
-        <div class="form-section">
-          <h3><i class="bi bi-credit-card"></i> Zahlung</h3>
-          <div class="payment-options">
-            <button @click="paymentMethod = 'creditcard'" :class="{ active: paymentMethod === 'creditcard' }">
-              <i class="bi bi-credit-card"></i> Karte
+        <section class="form-section" aria-labelledby="payment-title">
+          <h3 id="payment-title"><i class="bi bi-credit-card" aria-hidden="true"></i> Zahlungsmethode</h3>
+          <div class="payment-options" role="radiogroup" aria-label="Zahlungsmethode wählen">
+            <button 
+              type="button"
+              @click="paymentMethod = 'creditcard'" 
+              :class="{ active: paymentMethod === 'creditcard' }"
+              :aria-pressed="paymentMethod === 'creditcard'"
+              :disabled="loading"
+            >
+              <i class="bi bi-credit-card" aria-hidden="true"></i> Kreditkarte
             </button>
-            <button @click="paymentMethod = 'paypal'" :class="{ active: paymentMethod === 'paypal' }">
-              <i class="bi bi-paypal"></i> PayPal
+            <button 
+              type="button"
+              @click="paymentMethod = 'paypal'" 
+              :class="{ active: paymentMethod === 'paypal' }"
+              :aria-pressed="paymentMethod === 'paypal'"
+              :disabled="loading"
+            >
+              <i class="bi bi-paypal" aria-hidden="true"></i> PayPal
             </button>
-            <button @click="paymentMethod = 'invoice'" :class="{ active: paymentMethod === 'invoice' }">
-              <i class="bi bi-receipt"></i> Rechnung
+            <button 
+              type="button"
+              @click="paymentMethod = 'invoice'" 
+              :class="{ active: paymentMethod === 'invoice' }"
+              :aria-pressed="paymentMethod === 'invoice'"
+              :disabled="loading"
+            >
+              <i class="bi bi-receipt" aria-hidden="true"></i> Rechnung
             </button>
           </div>
-        </div>
+        </section>
       </div>
 
       <!-- Zusammenfassung -->
-      <div class="summary">
-        <h2><i class="bi bi-receipt"></i> Zusammenfassung</h2>
+      <section class="summary" aria-labelledby="summary-title">
+        <h2 id="summary-title"><i class="bi bi-receipt" aria-hidden="true"></i> Zusammenfassung</h2>
         
         <div class="summary-row">
           <span>Zwischensumme</span>
-          <span>{{ subtotal.toFixed(2) }}€</span>
+          <span>{{ subtotal.toFixed(2) }} €</span>
         </div>
         <div class="summary-row">
-          <span>Versand</span>
-          <span>4.99€</span>
+          <span>Versandkosten</span>
+          <span>4,99 €</span>
         </div>
         <div class="summary-row total">
-          <span>Gesamt</span>
-          <span>{{ total.toFixed(2) }}€</span>
+          <span>Gesamtsumme</span>
+          <span><strong>{{ total.toFixed(2) }} €</strong></span>
         </div>
 
+        <!-- AGB -->
         <div class="terms">
-          <input type="checkbox" v-model="acceptTerms" id="terms" required>
-          <label for="terms">Ich akzeptiere die AGB</label>
+          <input 
+            type="checkbox" 
+            v-model="acceptTerms" 
+            id="terms" 
+            required
+            aria-required="true"
+            :disabled="loading"
+          >
+          <label for="terms">
+            Ich akzeptiere die 
+            <router-link to="/agb" class="terms-link">AGB</router-link>
+            und habe die 
+            <router-link to="/datenschutz" class="terms-link">Datenschutzerklärung</router-link>
+            zur Kenntnis genommen *
+          </label>
         </div>
 
-        <button @click="submitOrder" :disabled="!canSubmit || loading" class="order-btn">
-          <i class="bi bi-lock"></i>
-          {{ loading ? 'Wird verarbeitet...' : `Jetzt zahlen (${total.toFixed(2)}€)` }}
+        <!-- Newsletter -->
+        <div class="newsletter" v-if="!loading">
+          <input 
+            type="checkbox" 
+            v-model="acceptNewsletter" 
+            id="newsletter"
+          >
+          <label for="newsletter">
+            Ich möchte den PuppyRacer Newsletter mit exklusiven Angeboten erhalten
+          </label>
+        </div>
+
+        <!-- Error Message -->
+        <div v-if="error" class="error-message" role="alert" aria-live="assertive">
+          <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+          <span>{{ error }}</span>
+        </div>
+
+        <!-- Order Button -->
+        <button 
+          @click="submitOrder" 
+          :disabled="!canSubmit || loading" 
+          class="order-btn"
+          aria-label="Bestellung abschließen und bezahlen"
+        >
+          <i class="bi bi-lock" aria-hidden="true"></i>
+          {{ loading ? 'Wird verarbeitet...' : `Jetzt zahlen (${total.toFixed(2)} €)` }}
         </button>
 
-        <div v-if="error" class="error">{{ error }}</div>
-      </div>
+        <!-- Sicherheitshinweis -->
+        <div class="security-note">
+          <i class="bi bi-shield-check" aria-hidden="true"></i>
+          <span>Sicher bezahlen mit SSL-Verschlüsselung</span>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/Warenkorb.js'
 import { useAuth0 } from '@auth0/auth0-vue'
@@ -124,6 +283,7 @@ const form = reactive({
 
 const paymentMethod = ref('creditcard')
 const acceptTerms = ref(false)
+const acceptNewsletter = ref(false)
 const loading = ref(false)
 const error = ref('')
 
@@ -131,117 +291,222 @@ const error = ref('')
 const cartItems = computed(() => cartStore.cartItems)
 const itemCount = computed(() => cartStore.itemCount)
 const subtotal = computed(() => cartStore.subtotal)
-const total = computed(() => subtotal.value + 4.99)
+const total = computed(() => {
+  const shipping = cartItems.value.length > 0 ? 4.99 : 0
+  return subtotal.value + shipping
+})
 
 const canSubmit = computed(() => {
-  return (
-    form.firstName &&
-    form.lastName &&
-    form.email &&
-    form.street &&
-    form.zip &&
-    form.city &&
-    form.country &&
-    acceptTerms.value &&
-    cartItems.value.length > 0
-  )
+  const requiredFields = [
+    form.firstName.trim(),
+    form.lastName.trim(),
+    form.email.trim(),
+    form.street.trim(),
+    form.zip.trim(),
+    form.city.trim(),
+    form.country.trim()
+  ]
+  
+  return requiredFields.every(field => field.length > 0) && 
+         acceptTerms.value && 
+         cartItems.value.length > 0
 })
 
 // Methoden
+const validateForm = () => {
+  const errors = []
+  
+  if (!form.firstName.trim()) errors.push('Vorname ist erforderlich')
+  if (!form.lastName.trim()) errors.push('Nachname ist erforderlich')
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!form.email.trim()) {
+    errors.push('E-Mail ist erforderlich')
+  } else if (!emailRegex.test(form.email)) {
+    errors.push('Bitte geben Sie eine gültige E-Mail ein')
+  }
+  
+  if (!form.street.trim()) errors.push('Straße ist erforderlich')
+  
+  const zipRegex = /^[0-9]{5}$/
+  if (!form.zip.trim()) {
+    errors.push('PLZ ist erforderlich')
+  } else if (!zipRegex.test(form.zip)) {
+    errors.push('PLZ muss 5 Ziffern haben')
+  }
+  
+  if (!form.city.trim()) errors.push('Stadt ist erforderlich')
+  if (!acceptTerms.value) errors.push('AGB müssen akzeptiert werden')
+  if (cartItems.value.length === 0) errors.push('Warenkorb ist leer')
+  
+  return errors
+}
+
 const submitOrder = async () => {
-  if (!canSubmit.value) return
+  const validationErrors = validateForm()
+  if (validationErrors.length > 0) {
+    error.value = validationErrors.join(', ')
+    return
+  }
   
   loading.value = true
   error.value = ''
   
   try {
-    // 1. Token von Auth0 holen
     const token = await getAccessTokenSilently()
     
-    // 2. Bestelldaten für Backend vorbereiten
     const orderData = {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      phone: form.phone,
-      street: form.street,
-      zipCode: form.zip,
-      city: form.city,
-      country: form.country === 'de' ? 'Deutschland' : 
-              form.country === 'at' ? 'Österreich' : 'Schweiz',
-      paymentMethod: paymentMethod.value,
-      subtotal: subtotal.value,
-      shippingCost: 4.99,
-      total: total.value,
-      items: cartItems.value.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity
-      }))
+      customer: {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || null
+      },
+      shippingAddress: {
+        street: form.street.trim(),
+        zipCode: form.zip.trim(),
+        city: form.city.trim(),
+        country: form.country === 'de' ? 'Deutschland' : 
+                form.country === 'at' ? 'Österreich' : 'Schweiz'
+      },
+      payment: {
+        method: paymentMethod.value,
+        status: 'pending'
+      },
+      order: {
+        subtotal: subtotal.value,
+        shippingCost: 4.99,
+        total: total.value,
+        items: cartItems.value.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        }))
+      },
+      preferences: {
+        newsletter: acceptNewsletter.value
+      }
     }
     
-    // 3. An Backend senden
-    const response = await fetch('http://localhost:8081/api/product/checkout', {
+    const response = await fetch('http://localhost:8081/api/orders', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify(orderData)
     })
     
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Bestellung fehlgeschlagen')
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || `Bestellung fehlgeschlagen (${response.status})`)
     }
     
     const result = await response.json()
     
-    // 4. Erfolg - Daten für Bestätigungsseite speichern
-    localStorage.setItem('lastOrderNumber', result.orderNumber)
-    localStorage.setItem('lastOrderTotal', result.total)
-    localStorage.setItem('lastOrderEmail', form.email)
+    // Bestätigung speichern
+    localStorage.setItem('lastOrder', JSON.stringify({
+      orderNumber: result.orderNumber,
+      total: result.total,
+      email: form.email,
+      date: new Date().toISOString()
+    }))
     
-    // 5. Warenkorb leeren
+    // Warenkorb leeren
     cartStore.clearCart()
     
-    // 6. Zur Startseite navigieren (später Bestätigungsseite)
-    alert(`Bestellung #${result.orderNumber} erfolgreich!`)
-    router.push('/')
+    // Zur Bestätigungsseite navigieren
+    router.push({
+      name: 'OrderConfirmation',
+      params: { orderNumber: result.orderNumber }
+    })
     
   } catch (err) {
-    error.value = 'Fehler: ' + err.message
     console.error('Checkout error:', err)
+    error.value = `Fehler bei der Bestellung: ${err.message}. Bitte versuchen Sie es erneut oder kontaktieren Sie unseren Support.`
   } finally {
     loading.value = false
   }
 }
+
+// Formular mit gespeicherten Daten vorausfüllen
+onMounted(() => {
+  if (auth0User.value) {
+    const nameParts = (auth0User.value.name || '').split(' ')
+    if (nameParts.length >= 2) {
+      form.firstName = nameParts[0]
+      form.lastName = nameParts.slice(1).join(' ')
+    }
+    form.email = auth0User.value.email || ''
+  }
+})
 </script>
 
-
 <style scoped>
-/* Grundlayout */
 .checkout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #8b7355 0%, #a8916d 100%);
-  padding: 100px 20px 40px;
-  color: white;
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, #2d3748 100%);
+  padding: 120px 20px 40px;
+  color: var(--color-background-light);
 }
 
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.breadcrumb-link {
+  color: var(--color-accent-pink);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.breadcrumb-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.separator {
+  opacity: 0.5;
+}
+
+.current {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Header */
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .subtitle {
-  opacity: 0.9;
+  opacity: 0.8;
   font-size: 1.1rem;
+  font-weight: 300;
 }
 
 /* Content */
@@ -254,16 +519,20 @@ const submitOrder = async () => {
 
 /* Produkte */
 .section {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .section h2 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .products {
@@ -273,19 +542,26 @@ const submitOrder = async () => {
 }
 
 .product {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 1rem;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  border-radius: 12px;
+  transition: background-color 0.2s;
+}
+
+.product:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .product-img {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 8px;
   object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .product-info {
@@ -295,6 +571,7 @@ const submitOrder = async () => {
 .product-info h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1rem;
+  font-weight: 600;
 }
 
 .product-info p {
@@ -304,11 +581,12 @@ const submitOrder = async () => {
 }
 
 .product-total {
-  font-weight: bold;
+  font-weight: 700;
   font-size: 1.1rem;
+  color: var(--color-accent-pink);
 }
 
-/* Forms */
+/* Forms Grid */
 .forms-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -316,16 +594,20 @@ const submitOrder = async () => {
 }
 
 .form-section {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .form-section h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .form-group {
@@ -335,19 +617,49 @@ const submitOrder = async () => {
   margin-bottom: 1rem;
 }
 
+.input-wrapper {
+  position: relative;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1rem;
   background: rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
-  color: white;
+  color: var(--color-background-light);
   font-family: inherit;
+  font-size: 1rem;
   margin-bottom: 1rem;
+  transition: all 0.3s;
 }
 
 .input::placeholder {
   color: rgba(255, 255, 255, 0.6);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent-pink);
+  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .input.full {
@@ -362,44 +674,63 @@ select.input {
   padding-right: 2.5rem;
 }
 
-/* Zahlungsoptionen */
+/* Payment Options */
 .payment-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .payment-options button {
-  padding: 0.75rem;
+  padding: 1rem;
   background: rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: white;
+  border-radius: 10px;
+  color: var(--color-background-light);
   cursor: pointer;
   transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .payment-options button.active {
-  background: rgba(226, 97, 145, 0.3);
-  border-color: rgba(226, 97, 145, 0.5);
+  background: rgba(226, 97, 145, 0.2);
+  border-color: var(--color-accent-pink);
+  color: var(--color-accent-pink);
 }
 
-.payment-options button:hover {
-  background: rgba(255, 255, 255, 0.2);
+.payment-options button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* Zusammenfassung */
+.payment-options button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.payment-options button i {
+  font-size: 1.5rem;
+}
+
+/* Summary */
 .summary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .summary h2 {
   margin-bottom: 1.5rem;
   font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .summary-row {
@@ -413,68 +744,150 @@ select.input {
   border-top: 2px solid rgba(255, 255, 255, 0.2);
   border-bottom: none;
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: 700;
   margin-top: 0.5rem;
+  padding-top: 1rem;
 }
 
-/* AGB */
-.terms {
+.summary-row.total strong {
+  color: var(--color-accent-pink);
+}
+
+/* Terms & Newsletter */
+.terms, .newsletter {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.terms input, .newsletter input {
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.terms label, .newsletter label {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.terms-link {
+  color: var(--color-accent-pink);
+  text-decoration: none;
+}
+
+.terms-link:hover {
+  text-decoration: underline;
+}
+
+/* Error Message */
+.error-message {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 1.5rem 0;
+  gap: 0.75rem;
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff6b6b;
+  padding: 1rem;
+  border-radius: 10px;
+  margin: 1rem 0;
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.error-message i {
+  font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
 /* Order Button */
 .order-btn {
   width: 100%;
   padding: 1.25rem;
-  background: linear-gradient(135deg, #e26191, #ff8fab);
+  background: linear-gradient(135deg, var(--color-accent-pink), #ff8fab);
   border: none;
   border-radius: 12px;
   color: white;
   font-size: 1.1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  margin-bottom: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
 }
 
 .order-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(226, 97, 145, 0.4);
+  box-shadow: 0 8px 25px rgba(226, 97, 145, 0.4);
 }
 
 .order-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
 }
 
-/* Error */
-.error {
-  color: #ff6b6b;
-  text-align: center;
-  padding: 0.5rem;
-  background: rgba(255, 107, 107, 0.1);
-  border-radius: 8px;
+/* Security Note */
+.security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.security-note i {
+  color: #2ed573;
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-  .checkout {
-    padding: 80px 15px 30px;
-  }
-  
+@media (max-width: 992px) {
   .forms-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .checkout {
+    padding: 100px 1rem 2rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
   }
   
   .form-group {
     grid-template-columns: 1fr;
   }
   
+  .payment-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .product {
+    grid-template-columns: auto 1fr;
+  }
+  
+  .product-total {
+    grid-column: 2;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 480px) {
   .header h1 {
-    font-size: 2rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .section, .form-section, .summary {
+    padding: 1.25rem;
   }
 }
 </style>

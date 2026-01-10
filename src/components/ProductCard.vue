@@ -1,17 +1,18 @@
 <template>
-  <div class="card product-card" @click="goToProduct">
+  <article class="card product-card" @click="goToProduct">
     <div class="image-container">
       <img 
         :src="imageUrl" 
         class="card-img" 
-        :alt="product.title"
+        :alt="`Produktbild: ${product.title}`"
         loading="lazy"
+        @error="handleImageError"
       >
     </div>
     
     <div class="card-body">
-      <h5 class="card-title">{{ product.title }}</h5>
-      <p class="card-description">{{ product.description }}</p>
+      <h3 class="card-title">{{ product.title }}</h3>
+      <p class="card-description">{{ truncatedDescription }}</p>
       <p class="card-price">{{ formattedPrice }}</p>
       
       <div class="card-actions">
@@ -19,12 +20,13 @@
           :to="productRoute" 
           class="btn-details"
           @click.stop
+          :aria-label="`Details zu ${product.title}`"
         >
-          Details
+          Details anzeigen
         </router-link>
       </div>
     </div>
-  </div>
+  </article>
 </template>
 
 <script setup>
@@ -51,6 +53,10 @@ const imageUrl = computed(() => {
 
 const productRoute = computed(() => `/product/${props.product.id}`)
 const formattedPrice = computed(() => `${props.product.price.toFixed(2)} €`)
+const truncatedDescription = computed(() => {
+  const desc = props.product.description || ''
+  return desc.length > 100 ? desc.substring(0, 100) + '...' : desc
+})
 
 // Methods
 const getFallbackImage = (productId) => {
@@ -121,6 +127,7 @@ const goToProduct = () => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  background: #f0f0f0; /* Fallback background */
 }
 
 .product-card:hover .card-img {
@@ -168,7 +175,7 @@ const goToProduct = () => {
   width: 100%;
   padding: 0.75rem 1rem;
   background: var(--card-accent);
-  color: #333;
+  color: var(--color-primary-dark);
   text-decoration: none;
   border-radius: 4px;
   font-weight: 600;
@@ -183,6 +190,10 @@ const goToProduct = () => {
 .btn-details:hover {
   background: var(--card-hover);
   transform: scale(1.02);
+}
+
+.btn-details:active {
+  transform: scale(0.98);
 }
 
 /* Responsive */

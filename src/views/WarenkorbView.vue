@@ -6,7 +6,6 @@
     </div>
 
     <div class="cart-content">
-      <!-- Leerer Warenkorb -->
       <div v-if="cartItems.length === 0" class="empty">
         <i class="bi bi-cart-x"></i>
         <h2>Warenkorb ist leer</h2>
@@ -18,9 +17,7 @@
         </div>
       </div>
 
-      <!-- Warenkorb mit Inhalten -->
       <div v-else class="cart-grid">
-        <!-- Produktliste -->
         <div class="products-section">
           <div class="section-header">
             <h2><i class="bi bi-list"></i> Artikel</h2>
@@ -31,7 +28,7 @@
 
           <div class="products">
             <div v-for="item in cartItems" :key="item.id" class="product">
-              <img :src="item.image" :alt="item.name" class="product-img">
+              <img :src="item.image || '/src/assets/placeholder.jpg'" :alt="item.name" class="product-img">
               
               <div class="product-details">
                 <h3 @click="viewProduct(item.id)">{{ item.name }}</h3>
@@ -49,11 +46,11 @@
                   </div>
                   
                   <div class="price">
-                    <span class="single">{{ item.price.toFixed(2) }}€</span>
-                    <span class="total">{{ (item.price * item.quantity).toFixed(2) }}€</span>
+                    <span class="single">{{ formatPrice(item.price) }}</span>
+                    <span class="total">{{ formatPrice(item.price * item.quantity) }}</span>
                   </div>
                   
-                  <button @click="removeItem(item.id)" class="btn-remove">
+                  <button @click="removeItem(item.id)" class="btn-remove" title="Entfernen">
                     <i class="bi bi-x"></i>
                   </button>
                 </div>
@@ -62,14 +59,13 @@
           </div>
         </div>
 
-        <!-- Zusammenfassung -->
         <div class="summary-section">
           <div class="summary">
             <h2><i class="bi bi-receipt"></i> Zusammenfassung</h2>
             
             <div class="summary-row">
               <span>Zwischensumme</span>
-              <span>{{ subtotal.toFixed(2) }}€</span>
+              <span>{{ formatPrice(subtotal) }}</span>
             </div>
             <div class="summary-row">
               <span>Versand</span>
@@ -77,12 +73,12 @@
             </div>
             <div class="summary-row total">
               <span>Gesamt</span>
-              <span>{{ total.toFixed(2) }}€</span>
+              <span>{{ formatPrice(total) }}</span>
             </div>
 
             <button @click="proceedToCheckout" class="btn-checkout">
               <i class="bi bi-lock"></i>
-              Zur Kasse ({{ total.toFixed(2) }}€)
+              Zur Kasse ({{ formatPrice(total) }})
             </button>
 
             <router-link to="/" class="btn-continue">
@@ -109,24 +105,19 @@ import { useCartStore } from '@/stores/Warenkorb.js'
 const router = useRouter()
 const cartStore = useCartStore()
 
-// Computed Properties
+// Computed
 const cartItems = computed(() => cartStore.cartItems)
 const itemCount = computed(() => cartStore.itemCount)
 const subtotal = computed(() => cartStore.subtotal)
 const total = computed(() => cartStore.total)
 
+// Helper
+const formatPrice = (price) => `${price.toFixed(2)}€`
+
 // Methoden
-const increaseQuantity = (productId) => {
-  cartStore.increaseQuantity(productId)
-}
-
-const decreaseQuantity = (productId) => {
-  cartStore.decreaseQuantity(productId)
-}
-
-const removeItem = (productId) => {
-  cartStore.removeFromCart(productId)
-}
+const increaseQuantity = (productId) => cartStore.increaseQuantity(productId)
+const decreaseQuantity = (productId) => cartStore.decreaseQuantity(productId)
+const removeItem = (productId) => cartStore.removeFromCart(productId)
 
 const clearCart = () => {
   if (confirm('Warenkorb wirklich leeren?')) {
