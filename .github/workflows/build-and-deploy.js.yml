@@ -1,29 +1,69 @@
-name: Deploy Vue app to GitHub Pages
+name: Deploy Vue App to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
 
 permissions:
-  contents: write
-
-on:
-  push:
-    branches:
-      - main
-
-on:
-  push:
-    branches:
-      - main
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      # 1. Code von GitHub holen
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 2. Node.js installieren
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm ci
-      - run: npm run build
-      - uses: peaceiris/actions-gh-pages@v3
+          node-version: '18'
+          cache: 'npm'
+      
+      # 3. Abhängigkeiten installieren
+      - name: Install dependencies
+        run: npm install
+      
+      # 4. App bauen MIT Umgebungsvariablen
+      - name: Build Vue App
+        run: npm run build
+        env:
+          # WICHTIG: Diese kommen aus GitHub Secrets!
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
+          VITE_AUTH0_CLIENT_ID: ${{ secrets.VITE_AUTH0_CLIENT_ID }}
+          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
+      
+      # 5. Build-Ergebnis hochladen
+      - name: Upload build result
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          path: './dist'
+  
+  deploy:
+    # Braucht den build job
+    needs: build
+    
+    # Nur von main branch deployen
+    if: github.ref == 'refs/heads/main'
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 6. Pages vorbereiten
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      
+      # 7. Auf GitHub Pages deployen
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

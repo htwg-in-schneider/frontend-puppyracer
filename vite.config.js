@@ -1,18 +1,18 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-import dotenv from 'dotenv'
 
-// Lade die .env-Datei manuell
-dotenv.config()
+const repoName = '/frontend-puppyracer/'
 
 export default defineConfig({
   plugins: [vue()],
+  base: process.env.NODE_ENV === 'production' ? repoName : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
     }
   },
-  // Greife auf VITE_BASE aus der env-Datei zu
-  base: process.env.VITE_BASE || '/'
+  server: {
+    port: 5173
+  }
 })
