@@ -32,6 +32,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { productImages } from '@/utils/images' // WICHTIG: Import hinzufügen
 
 const props = defineProps({
   product: { type: Object, required: true }
@@ -40,15 +41,12 @@ const props = defineProps({
 const router = useRouter()
 const imageError = ref(false)
 
-// Computed Properties
+// Computed Properties - NEU und KORREKT
 const imageUrl = computed(() => {
-  if (imageError.value) return getDefaultImage()
+  if (imageError.value) return productImages['default']
   
-  const imageName = props.product.imageUrl || props.product.imageName
-  if (imageName) {
-    return `/src/assets/product_pics/${imageName}`
-  }
-  return getFallbackImage(props.product.id)
+  // Direkter Zugriff über die Bildermap
+  return productImages[props.product.id] || productImages['default']
 })
 
 const productRoute = computed(() => `/product/${props.product.id}`)
@@ -59,26 +57,6 @@ const truncatedDescription = computed(() => {
 })
 
 // Methods
-const getFallbackImage = (productId) => {
-  const imageMap = {
-    1: '/src/assets/product_pics/Hundeleine-dunklesLeder.png',
-    2: '/src/assets/product_pics/Hundeleine-rot.png',
-    3: '/src/assets/product_pics/Hundeleine-Stoff.png',
-    4: '/src/assets/product_pics/Hundehalsband-Türkis.png',
-    5: '/src/assets/product_pics/Hundehalsband-Leder.png',
-    6: '/src/assets/product_pics/Hundehalsband-premium.png',
-    7: '/src/assets/product_pics/Hundejacke-Blau.png',
-    8: '/src/assets/product_pics/HundePulli.png',
-    9: '/src/assets/product_pics/Hundejacke-Schwarz.png',
-    10: '/src/assets/product_pics/Pedigree-Futter.png',
-    11: '/src/assets/product_pics/Activa-Gold-Futter.png',
-    12: '/src/assets/product_pics/Nutrima-Futter.png'
-  }
-  return imageMap[productId] || getDefaultImage()
-}
-
-const getDefaultImage = () => '/src/assets/product_pics/default.jpg'
-
 const handleImageError = () => {
   imageError.value = true
 }
@@ -89,6 +67,7 @@ const goToProduct = () => {
 </script>
 
 <style scoped>
+/* Dein bestehender CSS-Code bleibt UNVERÄNDERT */
 .product-card {
   --card-bg: rgba(50, 50, 50, 0.8);
   --card-text: #f5f1e7;
@@ -127,7 +106,7 @@ const goToProduct = () => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
-  background: #f0f0f0; /* Fallback background */
+  background: #f0f0f0;
 }
 
 .product-card:hover .card-img {

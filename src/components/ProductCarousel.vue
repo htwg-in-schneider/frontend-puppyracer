@@ -30,84 +30,12 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { productCarouselData } from '@/images' // WICHTIG: Import ändern
 
 const router = useRouter()
 
-// VOLLSTÄNDIGE PRODUKTDATEN MIT EINDEUTIGEN IDs
-const products = [
-  { 
-    id: 1, 
-    name: 'Premium Lederleine', 
-    image: '/src/assets/product_pics/Hundeleine-dunklesLeder.png',
-    category: 'leinen'
-  },
-  { 
-    id: 2, 
-    name: 'Stoffleine mit Griff', 
-    image: '/src/assets/product_pics/Hundeleine-Stoff.png',
-    category: 'leinen'
-  },
-  { 
-    id: 3, 
-    name: 'Leine in Rot', 
-    image: '/src/assets/product_pics/Hundeleine-rot.png',
-    category: 'leinen'
-  },
-  { 
-    id: 4, 
-    name: 'Türkises Halsband', 
-    image: '/src/assets/product_pics/Hundehalsband-Türkis.png',
-    category: 'halsbaender'
-  },
-  { 
-    id: 5, 
-    name: 'Lederhalsband', 
-    image: '/src/assets/product_pics/Hundehalsband-Leder.png',
-    category: 'halsbaender'
-  },
-  { 
-    id: 6, 
-    name: 'Premium Halsband', 
-    image: '/src/assets/product_pics/Hundehalsband-premium.png',
-    category: 'halsbaender'
-  },
-  { 
-    id: 7, 
-    name: 'Rote Regenjacke', 
-    image: '/src/assets/product_pics/Hundejacke-Blau.png',
-    category: 'bekleidung'
-  },
-  { 
-    id: 8, 
-    name: 'Kuscheliger Pullover', 
-    image: '/src/assets/product_pics/HundePulli.png',
-    category: 'bekleidung'
-  },
-  { 
-    id: 9, 
-    name: 'Schwarze Regenjacke', 
-    image: '/src/assets/product_pics/Hundejacke-Schwarz.png',
-    category: 'bekleidung'
-  },
-  { 
-    id: 10, 
-    name: 'Pedigree Trockenfutter', 
-    image: '/src/assets/product_pics/Pedigree-Futter.png',
-    category: 'snacks'
-  },
-  { 
-    id: 11, 
-    name: 'Activa Gold Futter', 
-    image: '/src/assets/product_pics/Activa-Gold-Futter.png',
-    category: 'snacks'
-  },
-  { 
-    id: 12, 
-    name: 'Nutrima Premiumfutter', 
-    image: '/src/assets/product_pics/Nutrima-Futter.png',
-    category: 'snacks'
-  },
-]
+// Jetzt die importierten Daten verwenden
+const products = productCarouselData
 
 const imageError = ref(false)
 
@@ -133,6 +61,7 @@ const goToProduct = (productId) => {
 </script>
 
 <style scoped>
+/* DEIN BEREITS EXISTIERENDER CSS-CODE BLEIBT UNVERÄNDERT */
 .product-carousel {
     width: 100%;
     overflow-x: auto;

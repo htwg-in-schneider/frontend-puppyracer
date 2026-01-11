@@ -133,6 +133,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/Warenkorb.js'
 import ProductReviews from '@/components/ProductReviews.vue'
+import { productImages } from '@/images' // WICHTIGER IMPORT
 
 const route = useRoute()
 const router = useRouter()
@@ -153,28 +154,14 @@ const categoryNames = {
   'snacks': 'Snacks & Futter'
 }
 
-// Computed Properties
+// Computed Properties - KORRIGIERT
 const imageUrl = computed(() => {
-  if (imageError.value) return '/src/assets/product_pics/default.jpg'
+  if (imageError.value) return productImages['default']
   
-  if (!product.value) return '/src/assets/product_pics/default.jpg'
+  if (!product.value) return productImages['default']
   
-  const imageMap = {
-    1: '/src/assets/product_pics/Hundeleine-dunklesLeder.png',
-    2: '/src/assets/product_pics/Hundeleine-rot.png',
-    3: '/src/assets/product_pics/Hundeleine-Stoff.png',
-    4: '/src/assets/product_pics/Hundehalsband-Türkis.png',
-    5: '/src/assets/product_pics/Hundehalsband-Leder.png',
-    6: '/src/assets/product_pics/Hundehalsband-premium.png',
-    7: '/src/assets/product_pics/Hundejacke-Blau.png',
-    8: '/src/assets/product_pics/HundePulli.png',
-    9: '/src/assets/product_pics/Hundejacke-Schwarz.png',
-    10: '/src/assets/product_pics/Pedigree-Futter.png',
-    11: '/src/assets/product_pics/Activa-Gold-Futter.png',
-    12: '/src/assets/product_pics/Nutrima-Futter.png'
-  }
-  
-  return imageMap[product.value.id] || '/src/assets/product_pics/default.jpg'
+  // Direkter Zugriff über die zentrale Bildermap
+  return productImages[product.value.id] || productImages['default']
 })
 
 const formattedPrice = computed(() => {
@@ -194,7 +181,8 @@ const loadProduct = async () => {
   imageError.value = false
   
   try {
-    const response = await fetch(`http://localhost:8081/api/product/${route.params.id}`)
+    // WICHTIG: Backend-URL korrigieren
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${route.params.id}`)
     
     if (response.ok) {
       product.value = await response.json()
@@ -277,6 +265,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* DEIN BEREITS EXISTIERENDER CSS-CODE BLEIBT UNVERÄNDERT */
 .detail-page {
   padding-top: 120px;
   min-height: 100vh;
