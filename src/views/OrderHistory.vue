@@ -94,7 +94,7 @@
 
             <!-- Items -->
             <div class="items">
-              <div v-for="item in order.items?.slice(0, 3)" :key="item.id" class="item">
+              <div v-for="item in order.items.slice(0, 3)" :key="item.id" class="item">
                 <img :src="getImageUrl(item.productImage)" :alt="item.productName" />
                 <div class="item-details">
                   <span>{{ item.productName }}</span>
@@ -102,7 +102,7 @@
                 </div>
                 <span class="item-total">{{ formatCurrency(item.price * item.quantity) }}</span>
               </div>
-              <div v-if="order.items?.length > 3" class="more-items">
+              <div v-if="order.items.length > 3" class="more-items">
                 + {{ order.items.length - 3 }} weitere Artikel
               </div>
             </div>
@@ -160,7 +160,7 @@ import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 const router = useRouter()
-const { getAccessTokenSilently } = useAuth0()
+const { getAccessTokenSilently, isAuthenticated } = useAuth0()
 
 // State
 const orders = ref([])
@@ -176,7 +176,6 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 // Helper: Bild-URL konstruieren
 const getImageUrl = (imageName) => {
   if (!imageName) return '/src/assets/placeholder.jpg'
-  // Deine Bilder liegen im assets/product_pics/ Ordner
   return `/src/assets/product_pics/${imageName}`
 }
 
@@ -191,9 +190,9 @@ const filteredOrders = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(o => 
-      o.orderNumber?.toLowerCase().includes(query) ||
-      o.user?.name?.toLowerCase().includes(query) ||
-      o.user?.email?.toLowerCase().includes(query)
+      o.orderNumber.toLowerCase().includes(query) ||
+      (o.user && o.user.name.toLowerCase().includes(query)) ||
+      (o.user && o.user.email.toLowerCase().includes(query))
     )
   }
   
@@ -244,27 +243,40 @@ const getStatusText = (status) => {
   return map[status] || status
 }
 
-// Load orders from backend
+// Load orders from backend - KORRIGIERT nach PDFs
 const loadOrders = async () => {
+  if (!isAuthenticated.value) {
+    error.value = 'Bitte zuerst anmelden'
+    loading.value = false
+    return
+  }
+
   loading.value = true
   error.value = ''
   
   try {
-    // Check admin status
     const token = await getAccessTokenSilently()
     
-    // 1. User-Profil laden für Admin-Check
+    // 1. Zuerst Profil laden um Admin-Status zu prüfen (PDF Seite 41)
     const profileRes = await fetch(`${API_BASE}/api/profile`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
     })
     
-    if (profileRes.ok) {
-      const userData = await profileRes.json()
-      isAdmin.value = userData.role === 'ADMIN'
+    if (!profileRes.ok) {
+      throw new Error(`Profil konnte nicht geladen werden: ${profileRes.status}`)
     }
+    
+    const userData = await profileRes.json()
+    isAdmin.value = userData.role === 'ADMIN'
+    console.log('User role from backend:', userData.role, 'Is admin:', isAdmin.value)
     
     // 2. Bestellungen laden
     const endpoint = isAdmin.value ? '/api/orders/admin' : '/api/orders/my-orders'
+    console.log('Loading from endpoint:', endpoint)
+    
     const ordersRes = await fetch(`${API_BASE}${endpoint}`, {
       headers: { 
         'Authorization': `Bearer ${token}`,
@@ -272,20 +284,27 @@ const loadOrders = async () => {
       }
     })
     
+    console.log('Orders response status:', ordersRes.status)
+    
     if (!ordersRes.ok) {
-      if (ordersRes.status === 404) {
+      if (ordersRes.status === 403) {
+        error.value = 'Zugriff verweigert. Nur Administratoren können alle Bestellungen sehen.'
+        orders.value = []
+      } else if (ordersRes.status === 404) {
         orders.value = [] // Keine Bestellungen gefunden
       } else {
         throw new Error(`Fehler ${ordersRes.status}: ${ordersRes.statusText}`)
       }
     } else {
-      orders.value = await ordersRes.json()
-      console.log('Bestellungen geladen:', orders.value.length)
+      const ordersData = await ordersRes.json()
+      console.log('Orders loaded:', ordersData.length)
+      orders.value = ordersData
     }
     
   } catch (err) {
     console.error('Fehler beim Laden der Bestellungen:', err)
     error.value = `Fehler: ${err.message}`
+    orders.value = []
   } finally {
     loading.value = false
   }
@@ -293,17 +312,17 @@ const loadOrders = async () => {
 
 // View order details
 const viewOrder = (order) => {
-  // Navigiere zur Bestellbestätigungsseite
   router.push(`/order-confirmation/${order.orderNumber}`)
 }
 
-// Update order status (Admin only)
+// Update order status (Admin only) - KORRIGIERT nach PDFs
 const updateOrderStatus = async (order, newStatus) => {
   if (!confirm(`Bestellung #${order.orderNumber} wirklich auf "${getStatusText(newStatus)}" setzen?`)) return
   
   updatingStatus.value = order.id
   try {
     const token = await getAccessTokenSilently()
+    
     const response = await fetch(`${API_BASE}/api/orders/${order.id}/status`, {
       method: 'PUT',
       headers: { 
@@ -313,14 +332,13 @@ const updateOrderStatus = async (order, newStatus) => {
       body: JSON.stringify({ status: newStatus })
     })
     
-    if (response.ok) {
-      // Status lokal aktualisieren
-      order.status = newStatus
-      // Neu laden für konsistente Daten
-      await loadOrders()
-    } else {
-      throw new Error('Status konnte nicht aktualisiert werden')
+    if (!response.ok) {
+      throw new Error(`Status konnte nicht aktualisiert werden: ${response.status}`)
     }
+    
+    // Status lokal aktualisieren
+    order.status = newStatus
+    
   } catch (err) {
     alert(`Fehler: ${err.message}`)
   } finally {
@@ -333,8 +351,22 @@ watch([searchQuery, statusFilter], () => {
   // Filter wird über computed properties angewendet
 })
 
+// Watch authentication status
+watch(isAuthenticated, (newVal) => {
+  if (newVal) {
+    loadOrders()
+  }
+})
+
 // Init
-onMounted(loadOrders)
+onMounted(() => {
+  if (isAuthenticated.value) {
+    loadOrders()
+  } else {
+    loading.value = false
+    error.value = 'Bitte zuerst anmelden'
+  }
+})
 </script>
 
 <style scoped>
@@ -449,6 +481,10 @@ select:focus {
   margin: 0 auto 1rem;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .error i, .no-orders i {
   font-size: 2.5rem;
   margin-bottom: 1rem;
@@ -485,6 +521,7 @@ select:focus {
   font-weight: 600;
   transition: all 0.3s;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .btn-primary:hover {
@@ -797,11 +834,7 @@ select:focus {
   
   .item-total {
     text-align: left;
-    margin-left: 70px; /* Align with text */
+    margin-left: 70px;
   }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>

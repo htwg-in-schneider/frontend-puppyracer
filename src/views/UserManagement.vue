@@ -18,7 +18,6 @@
         <select v-model="roleFilter" class="filter-select">
           <option value="">Alle Rollen</option>
           <option value="ADMIN">Administratoren</option>
-          <option value="SELLER">Verkäufer</option>
           <option value="BUYER">Kunden</option>
         </select>
       </div>
@@ -141,26 +140,51 @@ const error = ref('')
 const savingUserId = ref(null)
 const searchQuery = ref('')
 const roleFilter = ref('')
-const originalUsers = ref(new Map()) // Für Änderungsverfolgung
+const originalUsers = ref(new Map())
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 
-// Helper: Authentifizierte Fetch
+// Helper: Authentifizierte Fetch mit besserer Fehlerbehandlung
 async function fetchWithAuth(url, options = {}) {
-  const token = await getAccessTokenSilently()
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers: { 
-      ...options.headers,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+  try {
+    const token = await getAccessTokenSilently()
+    
+    const response = await fetch(`${API_BASE}${url}`, {
+      ...options,
+      headers: { 
+        ...options.headers,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    })
+    
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.message || errorMessage
+      } catch {
+        const errorText = await response.text()
+        if (errorText) errorMessage = errorText
+      }
+      
+      if (response.status === 403) {
+        throw new Error(`Zugriff verweigert: Nur Administratoren haben Zugriff.`)
+      } else if (response.status === 401) {
+        throw new Error(`Sitzung abgelaufen. Bitte neu anmelden.`)
+      } else {
+        throw new Error(errorMessage)
+      }
     }
-  })
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`HTTP ${response.status}: ${errorText}`)
+    
+    return response
+  } catch (err) {
+    if (err.message.includes('login_required') || err.message.includes('timeout')) {
+      throw new Error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.')
+    }
+    throw err
   }
-  return response
 }
 
 // Computed
@@ -195,30 +219,53 @@ const isUserChanged = (user) => {
          user.role !== original.role
 }
 
-// API Calls
+// API Calls - KORRIGIERTE VERSION
 async function loadUsers() {
   if (!isAuthenticated.value) {
-    error.value = 'Bitte anmelden'
+    error.value = 'Bitte anmelden, um Benutzer zu verwalten.'
     loading.value = false
     return
   }
 
   loading.value = true
   error.value = ''
+  
   try {
+    // Zuerst prüfen, ob der Nutzer Admin ist
+    let isAdmin = false
+    try {
+      const profileRes = await fetchWithAuth('/api/profile')
+      const profileData = await profileRes.json()
+      isAdmin = profileData.role === 'ADMIN'
+    } catch (profileErr) {
+      console.warn('Profil-Check fehlgeschlagen:', profileErr)
+      // Falls Profil nicht geladen werden kann, versuche trotzdem zu laden
+    }
+    
+    if (!isAdmin) {
+      throw new Error('Zugriff verweigert: Nur Administratoren können Benutzer verwalten.')
+    }
+    
+    // Benutzer laden
     const response = await fetchWithAuth('/api/users')
     const data = await response.json()
+    
     users.value = data
     // Originalwerte speichern
     originalUsers.value = new Map(data.map(user => [user.id, { ...user }]))
+    
   } catch (err) {
-    if (err.message.includes('403')) {
-      error.value = 'Zugriff verweigert! Nur Administratoren.'
-    } else if (err.message.includes('401')) {
-      error.value = 'Sitzung abgelaufen. Bitte neu anmelden.'
+    console.error('Fehler beim Laden der Benutzer:', err)
+    
+    if (err.message.includes('Zugriff verweigert') || err.message.includes('Administratoren')) {
+      error.value = err.message
+    } else if (err.message.includes('Sitzung')) {
+      error.value = err.message
     } else {
       error.value = `Fehler: ${err.message}`
     }
+    
+    users.value = []
   } finally {
     loading.value = false
   }
@@ -240,9 +287,12 @@ async function saveUser(user) {
     // Original aktualisieren
     originalUsers.value.set(user.id, { ...user })
   } catch (err) {
-    alert(err.message.includes('403') 
-      ? 'Fehlende Berechtigung! Nur Administratoren.' 
-      : 'Speichern fehlgeschlagen.')
+    alert(`Speichern fehlgeschlagen: ${err.message}`)
+    // Benutzer zurücksetzen
+    const original = originalUsers.value.get(user.id)
+    if (original) {
+      Object.assign(user, original)
+    }
   } finally {
     savingUserId.value = null
   }
@@ -250,19 +300,24 @@ async function saveUser(user) {
 
 // Watcher
 watch(isAuthenticated, (newVal) => {
-  if (newVal) loadUsers()
-  else {
+  if (newVal) {
+    loadUsers()
+  } else {
     users.value = []
     error.value = ''
+    loading.value = false
   }
 }, { immediate: true })
 
 onMounted(() => {
-  if (isAuthenticated.value) loadUsers()
+  if (isAuthenticated.value) {
+    loadUsers()
+  }
 })
 </script>
 
 <style scoped>
+/* DER GANZE STYLE BLEIBT UNVERÄNDERT - GENAU WIE IN DEINER VORHERIGEN DATEI */
 .admin-container {
   min-height: 100vh;
   display: flex;
