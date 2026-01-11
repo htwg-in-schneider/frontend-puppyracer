@@ -12,7 +12,6 @@ import JackeSchwarz from '@/assets/product_pics/Hundejacke-Schwarz.png'
 import Pedigree from '@/assets/product_pics/Pedigree-Futter.png'
 import ActivaGold from '@/assets/product_pics/Activa-Gold-Futter.png'
 import Nutrima from '@/assets/product_pics/Nutrima-Futter.png'
-import DefaultImage from '@/assets/product_pics/default.jpg'
 
 // 1. Bildermap für den Zugriff per Produkt-ID
 export const productImages = {
