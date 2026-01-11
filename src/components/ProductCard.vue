@@ -32,7 +32,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { productImages } from '@/utils/images' // WICHTIG: Import hinzufügen
+import { productImages } from '@/images'
 
 const props = defineProps({
   product: { type: Object, required: true }
@@ -41,12 +41,10 @@ const props = defineProps({
 const router = useRouter()
 const imageError = ref(false)
 
-// Computed Properties - NEU und KORREKT
+// Computed Properties - KORRIGIERT
 const imageUrl = computed(() => {
-  if (imageError.value) return productImages['default']
-  
-  // Direkter Zugriff über die Bildermap
-  return productImages[props.product.id] || productImages['default']
+  // Fallback auf erstes Bild (ID 1)
+  return productImages[props.product.id] || productImages[1] || ''
 })
 
 const productRoute = computed(() => `/product/${props.product.id}`)
@@ -67,7 +65,7 @@ const goToProduct = () => {
 </script>
 
 <style scoped>
-/* Dein bestehender CSS-Code bleibt UNVERÄNDERT */
+/* DEIN CSS BLEIBT UNVERÄNDERT */
 .product-card {
   --card-bg: rgba(50, 50, 50, 0.8);
   --card-text: #f5f1e7;

@@ -26,8 +26,7 @@ export const productImages = {
   9: JackeSchwarz,
   10: Pedigree,
   11: ActivaGold,
-  12: Nutrima,
-  'default': DefaultImage
+  12: Nutrima
 }
 
 // 2. Produktdaten-Array (für ProductCarousel)
@@ -108,5 +107,5 @@ export const productCarouselData = [
 
 // 3. Hilfsfunktion
 export function getProductImage(productId) {
-  return productImages[productId] || productImages['default']
+  return productImages[productId] || productImages[1] // Fallback auf erstes Bild
 }

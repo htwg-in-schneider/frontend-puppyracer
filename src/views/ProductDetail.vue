@@ -156,12 +156,12 @@ const categoryNames = {
 
 // Computed Properties - KORRIGIERT
 const imageUrl = computed(() => {
-  if (imageError.value) return productImages['default']
+  if (imageError.value) return ''
   
-  if (!product.value) return productImages['default']
+  if (!product.value) return ''
   
   // Direkter Zugriff über die zentrale Bildermap
-  return productImages[product.value.id] || productImages['default']
+  return productImages[product.value.id] || productImages[1] || ''
 })
 
 const formattedPrice = computed(() => {

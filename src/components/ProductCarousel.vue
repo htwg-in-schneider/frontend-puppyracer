@@ -30,13 +30,10 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { productCarouselData } from '@/images' // WICHTIG: Import ändern
+import { productCarouselData } from '@/images'
 
 const router = useRouter()
-
-// Jetzt die importierten Daten verwenden
 const products = productCarouselData
-
 const imageError = ref(false)
 
 // Responsive Bildhöhe
@@ -48,9 +45,9 @@ const imageHeight = computed(() => {
 })
 
 const handleImageError = (event) => {
-  event.target.src = '/src/assets/product_pics/default.jpg'
-  event.target.style.opacity = '0.7'
+  // Einfach nur Warnung loggen, Bild bleibt wie es ist
   console.warn(`Bild konnte nicht geladen werden: ${event.target.alt}`)
+  event.target.style.opacity = '0.7'
 }
 
 const goToProduct = (productId) => {
@@ -61,7 +58,7 @@ const goToProduct = (productId) => {
 </script>
 
 <style scoped>
-/* DEIN BEREITS EXISTIERENDER CSS-CODE BLEIBT UNVERÄNDERT */
+/* DEIN CSS BLEIBT UNVERÄNDERT */
 .product-carousel {
     width: 100%;
     overflow-x: auto;
