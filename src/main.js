@@ -15,17 +15,33 @@ app.use(pinia)
 // Dann Router
 app.use(router)
 
-// Auth0 KONFIGURIEREN WIE IM PDF!
+// Auth0 KONFIGURIEREN FÜR HASH MODE
 app.use(
   createAuth0({
     domain: import.meta.env.VITE_AUTH0_DOMAIN,
     clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
     authorizationParams: {
       audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-      // WICHTIG: Genau wie im PDF Seite 21!
-      redirect_uri: window.location.origin + window.location.pathname
-    }
+    
+      redirect_uri: window.location.origin + window.location.pathname,
+      
+    },
+    // Wichtig für korrektes Verhalten
+    useRefreshTokens: false,
+    cacheLocation: 'localstorage',
+    
   })
 )
 
 app.mount('#app')
+
+// Debug: Logge die Auth0 Konfiguration (nur in Entwicklung)
+if (import.meta.env.DEV) {
+  console.log('Auth0 Config:', {
+    domain: import.meta.env.VITE_AUTH0_DOMAIN,
+    clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
+    audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+    redirectUri: window.location.origin + window.location.pathname,
+    fullUrl: window.location.href
+  })
+}
