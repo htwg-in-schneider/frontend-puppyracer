@@ -1,4 +1,3 @@
-<!-- HeroSection.vue - Optimierte Version -->
 <template>
   <div>
     <section class="hero" aria-label="Willkommensbereich">
@@ -11,15 +10,15 @@
       >
       <div class="hero-overlay" aria-hidden="true"></div>
       <div class="hero-text">
-        <h1 class="text-light">Willkommen auf <strong>PuppyRacer!</strong></h1>
+        <h1 class="text-light">Willkommen auf <span class="highlight">PuppyRacer!</span></h1>
         <h2 class="text-light">Die Webseite, wo du alles für deinen Hund findest!</h2>
       </div>
     </section>
 
-    <section class="contact-section bg-light" aria-labelledby="contact-heading">
+    <section class="contact-section" aria-labelledby="contact-heading">
       <div class="contact-container">
-        <h2 id="contact-heading" class="text-primary">Kontaktieren Sie uns</h2>
-        <p class="text-secondary">Haben Sie Fragen zu unseren Produkten? Schreiben Sie uns!</p>
+        <h2 id="contact-heading">Kontaktieren Sie uns</h2>
+        <p class="subtitle">Haben Sie Fragen zu unseren Produkten? Schreiben Sie uns!</p>
         
         <form @submit.prevent="sendContact" class="contact-form" novalidate>
           <div class="form-group">
@@ -32,10 +31,8 @@
               :class="{ 'error': errors.name }"
               @input="clearError('name')"
               aria-describedby="name-error"
-              minlength="2"
-              maxlength="50"
             >
-            <div v-if="errors.name" id="name-error" class="error-message" role="alert">{{ errors.name }}</div>
+            <div v-if="errors.name" id="name-error" class="error-message">{{ errors.name }}</div>
           </div>
           
           <div class="form-group">
@@ -50,7 +47,7 @@
               @input="clearError('email')"
               aria-describedby="email-error"
             >
-            <div v-if="errors.email" id="email-error" class="error-message" role="alert">{{ errors.email }}</div>
+            <div v-if="errors.email" id="email-error" class="error-message">{{ errors.email }}</div>
           </div>
           
           <div class="form-group">
@@ -64,13 +61,11 @@
               :class="{ 'error': errors.message }"
               @input="clearError('message')"
               aria-describedby="message-error"
-              minlength="10"
-              maxlength="1000"
             ></textarea>
-            <div v-if="errors.message" id="message-error" class="error-message" role="alert">{{ errors.message }}</div>
+            <div v-if="errors.message" id="message-error" class="error-message">{{ errors.message }}</div>
           </div>
           
-          <button type="submit" class="btn-submit" :disabled="isSubmitting">
+          <button type="submit" class="btn-primary" :disabled="isSubmitting">
             <span v-if="isSubmitting">Wird gesendet...</span>
             <span v-else>Nachricht senden</span>
           </button>
@@ -95,16 +90,10 @@ const isSubmitting = ref(false)
 const validateForm = () => {
   errors.value = {}
   
-  // Name validation
   if (!contact.value.name.trim()) {
     errors.value.name = 'Bitte geben Sie Ihren Namen ein'
-  } else if (contact.value.name.length < 2) {
-    errors.value.name = 'Name muss mindestens 2 Zeichen lang sein'
-  } else if (contact.value.name.length > 50) {
-    errors.value.name = 'Name darf maximal 50 Zeichen lang sein'
   }
   
-  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!contact.value.email.trim()) {
     errors.value.email = 'Bitte geben Sie Ihre E-Mail ein'
@@ -112,22 +101,15 @@ const validateForm = () => {
     errors.value.email = 'Bitte geben Sie eine gültige E-Mail ein'
   }
   
-  // Message validation
   if (!contact.value.message.trim()) {
     errors.value.message = 'Bitte geben Sie eine Nachricht ein'
-  } else if (contact.value.message.length < 10) {
-    errors.value.message = 'Nachricht muss mindestens 10 Zeichen lang sein'
-  } else if (contact.value.message.length > 1000) {
-    errors.value.message = 'Nachricht darf maximal 1000 Zeichen lang sein'
   }
   
   return Object.keys(errors.value).length === 0
 }
 
 const clearError = (field) => {
-  if (errors.value[field]) {
-    delete errors.value[field]
-  }
+  delete errors.value[field]
 }
 
 const handleImageError = (event) => {
@@ -153,15 +135,15 @@ Gesendet von PuppyRacer Website
     
     window.location.href = `mailto:info@puppyracer.de?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
     
-    // Reset form
     contact.value = { name: '', email: '', message: '' }
     
-    // Show success message (optional)
-    alert('Ihre Nachricht wird im E-Mail-Programm geöffnet.')
+    setTimeout(() => {
+      alert('Ihre Nachricht wird im E-Mail-Programm geöffnet.')
+    }, 100)
     
   } catch (error) {
-    console.error('Fehler beim Öffnen des E-Mail-Clients:', error)
-    alert('Leider konnte der E-Mail-Client nicht geöffnet werden. Bitte senden Sie Ihre Nachricht direkt an info@puppyracer.de')
+    console.error('Fehler:', error)
+    alert('Leider konnte der E-Mail-Client nicht geöffnet werden.')
   } finally {
     isSubmitting.value = false
   }
@@ -171,9 +153,9 @@ Gesendet von PuppyRacer Website
 <style scoped>
 .hero {
   position: relative;
-  height: 100vh;
-  min-height: 600px;
-  max-height: 800px;
+  height: 70vh;
+  min-height: 500px;
+  max-height: 700px;
   overflow: hidden;
 }
 
@@ -181,15 +163,16 @@ Gesendet von PuppyRacer Website
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.8;
 }
 
+/* KORREKTUR: Hero-Overlay ohne Pink */
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: var(--color-primary-dark);
-  opacity: 0.4;
-  mix-blend-mode: overlay;
+  background: linear-gradient(135deg, 
+    rgba(45, 33, 33, 0.7) 0%,       /* Dunkles Braun mit Transparenz */
+    rgba(180, 134, 101, 0.5) 100%   /* Mittleres Braun (#B48665) mit Transparenz */
+  );
 }
 
 .hero-text {
@@ -197,24 +180,32 @@ Gesendet von PuppyRacer Website
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--color-background-light);
+  color: white;
   text-align: center;
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
   width: 90%;
   max-width: 800px;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .hero-text h1 { 
   font-size: clamp(2rem, 5vw, 3rem);
   margin-bottom: 1rem;
+  font-weight: 700;
 }
+
 .hero-text h2 { 
-  font-size: clamp(1.25rem, 3vw, 2rem); 
+  font-size: clamp(1.25rem, 3vw, 1.75rem); 
+  font-weight: 400;
 }
-.hero-text strong { color: var(--color-accent-pink); }
+
+.highlight {
+  color: var(--color-accent-pink);
+  font-weight: 800;
+}
 
 .contact-section {
   padding: 4rem 2rem;
+  background-color: var(--color-background-light); /* #EFE1D6 */
   text-align: center;
 }
 
@@ -223,11 +214,22 @@ Gesendet von PuppyRacer Website
   margin: 0 auto;
 }
 
+.contact-container h2 {
+  color: var(--color-primary-dark); /* #2D2121 */
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.subtitle {
+  color: var(--color-accent-brown); /* #B48665 */
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
 .contact-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  margin-top: 2rem;
 }
 
 .form-group {
@@ -238,41 +240,39 @@ Gesendet von PuppyRacer Website
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   margin: -1px;
+  padding: 0;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
   border: 0;
 }
 
 input, textarea {
   width: 100%;
   padding: 1rem;
-  border: 2px solid var(--color-accent-brown);
+  border: 2px solid var(--color-accent-brown); /* #B48665 */
   border-radius: 8px;
   font-family: var(--font-roboto);
   font-size: 1rem;
-  transition: border-color 0.3s;
   background: white;
-  color: var(--color-primary-dark);
-}
-
-input.error, textarea.error {
-  border-color: var(--color-danger);
-}
-
-.error-message {
-  color: var(--color-danger);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  font-family: var(--font-opensans);
+  color: var(--color-primary-dark); /* #2D2121 */
+  transition: border-color 0.3s;
 }
 
 input:focus, textarea:focus {
   outline: none;
-  border-color: var(--color-accent-pink);
+  border-color: var(--color-accent-pink); /* #E26191 */
   box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.1);
+}
+
+input.error, textarea.error {
+  border-color: #dc3545;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 
 textarea { 
@@ -280,48 +280,51 @@ textarea {
   resize: vertical; 
 }
 
-.btn-submit {
-  background: var(--color-accent-pink);
+.btn-primary {
+  background: var(--color-accent-pink); /* #E26191 */
   color: white;
   padding: 1rem 2rem;
   border: none;
   border-radius: 8px;
   font-family: var(--font-roboto);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
-  margin: 0 auto;
+  transition: background-color 0.3s;
   width: 100%;
   max-width: 300px;
+  margin: 0 auto;
 }
 
-.btn-submit:hover:not(:disabled) { 
-  background: #d04a7c; 
-  transform: translateY(-1px);
+.btn-primary:hover:not(:disabled) { 
+  background: #d04a7c; /* Dunkleres Pink für Hover */
 }
 
-.btn-submit:active:not(:disabled) { 
-  transform: translateY(0); 
-}
-
-.btn-submit:disabled {
+.btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
   .hero {
-    height: 70vh;
+    height: 60vh;
     min-height: 400px;
+  }
+  
+  .hero-text h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+  }
+  
+  .hero-text h2 {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
   }
   
   .contact-section {
     padding: 2rem 1rem;
   }
   
-  input, textarea {
-    padding: 0.875rem;
+  .contact-container h2 {
+    font-size: 1.5rem;
   }
 }
 </style>

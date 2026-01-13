@@ -16,31 +16,39 @@ defineEmits(['click'])
 
 <style scoped>
 .nav-btn {
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: none;
   padding: 0.5rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
   font-weight: 600;
+  font-family: var(--font-roboto);
+  font-size: 0.95rem;
 }
 
 .btn-primary {
-  background: rgba(203, 191, 155, 0.25);
+  background: var(--color-accent-pink); /* #E26191 */
   color: white;
 }
 
 .btn-primary:hover {
-  background: rgba(255, 255, 255, 0.3);
-  color: #e26191;
+  background: #d04a7c; /* Dunkleres Pink */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(226, 97, 145, 0.3);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--color-accent-brown); /* #B48665 */
+  color: var(--color-primary-dark); /* #2D2121 */
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.25);
-  color: #e26191;
+  background: #a37854; /* Dunkleres Braun */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(180, 134, 101, 0.3);
+}
+
+.nav-btn:active {
+  transform: translateY(0);
 }
 </style>

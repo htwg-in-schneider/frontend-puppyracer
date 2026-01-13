@@ -11,120 +11,95 @@
 
       <!-- Desktop Navigation -->
       <div class="desktop-nav" v-if="!isMobile">
-        <!-- Kategorien -->
-        <div class="categories-wrapper">
-          <div class="categories-dropdown" v-if="showCategoriesDropdown">
-            <button class="categories-toggle" @click="toggleCategoriesMenu" :aria-expanded="categoriesMenuOpen">
-              Kategorien
-              <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': categoriesMenuOpen }"></i>
-            </button>
-            
-            <div v-if="categoriesMenuOpen" class="categories-dropdown-menu" @click="closeCategoriesMenu">
-              <router-link to="/produkte/leinen" class="dropdown-item">
-                Leinen
-              </router-link>
-              <router-link to="/produkte/halsbaender" class="dropdown-item">
-                Halsbänder
-              </router-link>
-              <router-link to="/produkte/bekleidung" class="dropdown-item">
-                Bekleidung
-              </router-link>
-              <router-link to="/produkte/snacks" class="dropdown-item">
-                Snacks
-              </router-link>
-            </div>
-          </div>
-          
-          <div class="categories" v-else>
-            <router-link v-for="category in categories" :key="category.path" :to="category.path" class="category">
-              {{ category.name }}
-            </router-link>
-          </div>
+        <!-- Kategorien als Buttons -->
+        <div class="categories">
+          <button 
+            v-for="category in categories" 
+            :key="category.path" 
+            class="category-btn"
+            @click="goToCategory(category.path)"
+            :aria-label="`Zu ${category.name} navigieren`"
+          >
+            {{ category.name }}
+          </button>
         </div>
 
         <!-- Suchleiste -->
         <div class="search">
           <form @submit.prevent="handleSearch" class="search-form" role="search">
-            <div class="search-wrapper">
-              <input 
-                v-model="searchQuery" 
-                placeholder="Hundezubehör suchen..." 
-                class="search-input" 
-                @keyup.enter="handleSearch"
-                aria-label="Suchbegriff"
-              />
-              <button type="submit" class="search-btn" aria-label="Suchen">
-                <i class="bi bi-search"></i>
-                <span class="search-text">Suchen</span>
-              </button>
-            </div>
+            <input 
+              v-model="searchQuery" 
+              placeholder="Hundezubehör suchen..." 
+              class="search-input" 
+              @keyup.enter="handleSearch"
+              aria-label="Suchbegriff"
+            />
+            <button type="submit" class="search-btn" aria-label="Suchen">
+              <i class="bi bi-search"></i>
+            </button>
           </form>
         </div>
 
         <!-- User Actions -->
         <div class="user-actions">
-          <div class="auth-section">
-            <div v-if="!isAuthenticated" class="not-logged">
-              <button @click="handleLogin" class="auth-btn">
-                <i class="bi bi-person-circle"></i>
-                <span class="btn-text">Login</span>
+          <!-- Authentifizierung -->
+          <div v-if="!isAuthenticated" class="auth-actions">
+            <button @click="handleLogin" class="user-btn login-btn" aria-label="Login">
+              <i class="bi bi-person"></i>
+              <span class="btn-text">Login</span>
+            </button>
+          </div>
+          
+          <div v-else class="user-menu">
+            <!-- Admin Menu -->
+            <div v-if="isAdmin" class="admin-dropdown">
+              <button class="user-btn admin-btn" @click="toggleAdminMenu" :aria-expanded="adminMenuOpen">
+                <i class="bi bi-shield"></i>
+                <span class="btn-text">Admin</span>
+                <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': adminMenuOpen }"></i>
               </button>
-            </div>
-            
-            <div v-else class="logged">
-              <div class="user-info">
-                <div v-if="isAdmin" class="admin-menu">
-                  <button class="admin-toggle" @click="toggleAdminMenu" :aria-expanded="adminMenuOpen">
-                    <i class="bi bi-shield-lock"></i>
-                    <span class="btn-text" v-if="!showCompactAdmin">Admin</span>
-                    <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': adminMenuOpen }"></i>
-                  </button>
-                  
-                  <div v-if="adminMenuOpen" class="admin-dropdown">
-                    <router-link to="/admin/users" class="dropdown-item" @click="closeAdminMenu">
-                      Benutzer
-                    </router-link>
-                    <router-link to="/admin/orders" class="dropdown-item" @click="closeAdminMenu">
-                      Bestellungen
-                    </router-link>
-                    <router-link to="/admin/products" class="dropdown-item" @click="closeAdminMenu">
-                      Produkte
-                    </router-link>
-                    <router-link to="/account" class="dropdown-item" @click="closeAdminMenu">
-                      Mein Profil
-                    </router-link>
-                  </div>
-                </div>
-                
-                <router-link v-else to="/account" class="account-btn" aria-label="Mein Konto">
-                  <i class="bi bi-person-circle"></i>
-                  <span class="btn-text" v-if="!showCompactUserInfo">Konto</span>
+              
+              <div v-if="adminMenuOpen" class="dropdown-menu">
+                <router-link to="/admin/users" class="dropdown-item" @click="closeAdminMenu">
+                  <i class="bi bi-people"></i> Benutzer
                 </router-link>
-                
-                <button @click="handleLogout" class="logout-btn" aria-label="Abmelden">
-                  <i class="bi bi-box-arrow-right"></i>
-                  <span class="btn-text" v-if="!showCompactUserInfo">Logout</span>
-                </button>
+                <router-link to="/admin/orders" class="dropdown-item" @click="closeAdminMenu">
+                  <i class="bi bi-receipt"></i> Bestellungen
+                </router-link>
+                <router-link to="/admin/products" class="dropdown-item" @click="closeAdminMenu">
+                  <i class="bi bi-box"></i> Produkte
+                </router-link>
               </div>
             </div>
+            
+            <!-- User Profile -->
+            <router-link to="/account" class="user-btn account-btn" aria-label="Mein Konto">
+              <i class="bi bi-person-circle"></i>
+              <span class="btn-text">Konto</span>
+            </router-link>
+            
+            <!-- Logout -->
+            <button @click="handleLogout" class="user-btn logout-btn" aria-label="Abmelden">
+              <i class="bi bi-box-arrow-right"></i>
+              <span class="btn-text">Logout</span>
+            </button>
           </div>
           
           <!-- Warenkorb -->
           <router-link to="/warenkorb" class="cart-btn" aria-label="Warenkorb">
             <i class="bi bi-cart3"></i>
-            <span class="btn-text" v-if="!showCompactCart">Warenkorb</span>
-            <span class="badge" v-if="cartCount > 0" aria-label="Artikel im Warenkorb">{{ cartCount }}</span>
+            <span class="btn-text">Warenkorb</span>
+            <span class="cart-badge" v-if="cartCount > 0">{{ cartCount }}</span>
           </router-link>
         </div>
       </div>
 
       <!-- Burger Menu für Mobile -->
       <button 
-        class="burger" 
+        class="burger-menu" 
         @click="toggleMenu" 
         :class="{ 'open': menuOpen }"
         :aria-label="menuOpen ? 'Menü schließen' : 'Menü öffnen'"
-        :aria-expanded="menuOpen"
         v-if="isMobile"
       >
         <span></span>
@@ -133,84 +108,76 @@
       </button>
 
       <!-- Mobile Navigation -->
-      <div class="mobile-nav" v-if="isMobile" :class="{ 'show': menuOpen }" v-show="menuOpen">
+      <div class="mobile-nav" v-if="isMobile && menuOpen">
         <!-- Suchleiste -->
         <div class="mobile-search">
-          <form @submit.prevent="handleSearch" class="search-form" role="search">
-            <div class="search-wrapper">
-              <input 
-                v-model="searchQuery" 
-                placeholder="Hundezubehör suchen..." 
-                class="search-input" 
-                @keyup.enter="handleSearch"
-                aria-label="Suchbegriff"
-              />
-              <button type="submit" class="search-btn" aria-label="Suchen">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-          </form>
+          <input 
+            v-model="searchQuery" 
+            placeholder="Suchen..." 
+            class="mobile-search-input"
+            @keyup.enter="handleSearch"
+          />
+          <button @click="handleSearch" class="mobile-search-btn">
+            <i class="bi bi-search"></i>
+          </button>
         </div>
 
         <!-- Kategorien -->
         <div class="mobile-categories">
-          <router-link 
+          <button 
             v-for="category in categories" 
             :key="category.path" 
-            :to="category.path" 
-            class="category" 
-            @click="closeMenu"
+            class="mobile-category-btn"
+            @click="goToCategoryMobile(category.path)"
           >
             {{ category.name }}
-          </router-link>
+          </button>
         </div>
 
         <!-- User Actions -->
         <div class="mobile-user-actions">
-          <div v-if="!isAuthenticated" class="mobile-auth">
-            <button @click="handleLogin" class="mobile-btn">
-              <i class="bi bi-person-circle"></i>
+          <div v-if="!isAuthenticated">
+            <button @click="handleLogin" class="mobile-btn login-mobile">
+              <i class="bi bi-person"></i>
               <span>Login / Registrieren</span>
             </button>
           </div>
           
-          <div v-else class="mobile-logged">
-            <div class="mobile-user-info">
-              <router-link to="/account" class="mobile-nav-item" @click="closeMenu">
-                <i class="bi bi-person"></i>
-                <span>Mein Profil</span>
-              </router-link>
-              
-              <div v-if="isAdmin" class="admin-section">
-                <div class="mobile-nav-header">
-                  <i class="bi bi-shield-lock"></i>
-                  <span>Admin-Bereich</span>
-                </div>
-                <router-link to="/admin/users" class="mobile-nav-subitem" @click="closeMenu">
-                  Benutzer
-                </router-link>
-                <router-link to="/admin/orders" class="mobile-nav-subitem" @click="closeMenu">
-                  Bestellungen
-                </router-link>
-                <router-link to="/admin/products" class="mobile-nav-subitem" @click="closeMenu">
-                  Produkte
-                </router-link>
+          <div v-else>
+            <button @click="goToAccount" class="mobile-nav-item">
+              <i class="bi bi-person-circle"></i>
+              <span>Mein Profil</span>
+            </button>
+            
+            <div v-if="isAdmin" class="admin-section">
+              <div class="admin-title">
+                <i class="bi bi-shield"></i>
+                <span>Admin-Bereich</span>
               </div>
-              
-              <button @click="handleLogout" class="mobile-btn logout">
-                <i class="bi bi-box-arrow-right"></i>
-                <span>Logout</span>
+              <button @click="goToAdmin('users')" class="mobile-nav-subitem">
+                Benutzer
+              </button>
+              <button @click="goToAdmin('orders')" class="mobile-nav-subitem">
+                Bestellungen
+              </button>
+              <button @click="goToAdmin('products')" class="mobile-nav-subitem">
+                Produkte
               </button>
             </div>
+            
+            <button @click="handleLogout" class="mobile-btn logout">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </button>
           </div>
           
-          <router-link to="/warenkorb" class="mobile-nav-item cart-mobile" @click="closeMenu">
-            <div class="cart-info">
+          <button @click="goToCart" class="mobile-nav-item cart-item">
+            <div>
               <i class="bi bi-cart3"></i>
               <span>Warenkorb</span>
             </div>
-            <span class="badge-mobile" v-if="cartCount > 0" aria-label="Artikel im Warenkorb">{{ cartCount }}</span>
-          </router-link>
+            <span class="badge" v-if="cartCount > 0">{{ cartCount }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -218,7 +185,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/Warenkorb'
 import { useAuth0 } from '@auth0/auth0-vue'
@@ -231,12 +198,11 @@ const { loginWithRedirect, logout, user, isAuthenticated, getAccessTokenSilently
 const isScrolled = ref(false)
 const menuOpen = ref(false)
 const adminMenuOpen = ref(false)
-const categoriesMenuOpen = ref(false)
 const searchQuery = ref('')
 const isAdmin = ref(false)
 const windowWidth = ref(window.innerWidth)
 
-// Kategorien als Array für DRY-Code
+// Kategorien
 const categories = [
   { name: 'Leinen', path: '/produkte/leinen' },
   { name: 'Halsbänder', path: '/produkte/halsbaender' },
@@ -244,20 +210,39 @@ const categories = [
   { name: 'Snacks', path: '/produkte/snacks' }
 ]
 
-// Computed Properties
+// Computed
 const cartCount = computed(() => cartStore.itemCount || 0)
 const isMobile = computed(() => windowWidth.value < 900)
-const showCategoriesDropdown = computed(() => windowWidth.value < 1100 && windowWidth.value >= 900)
-const showCompactUserInfo = computed(() => windowWidth.value < 1000)
-const showCompactAdmin = computed(() => windowWidth.value < 950)
-const showCompactCart = computed(() => windowWidth.value < 1000)
 
-// Admin-Check Funktion
+// Navigation Functions
+const goToCategory = (path) => {
+  router.push(path)
+  closeAllMenus()
+}
+
+const goToCategoryMobile = (path) => {
+  router.push(path)
+  closeMenu()
+}
+
+const goToAccount = () => {
+  router.push('/account')
+  closeMenu()
+}
+
+const goToAdmin = (section) => {
+  router.push(`/admin/${section}`)
+  closeMenu()
+}
+
+const goToCart = () => {
+  router.push('/warenkorb')
+  closeMenu()
+}
+
+// Admin Check
 async function checkAdminStatus() {
-  if (!isAuthenticated.value) {
-    isAdmin.value = false
-    return
-  }
+  if (!isAuthenticated.value) return
   
   try {
     const token = await getAccessTokenSilently()
@@ -269,81 +254,39 @@ async function checkAdminStatus() {
       const userData = await response.json()
       isAdmin.value = userData.role === 'ADMIN'
     }
-  } catch (error) {
-    console.error('Admin-Check fehlgeschlagen:', error)
+  } catch {
     const roles = user.value?.['puppyracer/roles'] || user.value?.['https://puppyracer.com/roles']
     isAdmin.value = roles?.includes('ADMIN') || false
   }
 }
 
-// Watcher für Authentifizierungsänderungen
-watch(isAuthenticated, (newVal) => {
-  if (newVal) {
-    checkAdminStatus()
-  } else {
-    isAdmin.value = false
-  }
-})
-
-// Event Handler
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 50
-}
-
+// Event Handlers
+const handleScroll = () => isScrolled.value = window.scrollY > 50
 const handleSearch = () => {
   const query = searchQuery.value.trim()
   if (query) {
-    router.push({ 
-      path: '/search', 
-      query: { q: query } 
-    })
+    router.push({ path: '/search', query: { q: query } })
     searchQuery.value = ''
     closeAllMenus()
   }
 }
-
 const handleLogin = () => {
   loginWithRedirect()
   closeAllMenus()
 }
-
 const handleLogout = () => {
-  logout({ 
-    logoutParams: { 
-      returnTo: window.location.origin 
-    } 
-  })
+  logout({ logoutParams: { returnTo: window.location.origin } })
   closeAllMenus()
-  isAdmin.value = false
 }
 
 // Menu Functions
-const toggleMenu = () => {
-  menuOpen.value = !menuOpen.value
-  if (menuOpen.value) {
-    adminMenuOpen.value = false
-    categoriesMenuOpen.value = false
-  }
-}
-
-const toggleCategoriesMenu = () => {
-  categoriesMenuOpen.value = !categoriesMenuOpen.value
-  if (categoriesMenuOpen.value) adminMenuOpen.value = false
-}
-
-const toggleAdminMenu = () => {
-  adminMenuOpen.value = !adminMenuOpen.value
-  if (adminMenuOpen.value) categoriesMenuOpen.value = false
-}
-
+const toggleMenu = () => menuOpen.value = !menuOpen.value
+const toggleAdminMenu = () => adminMenuOpen.value = !adminMenuOpen.value
 const closeMenu = () => menuOpen.value = false
-const closeCategoriesMenu = () => categoriesMenuOpen.value = false
 const closeAdminMenu = () => adminMenuOpen.value = false
-
 const closeAllMenus = () => {
   menuOpen.value = false
   adminMenuOpen.value = false
-  categoriesMenuOpen.value = false
 }
 
 // Resize Handler
@@ -352,16 +295,10 @@ const handleResize = () => {
   if (windowWidth.value >= 900) menuOpen.value = false
 }
 
-// Klick außerhalb schließt Menüs
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.navbar')) closeAllMenus()
-}
-
 // Lifecycle
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   window.addEventListener('resize', handleResize)
-  document.addEventListener('click', handleClickOutside)
   handleScroll()
   checkAdminStatus()
 })
@@ -369,381 +306,403 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
   window.removeEventListener('resize', handleResize)
-  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
 <style scoped>
-/* Basis Styles - Vereinfacht */
+/* Basis Navbar - HÖHER und mit deinen Farben */
 .navbar {
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
-  background: var(--color-navbar);
-  padding: 1rem 0;
-  z-index: 1000;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: padding 0.3s ease;
+  background: var(--color-accent-brown); /* #B48665 - HELLBRAUN */
+  padding: 1.25rem 0; /* MEHR PADDING = HÖHER */
+  z-index: 1100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  min-height: 80px; /* Mindesthöhe */
+  display: flex;
+  align-items: center;
 }
 
-.navbar.scrolled { padding: 0.75rem 0; }
+.navbar.scrolled {
+  padding: 0.75rem 0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
 
 .navbar-container {
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
 }
 
-/* Logo */
+/* Logo - etwas größer für höhere Navbar */
 .logo-link {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   text-decoration: none;
-  flex-shrink: 0;
 }
 
 .logo img {
-  height: 40px;
+  height: 50px; /* Größeres Logo */
   width: auto;
+  transition: transform 0.3s;
+}
+
+.logo-link:hover img {
+  transform: scale(1.05);
 }
 
 .logo-text {
   font-family: var(--font-roboto);
   font-weight: 800;
-  font-size: 1.5rem;
-  background: linear-gradient(135deg, var(--color-accent-pink), #d05583);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1.8rem; /* Größere Schrift */
+  color: var(--color-primary-dark); /* #2D2121 */
+  letter-spacing: -0.5px;
 }
 
 /* Desktop Navigation */
 .desktop-nav {
   display: flex;
   align-items: center;
+  gap: 2rem;
   flex: 1;
-  justify-content: space-between;
-  gap: 1rem;
+  margin-left: 2rem;
 }
 
-/* Kategorien */
-.categories-wrapper { flex-shrink: 0; }
-
-.categories-dropdown { position: relative; }
-
-.categories-toggle {
-  padding: 0.5rem 0.8rem;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-family: var(--font-roboto);
-  font-weight: 600;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.categories-toggle:hover { background: rgba(226, 97, 145, 0.3); }
-
-.categories-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 0.5rem;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  min-width: 160px;
-  z-index: 1002;
-  border: 1px solid #eee;
-}
-
-.categories-dropdown-menu .dropdown-item {
-  display: block;
-  padding: 0.7rem 1rem;
-  color: var(--color-primary-dark);
-  text-decoration: none;
-  font-family: var(--font-roboto);
-  font-size: 0.9rem;
-  transition: all 0.2s;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.categories-dropdown-menu .dropdown-item:hover {
-  background: #f8f9fa;
-  color: var(--color-accent-pink);
-}
-
+/* Kategorien als Buttons - KLEINER & DEINE FARBEN */
 .categories {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: nowrap;
 }
 
-.category {
-  padding: 0.5rem 0.8rem;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  text-decoration: none;
+.category-btn {
+  padding: 0.5rem 1rem; /* KLEINER */
+  background: var(--color-background-light); /* #EFE1D6 - CREME */
+  color: var(--color-primary-dark); /* #2D2121 */
+  border: 2px solid var(--color-accent-brown); /* #B48665 - Rahmen */
+  border-radius: 6px; /* Weniger rund */
   font-family: var(--font-roboto);
   font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.85rem; /* Kleinere Schrift */
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
 }
 
-.category:hover { background: rgba(226, 97, 145, 0.3); }
+.category-btn:hover {
+  background: var(--color-accent-pink); /* #E26191 */
+  color: white;
+  border-color: var(--color-accent-pink);
+  transform: translateY(-1px);
+}
+
+.category-btn:active {
+  transform: translateY(0);
+}
 
 /* Suchleiste */
-.search { 
-  flex: 1; 
-  min-width: 150px; 
-  max-width: 400px; 
+.search {
+  flex: 1;
+  max-width: 400px;
+  min-width: 200px;
 }
 
-.search-wrapper {
+.search-form {
   display: flex;
-  background: white;
+  background: var(--color-background-light); /* #EFE1D6 */
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  height: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--color-accent-brown); /* #B48665 */
 }
 
 .search-input {
   flex: 1;
-  padding: 0 0.8rem;
+  padding: 0.6rem 1rem;
   border: none;
   font-family: var(--font-roboto);
-  font-size: 0.95rem;
-  min-width: 120px;
+  font-size: 0.9rem;
+  color: var(--color-primary-dark);
+  background: transparent;
 }
 
-.search-input:focus { outline: none; }
+.search-input:focus {
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #888;
+}
 
 .search-btn {
   padding: 0 1rem;
-  background: var(--color-accent-pink);
+  background: var(--color-accent-pink); /* #E26191 */
   color: white;
   border: none;
   cursor: pointer;
-  transition: background 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 100%;
+  transition: background-color 0.3s;
+  font-size: 1rem;
 }
 
-.search-btn:hover { background: #d05583; }
+.search-btn:hover {
+  background: #d04a7c; /* Dunkleres Pink */
+}
 
 /* User Actions */
 .user-actions {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
-  flex-shrink: 0;
+  gap: 0.5rem;
 }
 
-.auth-section { display: flex; align-items: center; }
-.user-info { display: flex; gap: 0.4rem; align-items: center; }
-
-/* Admin Menu */
-.admin-menu { position: relative; }
-
-.admin-toggle {
-  padding: 0.4rem 0.6rem;
-  border-radius: 5px;
-  background: rgba(255, 193, 7, 0.25);
-  color: white;
-  border: 1px solid rgba(255, 193, 7, 0.4);
-  font-family: var(--font-roboto);
-  font-weight: 600;
-  font-size: 0.8rem;
+/* Gemeinsame Button-Stile - DEINE FARBEN */
+.user-btn {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  transition: all 0.3s ease;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem; /* KLEINER */
+  background: var(--color-background-light); /* #EFE1D6 */
+  color: var(--color-primary-dark); /* #2D2121 */
+  border: 2px solid var(--color-accent-brown); /* #B48665 */
+  border-radius: 6px;
   cursor: pointer;
+  font-family: var(--font-roboto);
+  font-weight: 600;
+  font-size: 0.8rem; /* Kleinere Schrift */
+  transition: all 0.3s;
+  white-space: nowrap;
 }
 
-.admin-toggle:hover { background: rgba(255, 193, 7, 0.4); }
+.user-btn:hover {
+  background: var(--color-accent-pink); /* #E26191 */
+  color: white;
+  border-color: var(--color-accent-pink);
+}
+
+/* Spezifische Buttons */
+.login-btn:hover {
+  background: var(--color-accent-pink);
+}
+
+.logout-btn:hover {
+  background: var(--color-primary-dark); /* #2D2121 */
+  border-color: var(--color-primary-dark);
+}
+
+.account-btn {
+  text-decoration: none;
+}
+
+/* Admin Button */
+.admin-btn {
+  background: var(--color-background-light); /* #EFE1D6 */
+  border-color: var(--color-accent-brown); /* #B48665 */
+  position: relative;
+}
+
+.admin-btn:hover {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: #ffc107;
+}
 
 .dropdown-icon {
   font-size: 0.7rem;
   transition: transform 0.3s;
+  margin-left: 0.25rem;
 }
 
-.dropdown-icon.rotate { transform: rotate(180deg); }
+.dropdown-icon.rotate {
+  transform: rotate(180deg);
+}
 
+/* Dropdown Menu */
 .admin-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
   margin-top: 0.5rem;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background: var(--color-background-light); /* #EFE1D6 */
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   min-width: 160px;
-  z-index: 1002;
-  border: 1px solid #eee;
+  z-index: 1001;
+  border: 2px solid var(--color-accent-brown); /* #B48665 */
+  overflow: hidden;
 }
 
-.admin-dropdown .dropdown-item {
-  display: block;
-  padding: 0.6rem 0.8rem;
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
   color: var(--color-primary-dark);
   text-decoration: none;
-  font-family: var(--font-roboto);
-  font-size: 0.85rem;
+  border-bottom: 1px solid var(--color-accent-brown); /* #B48665 */
+  font-size: 0.8rem;
   transition: all 0.2s;
-  border-bottom: 1px solid #f5f5f5;
 }
 
-.admin-dropdown .dropdown-item:hover {
-  background: #f8f9fa;
+.dropdown-item:hover {
+  background: rgba(226, 97, 145, 0.1);
   color: var(--color-accent-pink);
 }
 
-/* Allgemeine Buttons */
-.auth-btn, .logout-btn, .account-btn, .cart-btn {
-  padding: 0.4rem 0.7rem;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  text-decoration: none;
-  font-family: var(--font-roboto);
-  font-weight: 600;
-  font-size: 0.8rem;
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item i {
+  font-size: 0.9rem;
+  width: 16px;
+}
+
+/* Warenkorb */
+.cart-btn {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem; /* KLEINER */
+  background: var(--color-accent-pink); /* #E26191 */
+  color: white;
+  border: 2px solid var(--color-accent-pink);
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.8rem; /* Kleinere Schrift */
+  transition: all 0.3s;
 }
 
-.auth-btn:hover, .logout-btn:hover, .account-btn:hover, .cart-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+.cart-btn:hover {
+  background: white;
+  color: var(--color-accent-pink);
 }
 
-/* Warenkorb Badge */
-.cart-btn { position: relative; }
-
-.badge {
+.cart-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -6px;
+  right: -6px;
   background: #ff4757;
   color: white;
   font-size: 0.65rem;
   font-weight: 800;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 8px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 3px;
-  border: 2px solid var(--color-navbar);
+  border: 2px solid var(--color-accent-brown);
 }
 
 /* Burger Menu */
-.burger {
+.burger-menu {
   display: none;
   flex-direction: column;
-  justify-content: space-between;
-  width: 30px;
-  height: 22px;
+  gap: 4px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
-  z-index: 1001;
+  padding: 0.5rem;
 }
 
-.burger span {
-  width: 100%;
+.burger-menu span {
+  width: 25px;
   height: 3px;
-  background: white;
+  background: var(--color-primary-dark);
   border-radius: 2px;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
 }
 
-.burger.open span:first-child {
-  transform: rotate(45deg) translate(6px, 5px);
+.burger-menu.open span:first-child {
+  transform: rotate(45deg) translate(6px, 6px);
 }
 
-.burger.open span:nth-child(2) {
+.burger-menu.open span:nth-child(2) {
   opacity: 0;
 }
 
-.burger.open span:last-child {
-  transform: rotate(-45deg) translate(6px, -5px);
+.burger-menu.open span:last-child {
+  transform: rotate(-45deg) translate(6px, -6px);
 }
 
 /* Mobile Navigation */
 .mobile-nav {
   position: fixed;
-  top: 70px;
+  top: 80px; /* Höhere Navbar = höhere Position */
   left: 0;
   right: 0;
-  background: var(--color-navbar);
+  background: var(--color-accent-brown);
   padding: 1.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  transform: translateY(-100%);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 999;
-  max-height: calc(100vh - 70px);
+  max-height: calc(100vh - 80px);
   overflow-y: auto;
+  z-index: 999;
 }
 
-.mobile-nav.show {
-  transform: translateY(0);
-  opacity: 1;
-  visibility: visible;
-}
-
-.mobile-search { margin-bottom: 1.5rem; }
-
-.mobile-categories {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+.mobile-search {
+  display: flex;
+  gap: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
-.mobile-categories .category {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  text-decoration: none;
+.mobile-search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--color-accent-brown);
+  border-radius: 6px;
+  font-family: var(--font-roboto);
+  background: var(--color-background-light);
+  color: var(--color-primary-dark);
+}
+
+.mobile-search-btn {
+  padding: 0 1.25rem;
+  background: var(--color-accent-pink);
   color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Mobile Kategorien */
+.mobile-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.mobile-category-btn {
+  padding: 0.875rem;
+  background: var(--color-background-light);
+  color: var(--color-primary-dark);
+  border: 2px solid var(--color-accent-brown);
+  border-radius: 6px;
   font-family: var(--font-roboto);
   font-weight: 600;
-  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
 }
 
-.mobile-categories .category:hover {
-  background: rgba(226, 97, 145, 0.4);
+.mobile-category-btn:hover {
+  background: var(--color-accent-pink);
+  color: white;
+  border-color: var(--color-accent-pink);
 }
 
+/* Mobile User Actions */
 .mobile-user-actions {
   display: flex;
   flex-direction: column;
@@ -754,122 +713,163 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 0.875rem;
+  background: var(--color-background-light);
+  color: var(--color-primary-dark);
+  border: 2px solid var(--color-accent-brown);
   border-radius: 6px;
   text-decoration: none;
-  color: white;
-  font-family: var(--font-roboto);
   font-weight: 600;
-  transition: all 0.3s ease;
-  margin-bottom: 0.5rem;
+  transition: all 0.3s;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
 }
 
-.mobile-nav-item:hover { background: rgba(255, 255, 255, 0.2); }
-
-.badge-mobile {
-  background: #ff4757;
+.mobile-nav-item:hover {
+  background: var(--color-accent-pink);
   color: white;
-  font-size: 0.8rem;
-  font-weight: 800;
-  min-width: 24px;
-  height: 24px;
-  border-radius: 12px;
+}
+
+.mobile-btn {
+  width: 100%;
+  padding: 0.875rem;
+  background: var(--color-accent-pink);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.mobile-btn.logout {
+  background: var(--color-primary-dark);
+  border: 2px solid var(--color-primary-dark);
+}
+
+.mobile-btn.login-mobile {
+  background: var(--color-accent-pink);
 }
 
 .admin-section {
-  margin: 1rem 0;
-  padding: 0.75rem;
-  background: rgba(255, 193, 7, 0.1);
+  padding: 1rem;
+  background: rgba(255, 193, 7, 0.15);
+  border: 2px solid rgba(255, 193, 7, 0.3);
   border-radius: 8px;
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  margin: 0.5rem 0;
 }
 
-.mobile-nav-header {
+.admin-title {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  color: white;
-  font-family: var(--font-roboto);
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  gap: 0.5rem;
+  font-size: 1rem;
 }
 
 .mobile-nav-subitem {
   display: block;
-  padding: 0.6rem 1rem;
-  padding-left: 2rem;
+  padding: 0.7rem 1rem;
+  color: var(--color-primary-dark);
   text-decoration: none;
-  color: white;
-  font-family: var(--font-roboto);
-  font-size: 0.9rem;
-  border-radius: 4px;
+  border-radius: 6px;
+  margin-left: 1rem;
+  background: var(--color-background-light);
   margin-bottom: 0.25rem;
-  transition: all 0.3s ease;
-}
-
-.mobile-nav-subitem:hover { background: rgba(255, 255, 255, 0.1); }
-
-.mobile-btn {
-  width: 100%;
-  padding: 1rem;
-  background: rgba(226, 97, 145, 0.3);
-  border: 1px solid rgba(226, 97, 145, 0.5);
-  border-radius: 8px;
-  color: white;
-  font-family: var(--font-roboto);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  border: none;
+  width: calc(100% - 1rem);
+  text-align: left;
+  border: 2px solid var(--color-accent-brown);
 }
 
-.mobile-btn:hover { background: rgba(226, 97, 145, 0.5); }
-.mobile-btn.logout { 
-  background: rgba(45, 33, 33, 0.3);
-  border: 1px solid rgba(45, 33, 33, 0.5);
-}
-.mobile-btn.logout:hover { background: rgba(45, 33, 33, 0.5); }
-
-/* Responsive Design - Vereinfacht */
-@media (min-width: 900px) {
-  .burger { display: none; }
-  .mobile-nav { display: none; }
+.mobile-nav-subitem:hover {
+  background: var(--color-accent-pink);
+  color: white;
+  border-color: var(--color-accent-pink);
 }
 
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge {
+  background: #ff4757;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Responsive */
 @media (max-width: 899px) {
-  .burger { display: flex; }
   .desktop-nav { display: none; }
-  .mobile-nav.show { top: 65px; }
-  
-  .logo img { height: 35px; }
-  .logo-text { font-size: 1.3rem; }
+  .burger-menu { display: flex; }
 }
 
 @media (max-width: 768px) {
-  .mobile-nav.show { padding: 1.25rem; }
-}
-
-@media (max-width: 599px) {
-  .mobile-categories { grid-template-columns: 1fr; }
-  .navbar-container { padding: 0 0.5rem; }
+  .navbar {
+    padding: 1rem 0;
+    min-height: 70px;
+  }
   
-  .logo img { height: 32px; }
-  .logo-text { font-size: 1.2rem; }
+  .navbar-container {
+    padding: 0 1rem;
+  }
+  
+  .logo img {
+    height: 45px;
+  }
+  
+  .logo-text {
+    font-size: 1.6rem;
+  }
+  
+  .mobile-nav {
+    top: 70px;
+    padding: 1.25rem;
+  }
 }
 
-@media (max-width: 479px) {
-  .logo img { height: 30px; }
-  .logo-text { font-size: 1.1rem; }
-  .mobile-nav.show { padding: 1rem; }
-  .mobile-nav-item { padding: 0.7rem 0.9rem; }
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0.875rem 0;
+    min-height: 65px;
+  }
+  
+  .navbar-container {
+    padding: 0 0.75rem;
+  }
+  
+  .logo img {
+    height: 40px;
+  }
+  
+  .logo-text {
+    font-size: 1.4rem;
+  }
+  
+  .mobile-nav {
+    top: 65px;
+    padding: 1rem;
+  }
+  
+  .mobile-category-btn,
+  .mobile-nav-item,
+  .mobile-btn {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
 }
 </style>
