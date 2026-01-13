@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import ProductDetail from '../views/ProductDetail.vue'
 import ProductCatalog from '../views/ProductCatalog.vue'
 import AccountView from '@/views/AccountView.vue'
@@ -191,8 +191,9 @@ const routes = [
   }
 ]
 
+// ========== HIER DIE ÄNDERUNG ==========
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory('/frontend-puppyracer/'), // WICHTIG: mit Repo-Name!
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
@@ -212,17 +213,6 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   // Set page title
   document.title = to.meta?.title || 'PuppyRacer - Hundezubehör'
-  
-  // Hier könnte später Auth/Admin-Check hin
-  // const auth = useAuthStore()
-  // if (to.meta.requiresAuth && !auth.isAuthenticated) {
-  //   next('/')
-  // } else if (to.meta.requiresAdmin && !auth.isAdmin) {
-  //   next('/')
-  // } else {
-  //   next()
-  // }
-  
   next()
 })
 
