@@ -1,39 +1,38 @@
-// DEBUG: Auth0 Konfiguration prüfen
-console.log('=== AUTH0 SETUP START ===');
-const auth0Config = {
-  domain: import.meta.env.VITE_AUTH0_DOMAIN,
-  clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
-  authorizationParams: {
-    audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-    redirect_uri: window.location.origin + window.location.pathname,
-  },
-  useRefreshTokens: false,
-  cacheLocation: 'localstorage',
-};
+import './assets/style.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+import { createPinia } from 'pinia'
+import { createAuth0 } from '@auth0/auth0-vue'
 
-console.log('Auth0 Config:', auth0Config);
-console.log('Env variables:', {
-  domain: import.meta.env.VITE_AUTH0_DOMAIN,
-  clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
-  audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-  apiBase: import.meta.env.VITE_API_BASE_URL
-});
+const app = createApp(App)
 
-try {
-  const auth0 = createAuth0(auth0Config);
-  console.log('Auth0 created successfully:', !!auth0);
-  
-  // Test: Sind die Methoden da?
-  console.log('Auth0 methods check:', {
-    loginWithRedirect: typeof auth0.loginWithRedirect,
-    logout: typeof auth0.logout,
-    isAuthenticated: typeof auth0.isAuthenticated,
-    getUser: typeof auth0.getUser,
-    getAccessTokenSilently: typeof auth0.getAccessTokenSilently
-  });
-  
-  app.use(auth0);
-  console.log('=== AUTH0 SETUP COMPLETE ===');
-} catch (error) {
-  console.error('=== AUTH0 SETUP FAILED ===', error);
-}
+// Pinia (State Management) zuerst
+const pinia = createPinia()
+app.use(pinia)
+
+// Dann Router
+app.use(router)
+
+// Auth0 KONFIGURATION
+app.use(
+  createAuth0({
+    domain: import.meta.env.VITE_AUTH0_DOMAIN,
+    clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
+    authorizationParams: {
+      audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+      redirect_uri: window.location.origin + window.location.pathname,
+    },
+    useRefreshTokens: false,
+    cacheLocation: 'localstorage',
+  })
+)
+
+// Debug: Prüfe ob Auth0 korrekt initialisiert
+console.log('=== AUTH0 INIT CHECK ===')
+console.log('Redirect URI:', window.location.origin + window.location.pathname)
+console.log('Domain:', import.meta.env.VITE_AUTH0_DOMAIN)
+console.log('Client ID:', import.meta.env.VITE_AUTH0_CLIENT_ID ? '✓ Loaded' : '✗ Missing')
+
+app.mount('#app')
