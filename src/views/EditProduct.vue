@@ -1,7 +1,6 @@
 <template>
   <div class="edit-product">
     <div class="container">
-      <!-- Header -->
       <div class="header">
         <router-link to="/admin/products" class="back-btn">
           <i class="bi bi-arrow-left"></i> Zurück
@@ -9,22 +8,18 @@
         <h1><i class="bi bi-pencil-square"></i> Produkt bearbeiten</h1>
       </div>
 
-      <!-- Loading -->
       <div v-if="loading" class="loading">
         <div class="spinner"></div>
         <p>Produkt wird geladen...</p>
       </div>
 
-      <!-- Error -->
       <div v-else-if="error" class="error">
         <i class="bi bi-exclamation-triangle"></i>
         <h3>Fehler</h3>
         <p>{{ error }}</p>
       </div>
 
-      <!-- Form -->
       <form v-else @submit.prevent="updateProduct" class="form">
-        <!-- Messages -->
         <div v-if="successMessage" class="success">
           <i class="bi bi-check-circle"></i>
           <p>{{ successMessage }}</p>
@@ -35,34 +30,18 @@
           <p>{{ submitError }}</p>
         </div>
 
-        <!-- Basic Info -->
         <div class="form-section">
           <h2><i class="bi bi-info-circle"></i> Produktinformationen</h2>
           
           <div class="form-group">
             <label>Titel *</label>
-            <input
-              v-model="formData.title"
-              type="text"
-              placeholder="Produktname"
-              required
-              :disabled="isSubmitting"
-              maxlength="100"
-            />
+            <input v-model="formData.title" required :disabled="isSubmitting" />
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>Preis (€) *</label>
-              <input
-                v-model.number="formData.price"
-                type="number"
-                step="0.01"
-                min="0.01"
-                placeholder="29.99"
-                required
-                :disabled="isSubmitting"
-              />
+              <input v-model.number="formData.price" type="number" step="0.01" required :disabled="isSubmitting" />
             </div>
 
             <div class="form-group">
@@ -79,32 +58,18 @@
 
           <div class="form-group">
             <label>Beschreibung *</label>
-            <textarea
-              v-model="formData.description"
-              placeholder="Produktbeschreibung..."
-              rows="4"
-              required
-              :disabled="isSubmitting"
-              maxlength="500"
-            ></textarea>
+            <textarea v-model="formData.description" rows="3" required :disabled="isSubmitting"></textarea>
           </div>
 
           <div class="form-group">
             <label>Bild-URL *</label>
-            <input
-              v-model="formData.image"
-              type="text"
-              placeholder="/src/assets/product_pics/..."
-              required
-              :disabled="isSubmitting"
-            />
+            <input v-model="formData.image" required :disabled="isSubmitting" />
             <div v-if="formData.image" class="image-preview">
               <img :src="formData.image" :alt="formData.title" />
             </div>
           </div>
         </div>
 
-        <!-- Actions -->
         <div class="actions">
           <button type="button" @click="confirmDelete" class="btn-delete" :disabled="isSubmitting">
             <i class="bi bi-trash"></i> Löschen
@@ -147,17 +112,14 @@ const formData = reactive({
 
 const originalData = reactive({})
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
-
 const hasChanges = computed(() => {
   return JSON.stringify(formData) !== JSON.stringify(originalData)
 })
 
-// Load product
 onMounted(async () => {
   try {
     const token = await getAccessTokenSilently()
-    const response = await fetch(`${API_BASE}/api/product/${route.params.id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${route.params.id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     
@@ -165,14 +127,13 @@ onMounted(async () => {
     
     product.value = await response.json()
     
-    // Fill form
+    // Formular füllen
     formData.title = product.value.title || ''
     formData.price = product.value.price || 0
     formData.description = product.value.description || ''
     formData.category = product.value.category || ''
     formData.image = product.value.image || ''
     
-    // Save original
     Object.assign(originalData, { ...formData })
     
   } catch (err) {
@@ -182,14 +143,13 @@ onMounted(async () => {
   }
 })
 
-// Update
 const updateProduct = async () => {
   isSubmitting.value = true
   submitError.value = ''
   
   try {
     const token = await getAccessTokenSilently()
-    const response = await fetch(`${API_BASE}/api/product/${product.value.id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${product.value.id}`, {
       method: 'PUT',
       headers: { 
         'Authorization': `Bearer ${token}`,
@@ -212,11 +172,10 @@ const updateProduct = async () => {
   }
 }
 
-// Delete
 const confirmDelete = () => {
   if (!confirm('Produkt wirklich löschen?')) return
   
-  fetch(`${API_BASE}/api/product/${product.value.id}`, {
+  fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${product.value.id}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${getAccessTokenSilently()}` }
   })
@@ -241,7 +200,6 @@ const confirmDelete = () => {
   margin: 0 auto;
 }
 
-/* Header */
 .header {
   margin-bottom: 2.5rem;
   text-align: center;
@@ -254,7 +212,6 @@ const confirmDelete = () => {
   color: #e26191;
   text-decoration: none;
   margin-bottom: 1rem;
-  font-size: 0.95rem;
 }
 
 .back-btn:hover {
@@ -270,7 +227,6 @@ const confirmDelete = () => {
   margin: 0;
 }
 
-/* Loading & Error */
 .loading, .error {
   text-align: center;
   padding: 3rem;
@@ -299,7 +255,6 @@ const confirmDelete = () => {
   margin: 0 0 0.5rem 0;
 }
 
-/* Form */
 .form {
   background: rgba(255,255,255,0.05);
   border-radius: 16px;
@@ -317,10 +272,8 @@ const confirmDelete = () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #fff;
 }
 
-/* Form Groups */
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -331,17 +284,10 @@ const confirmDelete = () => {
   gap: 1.5rem;
 }
 
-@media (max-width: 600px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.9);
 }
 
 input, select, textarea {
@@ -352,7 +298,6 @@ input, select, textarea {
   border-radius: 8px;
   color: #fff;
   font-size: 1rem;
-  transition: all 0.3s;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -361,26 +306,11 @@ input:focus, select:focus, textarea:focus {
   background: rgba(255,255,255,0.12);
 }
 
-input:disabled, select:disabled, textarea:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 textarea {
   resize: vertical;
   min-height: 100px;
-  font-family: inherit;
 }
 
-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  padding-right: 2.5rem;
-}
-
-/* Image Preview */
 .image-preview {
   margin-top: 1rem;
   text-align: center;
@@ -393,7 +323,6 @@ select {
   border: 2px solid rgba(255,255,255,0.1);
 }
 
-/* Messages */
 .success, .error-message {
   padding: 1rem;
   border-radius: 8px;
@@ -415,7 +344,6 @@ select {
   color: #ff4757;
 }
 
-/* Actions */
 .actions {
   display: flex;
   justify-content: space-between;
@@ -432,7 +360,6 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.3s;
 }
 
 .btn-delete {
@@ -448,26 +375,33 @@ select {
 .btn-save {
   background: #e26191;
   color: white;
-  border: 1px solid #e26191;
 }
 
 .btn-save:hover:not(:disabled) {
   background: #d05583;
-  transform: translateY(-2px);
 }
 
 .btn-save:disabled, .btn-delete:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none !important;
 }
 
-/* Animations */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
 .spin {
   animation: spin 1s linear infinite;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
 }
 </style>

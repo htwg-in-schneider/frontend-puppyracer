@@ -8,14 +8,9 @@
       <div class="control-left">
         <div class="search-box">
           <i class="bi bi-search"></i>
-          <input 
-            v-model="searchQuery" 
-            placeholder="Benutzer suchen..." 
-            class="search-input"
-            maxlength="50"
-          />
+          <input v-model="searchQuery" placeholder="Benutzer suchen..." />
         </div>
-        <select v-model="roleFilter" class="filter-select">
+        <select v-model="roleFilter">
           <option value="">Alle Rollen</option>
           <option value="ADMIN">Administratoren</option>
           <option value="BUYER">Kunden</option>
@@ -34,12 +29,9 @@
 
     <div v-else-if="error" class="error-state">
       <div class="error-icon"><i class="bi bi-shield-exclamation"></i></div>
-      <div class="error-content">
+      <div>
         <h3>Zugriff verweigert</h3>
         <p>{{ error }}</p>
-        <button v-if="error.includes('Admin')" @click="loginWithRedirect" class="btn-login">
-          Mit Admin-Account anmelden
-        </button>
       </div>
     </div>
 
@@ -51,7 +43,6 @@
               <th>ID</th>
               <th>Name</th>
               <th>E-Mail</th>
-              <th class="hide-mobile">Auth0 ID</th>
               <th>Rolle</th>
               <th>Aktionen</th>
             </tr>
@@ -62,33 +53,23 @@
               <td>
                 <input 
                   v-model="user.name" 
-                  class="form-input"
                   :disabled="savingUserId === user.id"
                   @blur="saveUser(user)"
                   placeholder="Name"
-                  maxlength="50"
                 />
               </td>
               <td>
                 <input 
                   v-model="user.email" 
                   type="email"
-                  class="form-input"
                   :disabled="savingUserId === user.id"
                   @blur="saveUser(user)"
                   placeholder="E-Mail"
-                  @keyup.enter="saveUser(user)"
                 />
-              </td>
-              <td class="hide-mobile">
-                <div class="auth-id-container">
-                  <code>{{ truncateOauthId(user.oauthId) }}</code>
-                </div>
               </td>
               <td>
                 <select 
                   v-model="user.role" 
-                  class="role-select"
                   :disabled="savingUserId === user.id"
                   @change="saveUser(user)"
                   :class="getRoleClass(user.role)"
@@ -106,7 +87,7 @@
                 >
                   <span v-if="savingUserId === user.id" class="save-spinner"></span>
                   <i v-else class="bi bi-check-lg"></i>
-                  <span class="hide-mobile">Speichern</span>
+                  <span>Speichern</span>
                 </button>
               </td>
             </tr>
@@ -117,14 +98,7 @@
       <div v-if="filteredUsers.length === 0 && !loading" class="empty-state">
         <i class="bi bi-person-slash"></i>
         <h3>Keine Benutzer gefunden</h3>
-        <p v-if="searchQuery || roleFilter">Filter anpassen</p>
-        <p v-else>Keine Benutzer registriert</p>
       </div>
-    </div>
-
-    <div class="admin-footer">
-      <span>Benutzerverwaltung</span>
-      <span>{{ filteredUsers.length }}/{{ users.length }} Benutzer</span>
     </div>
   </div>
 </template>
@@ -133,7 +107,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 
-const { getAccessTokenSilently, loginWithRedirect, isAuthenticated } = useAuth0()
+const { getAccessTokenSilently, isAuthenticated } = useAuth0()
 const users = ref([])
 const loading = ref(true)
 const error = ref('')
@@ -142,52 +116,6 @@ const searchQuery = ref('')
 const roleFilter = ref('')
 const originalUsers = ref(new Map())
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
-
-// Helper: Authentifizierte Fetch mit besserer Fehlerbehandlung
-async function fetchWithAuth(url, options = {}) {
-  try {
-    const token = await getAccessTokenSilently()
-    
-    const response = await fetch(`${API_BASE}${url}`, {
-      ...options,
-      headers: { 
-        ...options.headers,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    })
-    
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}`
-      try {
-        const errorData = await response.json()
-        errorMessage = errorData.message || errorMessage
-      } catch {
-        const errorText = await response.text()
-        if (errorText) errorMessage = errorText
-      }
-      
-      if (response.status === 403) {
-        throw new Error(`Zugriff verweigert: Nur Administratoren haben Zugriff.`)
-      } else if (response.status === 401) {
-        throw new Error(`Sitzung abgelaufen. Bitte neu anmelden.`)
-      } else {
-        throw new Error(errorMessage)
-      }
-    }
-    
-    return response
-  } catch (err) {
-    if (err.message.includes('login_required') || err.message.includes('timeout')) {
-      throw new Error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.')
-    }
-    throw err
-  }
-}
-
-// Computed
 const filteredUsers = computed(() => {
   let filtered = users.value
   if (searchQuery.value) {
@@ -203,12 +131,6 @@ const filteredUsers = computed(() => {
   return filtered
 })
 
-// Funktionen
-const truncateOauthId = (oauthId) => {
-  if (!oauthId) return ''
-  return `${oauthId.substring(0, 8)}...${oauthId.substring(oauthId.length - 4)}`
-}
-
 const getRoleClass = (role) => role.toLowerCase()
 
 const isUserChanged = (user) => {
@@ -219,10 +141,9 @@ const isUserChanged = (user) => {
          user.role !== original.role
 }
 
-// API Calls - KORRIGIERTE VERSION
 async function loadUsers() {
   if (!isAuthenticated.value) {
-    error.value = 'Bitte anmelden, um Benutzer zu verwalten.'
+    error.value = 'Bitte anmelden'
     loading.value = false
     return
   }
@@ -231,40 +152,32 @@ async function loadUsers() {
   error.value = ''
   
   try {
-    // Zuerst prüfen, ob der Nutzer Admin ist
-    let isAdmin = false
-    try {
-      const profileRes = await fetchWithAuth('/api/profile')
-      const profileData = await profileRes.json()
-      isAdmin = profileData.role === 'ADMIN'
-    } catch (profileErr) {
-      console.warn('Profil-Check fehlgeschlagen:', profileErr)
-      // Falls Profil nicht geladen werden kann, versuche trotzdem zu laden
-    }
+    const token = await getAccessTokenSilently()
+    
+    // Profil prüfen
+    const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    const profileData = await profileRes.json()
+    const isAdmin = profileData.role === 'ADMIN'
     
     if (!isAdmin) {
-      throw new Error('Zugriff verweigert: Nur Administratoren können Benutzer verwalten.')
+      throw new Error('Zugriff verweigert: Nur Administratoren')
     }
     
     // Benutzer laden
-    const response = await fetchWithAuth('/api/users')
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
     const data = await response.json()
     
     users.value = data
-    // Originalwerte speichern
     originalUsers.value = new Map(data.map(user => [user.id, { ...user }]))
     
   } catch (err) {
-    console.error('Fehler beim Laden der Benutzer:', err)
-    
-    if (err.message.includes('Zugriff verweigert') || err.message.includes('Administratoren')) {
-      error.value = err.message
-    } else if (err.message.includes('Sitzung')) {
-      error.value = err.message
-    } else {
-      error.value = `Fehler: ${err.message}`
-    }
-    
+    error.value = err.message.includes('Zugriff') ? err.message : `Fehler: ${err.message}`
     users.value = []
   } finally {
     loading.value = false
@@ -276,48 +189,40 @@ async function saveUser(user) {
   
   savingUserId.value = user.id
   try {
-    await fetchWithAuth(`/api/users/${user.id}`, {
+    const token = await getAccessTokenSilently()
+    await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${user.id}`, {
       method: 'PUT',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ 
         name: user.name?.trim(), 
         email: user.email?.trim(), 
         role: user.role 
       })
     })
-    // Original aktualisieren
     originalUsers.value.set(user.id, { ...user })
   } catch (err) {
     alert(`Speichern fehlgeschlagen: ${err.message}`)
-    // Benutzer zurücksetzen
     const original = originalUsers.value.get(user.id)
-    if (original) {
-      Object.assign(user, original)
-    }
+    if (original) Object.assign(user, original)
   } finally {
     savingUserId.value = null
   }
 }
 
-// Watcher
 watch(isAuthenticated, (newVal) => {
-  if (newVal) {
-    loadUsers()
-  } else {
+  if (newVal) loadUsers()
+  else {
     users.value = []
     error.value = ''
     loading.value = false
   }
 }, { immediate: true })
-
-onMounted(() => {
-  if (isAuthenticated.value) {
-    loadUsers()
-  }
-})
 </script>
 
 <style scoped>
-/* DER GANZE STYLE BLEIBT UNVERÄNDERT - GENAU WIE IN DEINER VORHERIGEN DATEI */
 .admin-container {
   min-height: 100vh;
   display: flex;
@@ -331,7 +236,6 @@ onMounted(() => {
   padding: 2rem;
   background: linear-gradient(135deg, #E26191, #B48665);
   color: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .admin-title {
@@ -342,27 +246,22 @@ onMounted(() => {
 
 .control-bar {
   display: flex;
-  flex-wrap: wrap;
   gap: 1rem;
   padding: 1.5rem;
   background: white;
   margin: 1rem;
   border-radius: 12px;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  border: 1px solid rgba(180, 134, 101, 0.1);
 }
 
 .control-left {
   display: flex;
   flex: 1;
   gap: 1rem;
-  flex-wrap: wrap;
 }
 
 .search-box {
   flex: 1;
-  min-width: 250px;
   position: relative;
 }
 
@@ -374,7 +273,7 @@ onMounted(() => {
   color: #BB9580;
 }
 
-.search-input {
+.search-box input, select {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 3rem;
   border: 2px solid #F5F0EB;
@@ -382,36 +281,11 @@ onMounted(() => {
   background: #F5F0EB;
   font-size: 1rem;
   color: #5D4037;
-  transition: all 0.2s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #E26191;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.1);
-}
-
-.filter-select {
-  padding: 0.75rem 1rem;
-  border: 2px solid #F5F0EB;
-  border-radius: 8px;
-  background: #F5F0EB;
-  min-width: 180px;
-  font-size: 1rem;
-  color: #5D4037;
-  cursor: pointer;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: #E26191;
-  background: white;
 }
 
 .btn-refresh {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #BB9580, #B48665);
+  background: #BB9580;
   color: white;
   border: none;
   border-radius: 8px;
@@ -420,17 +294,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
 }
 
 .btn-refresh:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(187, 149, 128, 0.3);
+  background: #B48665;
 }
 
 .btn-refresh:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .loading-state, .error-state, .empty-state {
@@ -472,7 +343,6 @@ onMounted(() => {
 
 .error-state {
   background: #FFF5F7;
-  border-left: 4px solid #E26191;
 }
 
 .error-icon {
@@ -481,41 +351,22 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
-.btn-login {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background: #BB9580;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.btn-login:hover {
-  background: #B48665;
-  transform: translateY(-2px);
-}
-
 .user-table-container {
   flex: 1;
   background: white;
   margin: 0 1rem 1rem;
   border-radius: 12px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .table-responsive {
-  flex: 1;
   overflow-x: auto;
 }
 
 .user-table {
   width: 100%;
-  min-width: 700px;
+  min-width: 600px;
   border-collapse: collapse;
 }
 
@@ -524,22 +375,15 @@ onMounted(() => {
 }
 
 .user-table th {
-  padding: 1.25rem 1rem;
+  padding: 1rem;
   color: white;
   text-align: left;
   font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .user-table td {
   padding: 1rem;
   border-bottom: 1px solid #F5F0EB;
-}
-
-.user-table tbody tr:hover {
-  background-color: rgba(239, 225, 214, 0.3);
 }
 
 .id-badge {
@@ -549,10 +393,9 @@ onMounted(() => {
   border-radius: 6px;
   color: #B48665;
   font-weight: 600;
-  font-size: 0.85rem;
 }
 
-.form-input {
+input, select {
   width: 100%;
   padding: 0.75rem;
   border: 2px solid #F5F0EB;
@@ -560,54 +403,21 @@ onMounted(() => {
   background: #F5F0EB;
   font-size: 1rem;
   color: #5D4037;
-  transition: all 0.2s;
 }
 
-.form-input:focus {
+input:focus, select:focus {
   outline: none;
   border-color: #E26191;
   background: white;
-  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.1);
 }
 
-.form-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.role-select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #F5F0EB;
-  border-radius: 8px;
-  background: #F5F0EB;
-  font-size: 1rem;
-  color: #5D4037;
+select {
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.role-select:focus {
-  outline: none;
-  border-color: #E26191;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.1);
-}
-
-.role-select.admin { 
-  color: #E26191;
-  border-color: rgba(226, 97, 145, 0.3);
-}
-
-.role-select.seller { 
-  color: #B48665;
-  border-color: rgba(180, 134, 101, 0.3);
-}
-
-.role-select.buyer { 
-  color: #BB9580;
-  border-color: rgba(187, 149, 128, 0.3);
-}
+.role-select.admin { color: #E26191; }
+.role-select.seller { color: #B48665; }
+.role-select.buyer { color: #BB9580; }
 
 .btn-save {
   padding: 0.6rem 1.2rem;
@@ -620,32 +430,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
 }
 
 .btn-save:hover:not(:disabled) {
-  background: linear-gradient(135deg, #E26191, #D45A87);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(226, 97, 145, 0.2);
+  background: #D45A87;
 }
 
 .btn-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background: #ccc;
-}
-
-.admin-footer {
-  padding: 1.25rem;
-  background: white;
-  border-top: 1px solid #F5F0EB;
-  margin-top: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #B48665;
-  font-size: 0.9rem;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
 }
 
 .empty-state {
@@ -659,63 +452,13 @@ onMounted(() => {
 
 .empty-state h3 {
   color: #5D4037;
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
 @media (max-width: 768px) {
-  .admin-header { 
-    padding: 1.5rem 1rem; 
-    text-align: center;
-  }
-  
-  .admin-title { 
-    font-size: 1.5rem; 
-  }
-  
-  .control-bar { 
-    margin: 0.5rem; 
-    padding: 1rem; 
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .control-left { 
-    width: 100%; 
-    margin-bottom: 1rem;
-  }
-  
-  .search-box, .filter-select { 
-    min-width: 100%; 
-  }
-  
-  .user-table-container { 
-    margin: 0 0.5rem 0.5rem; 
-  }
-  
-  .hide-mobile { 
-    display: none; 
-  }
-  
-  .admin-footer { 
-    flex-direction: column; 
-    gap: 0.5rem; 
-    text-align: center; 
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .btn-refresh span, .btn-save span { 
-    display: none; 
-  }
-  
-  .btn-refresh, .btn-save { 
-    padding: 0.75rem; 
-    justify-content: center;
-  }
-  
-  .user-table th, .user-table td {
-    padding: 0.75rem 0.5rem;
-  }
+  .admin-header { padding: 1.5rem 1rem; }
+  .admin-title { font-size: 1.5rem; }
+  .control-bar { margin: 0.5rem; padding: 1rem; flex-direction: column; }
+  .control-left { width: 100%; margin-bottom: 1rem; }
 }
 </style>

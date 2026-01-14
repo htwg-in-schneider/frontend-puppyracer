@@ -167,7 +167,7 @@ const validateForm = () => {
 const loadReviews = async () => {
   loading.value = true
   try {
-    const response = await fetch(`http://localhost:8081/api/product/${props.productId}/reviews`)
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${props.productId}/reviews`)
     if (response.ok) {
       reviews.value = await response.json()
     } else {
@@ -195,7 +195,7 @@ const submitReview = async () => {
       createdAt: new Date().toISOString()
     }
     
-    const response = await fetch(`http://localhost:8081/api/product/${props.productId}/reviews`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${props.productId}/reviews`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
