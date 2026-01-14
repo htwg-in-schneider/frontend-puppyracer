@@ -96,25 +96,7 @@ const routes = [
     }
   },
   
-  // Redirects für einfache Kategorie-Links
-  {
-    path: '/leinen',
-    redirect: '/produkte/leinen'
-  },
-  {
-    path: '/halsbaender',
-    redirect: '/produkte/halsbaender'
-  },
-  {
-    path: '/bekleidung',
-    redirect: '/produkte/bekleidung'
-  },
-  {
-    path: '/snacks',
-    redirect: '/produkte/snacks'
-  },
-  
-  // === PRODUCT ROUTES ===
+  // === PRODUCT ROUTES MÜSSEN VOR DEN REDIRECTS KOMMEN! ===
   {
     path: '/product/:id',
     name: 'product-detail',
@@ -135,6 +117,25 @@ const routes = [
     component: ProductCatalog,
     props: route => getCatalogProps(route),
     meta: { title: 'Suchergebnisse - PuppyRacer' }
+  },
+  
+  // === KORRIGIERTE REDIRECTS ===
+  // WICHTIG: Auf dasselbe umleiten wie in deiner ProductCatalog erwartet wird
+  {
+    path: '/leinen',
+    redirect: '/produkte/leinen'
+  },
+  {
+    path: '/halsbaender',
+    redirect: '/produkte/halsband' // Hier geändert von 'halsbaender' zu 'halsband'
+  },
+  {
+    path: '/bekleidung',
+    redirect: '/produkte/bekleidung'
+  },
+  {
+    path: '/snacks',
+    redirect: '/produkte/snacks'
   },
   
   // === USER ACCOUNT ROUTES ===
@@ -208,24 +209,17 @@ const router = createRouter({
   }
 })
 
-// Title Management Middleware
+// Debugging Middleware
 router.beforeEach((to, from, next) => {
-  console.log('Routing von:', from.path, 'nach:', to.path)
+  console.log('========== ROUTER DEBUG ==========')
+  console.log('Von:', from.path)
+  console.log('Nach:', to.path)
+  console.log('Name:', to.name)
+  console.log('Params:', to.params)
+  console.log('Query:', to.query)
+  console.log('==================================')
+  
   document.title = to.meta?.title || 'PuppyRacer - Hundezubehör'
-  next()
-})
-
-// Auth Middleware
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
-  
-  if (requiresAuth || requiresAdmin) {
-    // Auth0 oder eigene Auth-Logik hier implementieren
-    // Für jetzt einfach durchlassen (zum Testen)
-    console.log('Route erfordert Auth:', to.path)
-  }
-  
   next()
 })
 
