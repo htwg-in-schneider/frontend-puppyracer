@@ -52,7 +52,7 @@
           
           <!-- Eingeloggt: User Menu -->
           <div v-else class="user-menu">
-            <!-- Admin Menu (wenn Admin) -->
+            <!-- Admin Menu (nur für Admin) -->
             <div v-if="isAdmin" class="admin-dropdown">
               <button class="user-btn admin-btn" @click="toggleAdminMenu" :aria-expanded="adminMenuOpen">
                 <i class="bi bi-shield"></i>
@@ -70,35 +70,19 @@
                 <router-link to="/admin/products" class="dropdown-item" @click="closeAdminMenu">
                   <i class="bi bi-box"></i> Produkte
                 </router-link>
-                <!-- Profil im Admin Dropdown -->
                 <router-link to="/account" class="dropdown-item" @click="closeAdminMenu">
                   <i class="bi bi-person-circle"></i> Mein Profil
                 </router-link>
               </div>
             </div>
             
-            <!-- Normale User (kein Admin) -->
-            <div v-else class="user-dropdown">
-              <button class="user-btn user-main-btn" @click="toggleUserMenu" :aria-expanded="userMenuOpen">
-                <i class="bi bi-person-circle"></i>
-                <span class="btn-text">Mein Konto</span>
-                <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': userMenuOpen }"></i>
-              </button>
-              
-              <div v-if="userMenuOpen" class="dropdown-menu">
-                <router-link to="/account" class="dropdown-item" @click="closeUserMenu">
-                  <i class="bi bi-person-circle"></i> Mein Profil
-                </router-link>
-                <router-link to="/warenkorb" class="dropdown-item" @click="closeUserMenu">
-                  <i class="bi bi-cart3"></i> Warenkorb
-                </router-link>
-                <button @click="handleLogout" class="dropdown-item logout-dropdown">
-                  <i class="bi bi-box-arrow-right"></i> Logout
-                </button>
-              </div>
-            </div>
+            <!-- Normale User (KEIN Admin) - Nur Profil-Button -->
+            <router-link v-else to="/account" class="user-btn account-btn" aria-label="Mein Profil">
+              <i class="bi bi-person-circle"></i>
+              <span class="btn-text">Profil</span>
+            </router-link>
             
-            <!-- Logout Button (außerhalb vom Dropdown für einfachen Zugriff) -->
+            <!-- Logout Button (für alle) -->
             <button @click="handleLogout" class="user-btn logout-btn" aria-label="Abmelden">
               <i class="bi bi-box-arrow-right"></i>
               <span class="btn-text">Logout</span>
@@ -170,7 +154,7 @@
               <span>Mein Profil</span>
             </button>
             
-            <!-- Admin Bereich (wenn Admin) -->
+            <!-- Admin Bereich (nur wenn Admin) -->
             <div v-if="isAdmin" class="admin-section">
               <div class="admin-title">
                 <i class="bi bi-shield"></i>
@@ -220,7 +204,6 @@ const { loginWithRedirect, logout, user, isAuthenticated, getAccessTokenSilently
 const isScrolled = ref(false)
 const menuOpen = ref(false)
 const adminMenuOpen = ref(false)
-const userMenuOpen = ref(false)
 const searchQuery = ref('')
 const isAdmin = ref(false)
 const windowWidth = ref(window.innerWidth)
@@ -302,15 +285,17 @@ const handleLogin = () => {
   loginWithRedirect()
   closeAllMenus()
 }
+
+// KORRIGIERTE Logout Funktion - immer zur Startseite
 const handleLogout = () => {
-  // Zurück zur Startseite (nicht zu Admin-Seiten)
-  const baseUrl = window.location.origin + window.location.pathname
-  // Entferne Admin-Pfade
-  const cleanUrl = baseUrl.replace(/\/admin\/.*/, '')
+  // IMMER zur Startseite zurückkehren
+  const returnUrl = window.location.origin + '/frontend-puppyracer/'
+  
+  console.log('Logout from:', window.location.pathname, 'Return to:', returnUrl)
   
   logout({ 
     logoutParams: { 
-      returnTo: cleanUrl || window.location.origin
+      returnTo: returnUrl
     }
   })
   closeAllMenus()
@@ -319,14 +304,11 @@ const handleLogout = () => {
 // Menu Functions
 const toggleMenu = () => menuOpen.value = !menuOpen.value
 const toggleAdminMenu = () => adminMenuOpen.value = !adminMenuOpen.value
-const toggleUserMenu = () => userMenuOpen.value = !userMenuOpen.value
 const closeMenu = () => menuOpen.value = false
 const closeAdminMenu = () => adminMenuOpen.value = false
-const closeUserMenu = () => userMenuOpen.value = false
 const closeAllMenus = () => {
   menuOpen.value = false
   adminMenuOpen.value = false
-  userMenuOpen.value = false
 }
 
 // Resize Handler
@@ -928,43 +910,5 @@ onUnmounted(() => {
     padding: 0.75rem;
     font-size: 0.85rem;
   }
-  .user-dropdown {
-  position: relative;
-}
-
-.user-main-btn {
-  background: var(--color-background-light);
-  border-color: var(--color-accent-brown);
-  position: relative;
-}
-
-.user-main-btn:hover {
-  background: var(--color-accent-pink);
-  color: white;
-  border-color: var(--color-accent-pink);
-}
-
-/* Dropdown Item für Logout im Menu */
-.logout-dropdown {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 1rem;
-  color: var(--color-primary-dark);
-  text-decoration: none;
-  border-bottom: 1px solid var(--color-accent-brown);
-  font-size: 0.8rem;
-  transition: all 0.2s;
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-}
-
-.logout-dropdown:hover {
-  background: rgba(226, 97, 145, 0.1);
-  color: var(--color-accent-pink);
-}
 }
 </style>
