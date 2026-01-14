@@ -28,24 +28,6 @@ const routes = [
     meta: { title: 'Startseite - PuppyRacer' }
   },
   
-  // Redirects für einfache Kategorie-Links
-  {
-    path: '/leinen',
-    redirect: '/produkte/leinen'
-  },
-  {
-    path: '/halsbaender',
-    redirect: '/produkte/halsbaender'
-  },
-  {
-    path: '/bekleidung',
-    redirect: '/produkte/bekleidung'
-  },
-  {
-    path: '/snacks',
-    redirect: '/produkte/snacks'
-  },
-  
   // Legal Pages
   {
     path: '/impressum',
@@ -60,77 +42,7 @@ const routes = [
     meta: { title: 'Datenschutz - PuppyRacer' }
   },
   
-  // Product Routes
-  {
-    path: '/product/:id',
-    name: 'product-detail',
-    component: ProductDetail,
-    props: true,
-    meta: { title: 'Produktdetails - PuppyRacer' }
-  },
-  {
-    path: '/produkte/:category?',
-    name: 'product-catalog',
-    component: ProductCatalog,
-    props: route => getCatalogProps(route),
-    meta: { title: 'Produkte - PuppyRacer' }
-  },
-  {
-    path: '/search',
-    name: 'search',
-    component: ProductCatalog,
-    props: route => getCatalogProps(route),
-    meta: { title: 'Suchergebnisse - PuppyRacer' }
-  },
-  
-  // User Account Routes
-  {
-    path: '/account',
-    name: 'account',
-    component: AccountView,
-    meta: { 
-      requiresAuth: true,
-      title: 'Mein Konto - PuppyRacer'
-    }
-  },
-  {
-    path: '/warenkorb',
-    name: 'warenkorb',
-    component: WarenkorbView,
-    meta: { title: 'Warenkorb - PuppyRacer' }
-  },
-  {
-    path: '/checkout',
-    name: 'checkout',
-    component: Checkout,
-    meta: { 
-      requiresAuth: true,
-      title: 'Kasse - PuppyRacer'
-    }
-  },
-  
-  // Order Routes
-  {
-    path: '/order-confirmation/:orderNumber?',
-    name: 'OrderConfirmation',
-    component: OrderConfirmation,
-    props: true,
-    meta: { 
-      requiresAuth: true,
-      title: 'Bestellbestätigung - PuppyRacer'
-    }
-  },
-  {
-    path: '/my-orders',
-    name: 'MyOrders',
-    component: OrderHistory,
-    meta: { 
-      requiresAuth: true,
-      title: 'Meine Bestellungen - PuppyRacer'
-    }
-  },
-  
-  // Admin Routes
+  // === ADMIN ROUTES (MÜSSEN ZUERST KOMMEN!) ===
   {
     path: '/admin/products/create',
     name: 'CreateProduct',
@@ -176,11 +88,99 @@ const routes = [
     path: '/admin/products',
     name: 'AdminProducts',
     component: ProductCatalog,
-    props: route => getCatalogProps(route, true),
+    props: route => ({ adminMode: true, category: '' }),
     meta: { 
       requiresAuth: true, 
       requiresAdmin: true,
       title: 'Produkte verwalten - Admin'
+    }
+  },
+  
+  // Redirects für einfache Kategorie-Links
+  {
+    path: '/leinen',
+    redirect: '/produkte/leinen'
+  },
+  {
+    path: '/halsbaender',
+    redirect: '/produkte/halsbaender'
+  },
+  {
+    path: '/bekleidung',
+    redirect: '/produkte/bekleidung'
+  },
+  {
+    path: '/snacks',
+    redirect: '/produkte/snacks'
+  },
+  
+  // === PRODUCT ROUTES ===
+  {
+    path: '/product/:id',
+    name: 'product-detail',
+    component: ProductDetail,
+    props: true,
+    meta: { title: 'Produktdetails - PuppyRacer' }
+  },
+  {
+    path: '/produkte/:category?',
+    name: 'product-catalog',
+    component: ProductCatalog,
+    props: route => getCatalogProps(route),
+    meta: { title: 'Produkte - PuppyRacer' }
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: ProductCatalog,
+    props: route => getCatalogProps(route),
+    meta: { title: 'Suchergebnisse - PuppyRacer' }
+  },
+  
+  // === USER ACCOUNT ROUTES ===
+  {
+    path: '/account',
+    name: 'account',
+    component: AccountView,
+    meta: { 
+      requiresAuth: true,
+      title: 'Mein Konto - PuppyRacer'
+    }
+  },
+  {
+    path: '/warenkorb',
+    name: 'warenkorb',
+    component: WarenkorbView,
+    meta: { title: 'Warenkorb - PuppyRacer' }
+  },
+  {
+    path: '/checkout',
+    name: 'checkout',
+    component: Checkout,
+    meta: { 
+      requiresAuth: true,
+      title: 'Kasse - PuppyRacer'
+    }
+  },
+  
+  // === ORDER ROUTES ===
+  {
+    path: '/order-confirmation/:id',
+    name: 'OrderConfirmation',
+    component: OrderConfirmation,
+    props: true,
+    meta: { 
+      requiresAuth: true,
+      title: 'Bestellbestätigung - PuppyRacer'
+    }
+  },
+  {
+    path: '/my-orders',
+    name: 'MyOrders',
+    component: OrderHistory,
+    meta: { 
+      requiresAuth: true,
+      title: 'Meine Bestellungen - PuppyRacer'
     }
   },
   
@@ -191,9 +191,8 @@ const routes = [
   }
 ]
 
-// ========== HIER DIE ÄNDERUNG ==========
 const router = createRouter({
-  history: createWebHistory('/frontend-puppyracer/'), // WICHTIG: mit Repo-Name!
+  history: createWebHistory('/frontend-puppyracer/'),
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
@@ -211,8 +210,22 @@ const router = createRouter({
 
 // Title Management Middleware
 router.beforeEach((to, from, next) => {
-  // Set page title
+  console.log('Routing von:', from.path, 'nach:', to.path)
   document.title = to.meta?.title || 'PuppyRacer - Hundezubehör'
+  next()
+})
+
+// Auth Middleware
+router.beforeEach((to, from, next) => {
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
+  
+  if (requiresAuth || requiresAdmin) {
+    // Auth0 oder eigene Auth-Logik hier implementieren
+    // Für jetzt einfach durchlassen (zum Testen)
+    console.log('Route erfordert Auth:', to.path)
+  }
+  
   next()
 })
 

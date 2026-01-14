@@ -132,6 +132,10 @@ const showDeleteModal = ref(false)
 const productToDelete = ref(null)
 const userRole = ref('')
 
+// Debugging hinzufügen
+console.log('ProductCatalog mounted, Category:', props.category)
+console.log('Route:', route.path)
+
 const categoryNames = {
   leinen: 'Leinen & Geschirre',
   halsband: 'Halsbänder',
@@ -151,7 +155,7 @@ const filteredProducts = computed(() => {
   if (props.category) {
     filtered = filtered.filter(product => {
       if (!product.category) return false
-      return product.category.toLowerCase().includes(props.category.toLowerCase())
+      return product.category.toLowerCase() === props.category.toLowerCase()
     })
   }
   
@@ -193,7 +197,6 @@ async function fetchUserRole() {
     if (response.ok) {
       const data = await response.json()
       userRole.value = data.role
-      console.log('User Role:', data.role, 'Is Admin:', isAdmin.value)
     }
   } catch (err) {
     console.error('Fehler beim Laden der Rolle:', err)
@@ -203,10 +206,13 @@ async function fetchUserRole() {
 async function loadProducts() {
   loading.value = true
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product`)
+    // WICHTIG: API-Endpoint korrigieren
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products`)
     if (res.ok) {
       allProducts.value = await res.json()
-      console.log('Geladene Produkte:', allProducts.value)
+      console.log('Produkte geladen:', allProducts.value.length)
+    } else {
+      console.error('Fehler beim Laden der Produkte:', res.status)
     }
   } catch (err) {
     console.error('Fehler beim Laden:', err)
@@ -218,7 +224,7 @@ async function loadProducts() {
 async function deleteProduct(productId) {
   try {
     const token = await getAccessTokenSilently()
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${productId}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products/${productId}`, {
       method: 'DELETE',
       headers: { 
         'Authorization': `Bearer ${token}`,
@@ -230,6 +236,7 @@ async function deleteProduct(productId) {
       allProducts.value = allProducts.value.filter(p => p.id !== productId)
     } else {
       console.error('Löschen fehlgeschlagen:', response.status)
+      alert('Löschen fehlgeschlagen')
     }
   } catch (err) {
     console.error('Fehler beim Löschen:', err)
@@ -262,12 +269,10 @@ function goToProduct(productId) {
 
 function toggleEditMode() {
   editMode.value = !editMode.value
-  console.log('Edit Mode:', editMode.value)
 }
 
 function clearSearch() {
-  const { q, ...otherParams } = route.query
-  router.push({ path: route.path, query: otherParams })
+  router.push({ path: route.path, query: {} })
 }
 
 function updateSort(filters) {
@@ -275,11 +280,15 @@ function updateSort(filters) {
 }
 
 onMounted(async () => {
+  console.log('ProductCatalog onMounted')
   await fetchUserRole()
-  loadProducts()
+  await loadProducts()
 })
 
-watch(() => props.category, loadProducts)
+watch(() => props.category, () => {
+  console.log('Category changed:', props.category)
+  loadProducts()
+})
 </script>
 
 <style scoped>

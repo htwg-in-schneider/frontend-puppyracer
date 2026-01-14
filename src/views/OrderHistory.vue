@@ -93,12 +93,12 @@
             </div>
 
             <div class="actions">
-              <router-link 
-                :to="`/order-confirmation/${order.id}`" 
-                class="btn-view"
-              >
-                <i class="bi bi-eye"></i> Details
-              </router-link>
+             <router-link 
+              :to="`/order-confirmation/${order.id}`" 
+              class="btn-view"
+            >
+              <i class="bi bi-eye"></i> Details
+            </router-link>
               <button 
                 v-if="isAdmin && order.status === 'PAID'" 
                 @click="updateOrderStatus(order, 'SHIPPED')"
@@ -146,7 +146,7 @@ const filteredOrders = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(o => 
-      o.orderNumber.toLowerCase().includes(query) ||
+      o.orderNumber?.toLowerCase().includes(query) ||
       (o.user && o.user.name && o.user.name.toLowerCase().includes(query))
     )
   }
@@ -203,6 +203,7 @@ const loadOrders = async () => {
   try {
     const token = await getAccessTokenSilently()
     
+    // 1. Profil und Admin-Status laden
     const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -212,25 +213,47 @@ const loadOrders = async () => {
     const userData = await profileRes.json()
     isAdmin.value = userData.role === 'ADMIN'
     
-    const endpoint = isAdmin.value ? '/api/orders' : '/api/orders/my-orders'
+    // 2. Korrekte API-Endpoints verwenden
+    let endpoint
+    if (isAdmin.value) {
+      // Admin: Alle Bestellungen
+      endpoint = '/api/admin/orders' // ODER '/api/orders/all'
+    } else {
+      // Normaler User: Eigene Bestellungen
+      endpoint = '/api/orders'
+    }
+    
+    console.log('Lade Bestellungen von:', endpoint)
     
     const ordersRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     
     if (!ordersRes.ok) {
-      if (ordersRes.status === 403) {
-        error.value = 'Zugriff verweigert'
-        orders.value = []
-      } else {
-        throw new Error(`Fehler ${ordersRes.status}`)
+      if (ordersRes.status === 404) {
+        // Test: Alternative Endpoints probieren
+        const altEndpoint = isAdmin.value ? '/api/orders' : '/api/my-orders'
+        console.log('Versuche alternativen Endpoint:', altEndpoint)
+        
+        const altRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}${altEndpoint}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        
+        if (altRes.ok) {
+          orders.value = await altRes.json()
+          return
+        }
       }
+      
+      throw new Error(`Fehler ${ordersRes.status}: ${await ordersRes.text()}`)
     } else {
       orders.value = await ordersRes.json()
+      console.log('Bestellungen geladen:', orders.value.length)
     }
     
   } catch (err) {
-    error.value = err.message
+    console.error('Fehler beim Laden der Bestellungen:', err)
+    error.value = 'Bestellungen konnten nicht geladen werden: ' + err.message
     orders.value = []
   } finally {
     loading.value = false
@@ -243,19 +266,37 @@ const updateOrderStatus = async (order, newStatus) => {
   try {
     const token = await getAccessTokenSilently()
     
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${order.id}/status`, {
-      method: 'PUT',
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ status: newStatus })
-    })
+    // Teste verschiedene Endpoints
+    const endpoints = [
+      `/api/orders/${order.id}/status`,
+      `/api/admin/orders/${order.id}/status`,
+      `/api/orders/${order.id}`
+    ]
     
-    if (response.ok) {
-      order.status = newStatus
-    } else {
-      throw new Error('Status-Update fehlgeschlagen')
+    let success = false
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
+          method: 'PUT',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+        })
+        
+        if (response.ok) {
+          order.status = newStatus
+          success = true
+          break
+        }
+      } catch (err) {
+        console.log(`Endpoint ${endpoint} fehlgeschlagen:`, err)
+      }
+    }
+    
+    if (!success) {
+      throw new Error('Status konnte nicht aktualisiert werden')
     }
     
   } catch (err) {
@@ -264,6 +305,7 @@ const updateOrderStatus = async (order, newStatus) => {
 }
 
 onMounted(() => {
+  console.log('OrderHistory onMounted')
   if (isAuthenticated.value) {
     loadOrders()
   } else {
