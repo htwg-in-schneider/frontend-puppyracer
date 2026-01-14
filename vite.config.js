@@ -2,11 +2,9 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
-const repoName = '/frontend-puppyracer/'
-
 export default defineConfig({
   plugins: [vue()],
-  base: process.env.NODE_ENV === 'production' ? repoName : '/',
+  base: '/frontend-puppyracer/',  // FEST HARDCODED für Produktion
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
