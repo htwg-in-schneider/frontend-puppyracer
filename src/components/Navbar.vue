@@ -185,7 +185,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/Warenkorb'
 import { useAuth0 } from '@auth0/auth0-vue'
@@ -240,23 +240,68 @@ const goToCart = () => {
   closeMenu()
 }
 
-// Admin Check
+// Admin Check - Direkt aus Auth0 User Object
 async function checkAdminStatus() {
-  if (!isAuthenticated.value) return
+  console.log('checkAdminStatus called')
   
-  try {
-    const token = await getAccessTokenSilently()
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    
-    if (response.ok) {
-      const userData = await response.json()
-      isAdmin.value = userData.role === 'ADMIN'
+  if (!isAuthenticated.value) {
+    console.log('User not authenticated')
+    isAdmin.value = false
+    return
+  }
+  
+  console.log('User is authenticated, checking roles...')
+  console.log('User object:', user.value)
+  
+  // 1. Direkt aus Auth0 User Object lesen (Standard-Weg)
+  const rolesClaimPaths = [
+    'puppyracer/roles',
+    'https://puppyracer.api/roles',
+    'https://puppyracer.com/roles',
+    'roles'
+  ]
+  
+  let userRoles = []
+  
+  // Alle möglichen Role-Pfade prüfen
+  rolesClaimPaths.forEach(path => {
+    if (user.value && user.value[path]) {
+      console.log(`Found roles at path '${path}':`, user.value[path])
+      const roles = user.value[path]
+      if (Array.isArray(roles)) {
+        userRoles = [...userRoles, ...roles]
+      } else if (typeof roles === 'string') {
+        userRoles.push(roles)
+      }
     }
-  } catch {
-    const roles = user.value?.['puppyracer/roles'] || user.value?.['https://puppyracer.com/roles']
-    isAdmin.value = roles?.includes('ADMIN') || false
+  })
+  
+  console.log('All found roles:', userRoles)
+  
+  // Admin prüfen
+  isAdmin.value = userRoles.includes('ADMIN') || userRoles.includes('admin')
+  console.log('Admin status from Auth0:', isAdmin.value)
+  
+  // 2. Fallback: Backend /api/profile versuchen (wenn Auth0 keine Roles hat)
+  if (userRoles.length === 0) {
+    console.log('No roles found in Auth0, trying backend...')
+    try {
+      const token = await getAccessTokenSilently()
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        const userData = await response.json()
+        console.log('Backend user data:', userData)
+        isAdmin.value = userData.role === 'ADMIN'
+        console.log('Admin status from backend:', isAdmin.value)
+      } else {
+        console.log('Backend returned status:', response.status)
+      }
+    } catch (error) {
+      console.log('Backend call failed:', error.message)
+    }
   }
 }
 
@@ -275,12 +320,12 @@ const handleLogin = () => {
   closeAllMenus()
 }
 const handleLogout = () => {
-   logout({ 
+  logout({ 
     logoutParams: { 
       returnTo: window.location.origin + window.location.pathname 
     }
-    })
-    closeAllMenus()
+  })
+  closeAllMenus()
 }
 
 // Menu Functions
@@ -299,12 +344,35 @@ const handleResize = () => {
   if (windowWidth.value >= 900) menuOpen.value = false
 }
 
+// Watch for authentication changes
+watch(isAuthenticated, (newVal) => {
+  if (newVal) {
+    console.log('User logged in, checking admin status...')
+    checkAdminStatus()
+  } else {
+    console.log('User logged out')
+    isAdmin.value = false
+  }
+})
+
+// Watch for user object changes
+watch(user, () => {
+  if (isAuthenticated.value) {
+    console.log('User object updated, rechecking admin status...')
+    checkAdminStatus()
+  }
+})
+
 // Lifecycle
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   window.addEventListener('resize', handleResize)
   handleScroll()
-  checkAdminStatus()
+  
+  // Initial check
+  if (isAuthenticated.value) {
+    checkAdminStatus()
+  }
 })
 
 onUnmounted(() => {
