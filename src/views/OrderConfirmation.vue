@@ -2,8 +2,8 @@
   <div class="order-confirmation">
     <div class="container">
       <div class="header">
-        <router-link to="/order-history" class="back-btn">
-          <i class="bi bi-arrow-left"></i> Zur Bestellübersicht
+        <router-link to="/" class="back-btn">
+          <i class="bi bi-arrow-left"></i> Zurück
         </router-link>
         <h1><i class="bi bi-check-circle"></i> Bestellbestätigung</h1>
       </div>
@@ -17,25 +17,25 @@
         <i class="bi bi-exclamation-triangle"></i>
         <h3>Fehler</h3>
         <p>{{ error }}</p>
-        <router-link to="/order-history" class="btn-primary">
-          <i class="bi bi-arrow-left"></i> Zurück zur Übersicht
+        <router-link to="/" class="btn-primary">
+          <i class="bi bi-shop"></i> Zurück zum Shop
         </router-link>
       </div>
 
-      <div v-else-if="order" class="order-details">
+      <div v-else class="order-details">
         <div class="success-message">
           <i class="bi bi-check-circle"></i>
           <div>
             <h3>Bestellung erfolgreich!</h3>
-            <p>Vielen Dank für Ihre Bestellung <strong>#{{ order.orderNumber }}</strong></p>
+            <p>Vielen Dank für Ihre Bestellung</p>
           </div>
         </div>
 
         <div class="order-summary">
           <div class="summary-header">
             <h2><i class="bi bi-receipt"></i> Bestellübersicht</h2>
-            <div class="order-status" :class="order.status.toLowerCase()">
-              {{ getStatusText(order.status) }}
+            <div class="order-status pending">
+              Ausstehend
             </div>
           </div>
 
@@ -43,16 +43,12 @@
             <div class="info-card">
               <h3><i class="bi bi-info-circle"></i> Bestellinformationen</h3>
               <div class="info-row">
-                <span>Bestellnummer:</span>
-                <span class="highlight">#{{ order.orderNumber }}</span>
-              </div>
-              <div class="info-row">
                 <span>Bestelldatum:</span>
                 <span>{{ formatDate(order.createdAt) }}</span>
               </div>
               <div class="info-row">
                 <span>Zahlungsmethode:</span>
-                <span>{{ getPaymentMethodText(order.paymentMethod) }}</span>
+                <span>Rechnung</span>
               </div>
             </div>
 
@@ -62,7 +58,7 @@
                 <p><strong>{{ order.firstName }} {{ order.lastName }}</strong></p>
                 <p>{{ order.street }}</p>
                 <p>{{ order.zipCode }} {{ order.city }}</p>
-                <p>{{ order.country }}</p>
+                <p>Deutschland</p>
                 <p v-if="order.phone"><i class="bi bi-telephone"></i> {{ order.phone }}</p>
                 <p><i class="bi bi-envelope"></i> {{ order.email }}</p>
               </div>
@@ -72,8 +68,8 @@
           <div class="order-items">
             <h3><i class="bi bi-cart"></i> Artikelübersicht</h3>
             <div class="items-list">
-              <div v-for="item in order.items" :key="item.id" class="item">
-                <img :src="getImageUrl(item.productImage)" :alt="item.productName" />
+              <div v-for="item in order.items" :key="item.productId" class="item">
+                <img :src="item.productImage || '/placeholder.jpg'" :alt="item.productName" />
                 <div class="item-details">
                   <h4>{{ item.productName }}</h4>
                   <div class="item-meta">
@@ -107,9 +103,6 @@
             <router-link to="/" class="btn-continue">
               <i class="bi bi-shop"></i> Weiter einkaufen
             </router-link>
-            <button v-if="isAdmin" @click="updateOrderStatus" class="btn-update">
-              <i class="bi bi-pencil-square"></i> Status aktualisieren
-            </button>
             <button @click="downloadInvoice" class="btn-download" :disabled="downloading">
               <i v-if="downloading" class="bi bi-arrow-clockwise spin"></i>
               <i v-else class="bi bi-download"></i>
@@ -134,13 +127,7 @@ const { getAccessTokenSilently } = useAuth0()
 const order = ref(null)
 const loading = ref(true)
 const error = ref('')
-const isAdmin = ref(false)
 const downloading = ref(false)
-
-const getImageUrl = (imageName) => {
-  if (!imageName) return '/src/assets/placeholder.jpg'
-  return `/src/assets/product_pics/${imageName}`
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
@@ -159,49 +146,14 @@ const formatCurrency = (amount) => {
   return `${(parseFloat(amount) || 0).toFixed(2)}€`
 }
 
-const getStatusText = (status) => {
-  const map = {
-    'PENDING': 'Ausstehend',
-    'PAID': 'Bezahlt',
-    'SHIPPED': 'Versendet',
-    'DELIVERED': 'Geliefert',
-    'CANCELLED': 'Storniert'
-  }
-  return map[status] || status
-}
-
-const getPaymentMethodText = (method) => {
-  const map = {
-    'PAYPAL': 'PayPal',
-    'CREDITCARD': 'Kreditkarte',
-    'INVOICE': 'Rechnung'
-  }
-  return map[method] || method
-}
-
 const loadOrder = async () => {
   loading.value = true
-  error.value = ''
   
   try {
+    const orderId = route.params.id
     const token = await getAccessTokenSilently()
     
-    // Admin-Status prüfen
-    const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    
-    if (profileRes.ok) {
-      const userData = await profileRes.json()
-      isAdmin.value = userData.role === 'ADMIN'
-    }
-    
-    const orderNumber = route.params.orderNumber
-    const endpoint = isAdmin.value 
-      ? `/api/orders/admin/${orderNumber}`
-      : `/api/orders/my-orders/${orderNumber}`
-    
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}`, {
       headers: { 
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json'
@@ -214,64 +166,30 @@ const loadOrder = async () => {
       } else if (response.status === 403) {
         error.value = 'Keine Berechtigung'
       } else {
-        throw new Error(`Fehler ${response.status}`)
+        throw new Error('Bestellung konnte nicht geladen werden')
       }
     } else {
       order.value = await response.json()
     }
     
   } catch (err) {
-    error.value = `Fehler: ${err.message}`
+    error.value = 'Bestellung konnte nicht geladen werden'
   } finally {
     loading.value = false
-  }
-}
-
-const updateOrderStatus = async () => {
-  if (!order.value || !isAdmin.value) return
-  
-  const currentStatus = order.value.status
-  let newStatus = ''
-  
-  if (currentStatus === 'PAID') newStatus = 'SHIPPED'
-  else if (currentStatus === 'SHIPPED') newStatus = 'DELIVERED'
-  else {
-    alert('Status kann nicht aktualisiert werden')
-    return
-  }
-  
-  if (!confirm(`Bestellung auf "${getStatusText(newStatus)}" setzen?`)) return
-  
-  try {
-    const token = await getAccessTokenSilently()
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${order.value.id}/status`, {
-      method: 'PUT',
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ status: newStatus })
-    })
-    
-    if (response.ok) {
-      order.value.status = newStatus
-      order.value.updatedAt = new Date().toISOString()
-      alert(`Status auf "${getStatusText(newStatus)}" aktualisiert`)
-    }
-  } catch (err) {
-    alert(`Fehler: ${err.message}`)
   }
 }
 
 const downloadInvoice = () => {
   downloading.value = true
   setTimeout(() => {
-    alert(`Rechnung für #${order.value.orderNumber} wird generiert...`)
+    alert('Rechnung wird generiert...')
     downloading.value = false
   }, 1000)
 }
 
-onMounted(loadOrder)
+onMounted(() => {
+  loadOrder()
+})
 </script>
 
 <style scoped>
@@ -299,6 +217,10 @@ onMounted(loadOrder)
   color: #e26191;
   text-decoration: none;
   margin-bottom: 1rem;
+}
+
+.back-btn:hover {
+  color: #ff8fab;
 }
 
 .header h1 {
@@ -353,7 +275,6 @@ onMounted(loadOrder)
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  transition: all 0.3s;
 }
 
 .btn-primary:hover {
@@ -412,10 +333,6 @@ onMounted(loadOrder)
 }
 
 .order-status.pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
-.order-status.paid { background: rgba(0, 123, 255, 0.2); color: #007bff; }
-.order-status.shipped { background: rgba(40, 167, 69, 0.2); color: #28a745; }
-.order-status.delivered { background: rgba(111, 66, 193, 0.2); color: #6f42c1; }
-.order-status.cancelled { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
 
 .summary-grid {
   display: grid;
@@ -549,7 +466,7 @@ onMounted(loadOrder)
   flex-wrap: wrap;
 }
 
-.btn-continue, .btn-update, .btn-download {
+.btn-continue, .btn-download {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   text-decoration: none;
@@ -557,7 +474,6 @@ onMounted(loadOrder)
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
-  transition: all 0.3s;
   cursor: pointer;
   border: none;
 }
@@ -568,10 +484,8 @@ onMounted(loadOrder)
   border: 1px solid rgba(255,255,255,0.2);
 }
 
-.btn-update {
-  background: rgba(0, 123, 255, 0.2);
-  color: #007bff;
-  border: 1px solid rgba(0, 123, 255, 0.3);
+.btn-continue:hover {
+  background: rgba(255,255,255,0.15);
 }
 
 .btn-download {
@@ -579,6 +493,10 @@ onMounted(loadOrder)
   color: #28a745;
   border: 1px solid rgba(40, 167, 69, 0.3);
   margin-left: auto;
+}
+
+.btn-download:hover:not(:disabled) {
+  background: rgba(40, 167, 69, 0.3);
 }
 
 .btn-download:disabled {

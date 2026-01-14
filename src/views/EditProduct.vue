@@ -41,7 +41,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>Preis (€) *</label>
-              <input v-model.number="formData.price" type="number" step="0.01" required :disabled="isSubmitting" />
+              <input v-model.number="formData.price" type="number" step="0.01" min="0" required :disabled="isSubmitting" />
             </div>
 
             <div class="form-group">
@@ -62,8 +62,8 @@
           </div>
 
           <div class="form-group">
-            <label>Bild-URL *</label>
-            <input v-model="formData.image" required :disabled="isSubmitting" />
+            <label>Bild-URL</label>
+            <input v-model="formData.image" :disabled="isSubmitting" />
             <div v-if="formData.image" class="image-preview">
               <img :src="formData.image" :alt="formData.title" />
             </div>
@@ -127,7 +127,6 @@ onMounted(async () => {
     
     product.value = await response.json()
     
-    // Formular füllen
     formData.title = product.value.title || ''
     formData.price = product.value.price || 0
     formData.description = product.value.description || ''
@@ -158,7 +157,10 @@ const updateProduct = async () => {
       body: JSON.stringify(formData)
     })
     
-    if (!response.ok) throw new Error('Update fehlgeschlagen')
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.message || 'Update fehlgeschlagen')
+    }
     
     successMessage.value = 'Produkt gespeichert!'
     Object.assign(originalData, { ...formData })
@@ -172,18 +174,25 @@ const updateProduct = async () => {
   }
 }
 
-const confirmDelete = () => {
+const confirmDelete = async () => {
   if (!confirm('Produkt wirklich löschen?')) return
   
-  fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${product.value.id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${getAccessTokenSilently()}` }
-  })
-    .then(() => {
+  try {
+    const token = await getAccessTokenSilently()
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${product.value.id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
       alert('Produkt gelöscht!')
       router.push('/admin/products')
-    })
-    .catch(err => alert('Löschen fehlgeschlagen: ' + err.message))
+    } else {
+      throw new Error('Löschen fehlgeschlagen')
+    }
+  } catch (err) {
+    alert('Löschen fehlgeschlagen: ' + err.message)
+  }
 }
 </script>
 

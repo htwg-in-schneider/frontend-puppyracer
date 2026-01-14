@@ -93,9 +93,12 @@
             </div>
 
             <div class="actions">
-              <button @click="viewOrder(order)" class="btn-view">
+              <router-link 
+                :to="`/order-confirmation/${order.id}`" 
+                class="btn-view"
+              >
                 <i class="bi bi-eye"></i> Details
-              </button>
+              </router-link>
               <button 
                 v-if="isAdmin && order.status === 'PAID'" 
                 @click="updateOrderStatus(order, 'SHIPPED')"
@@ -144,7 +147,7 @@ const filteredOrders = computed(() => {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(o => 
       o.orderNumber.toLowerCase().includes(query) ||
-      (o.user && o.user.name.toLowerCase().includes(query))
+      (o.user && o.user.name && o.user.name.toLowerCase().includes(query))
     )
   }
   
@@ -158,18 +161,8 @@ const totalRevenue = computed(() => {
     .toFixed(2)
 })
 
-// KORREKT: Bild-URLs für GitHub Pages
 const getImageUrl = (imageName) => {
-  if (!imageName || imageName.trim() === '') {
-    return ''
-  }
-  
-  // Für Entwicklung: localhost
-  if (import.meta.env.DEV) {
-    return `/src/assets/product_pics/${imageName}`
-  }
-  
-  // Für Produktion: GitHub Pages
+  if (!imageName) return ''
   return `/frontend-puppyracer/product_pics/${imageName}`
 }
 
@@ -210,20 +203,16 @@ const loadOrders = async () => {
   try {
     const token = await getAccessTokenSilently()
     
-    // Admin-Status prüfen
     const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     
-    if (!profileRes.ok) {
-      throw new Error(`Profil konnte nicht geladen werden`)
-    }
+    if (!profileRes.ok) throw new Error('Profil konnte nicht geladen werden')
     
     const userData = await profileRes.json()
     isAdmin.value = userData.role === 'ADMIN'
     
-    // Bestellungen laden
-    const endpoint = isAdmin.value ? '/api/orders/admin' : '/api/orders/my-orders'
+    const endpoint = isAdmin.value ? '/api/orders' : '/api/orders/my-orders'
     
     const ordersRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -237,29 +226,24 @@ const loadOrders = async () => {
         throw new Error(`Fehler ${ordersRes.status}`)
       }
     } else {
-      const ordersData = await ordersRes.json()
-      orders.value = ordersData
+      orders.value = await ordersRes.json()
     }
     
   } catch (err) {
-    error.value = `Fehler: ${err.message}`
+    error.value = err.message
     orders.value = []
   } finally {
     loading.value = false
   }
 }
 
-const viewOrder = (order) => {
-  router.push(`/order-confirmation/${order.orderNumber}`)
-}
-
 const updateOrderStatus = async (order, newStatus) => {
-  if (!confirm(`Bestellung #${order.orderNumber} wirklich auf "${getStatusText(newStatus)}" setzen?`)) return
+  if (!confirm(`Bestellung #${order.orderNumber} auf "${getStatusText(newStatus)}" setzen?`)) return
   
   try {
     const token = await getAccessTokenSilently()
     
-    await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${order.id}/status`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${order.id}/status`, {
       method: 'PUT',
       headers: { 
         'Authorization': `Bearer ${token}`,
@@ -268,7 +252,11 @@ const updateOrderStatus = async (order, newStatus) => {
       body: JSON.stringify({ status: newStatus })
     })
     
-    order.status = newStatus
+    if (response.ok) {
+      order.status = newStatus
+    } else {
+      throw new Error('Status-Update fehlgeschlagen')
+    }
     
   } catch (err) {
     alert(`Fehler: ${err.message}`)
@@ -286,7 +274,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Dein CSS bleibt gleich */
 .order-history {
   min-height: 100vh;
   background: #1a1a1a;
@@ -311,6 +298,10 @@ onMounted(() => {
   color: #e26191;
   text-decoration: none;
   margin-bottom: 1rem;
+}
+
+.back-btn:hover {
+  color: #ff8fab;
 }
 
 .header h1 {
@@ -391,6 +382,10 @@ onMounted(() => {
   gap: 0.5rem;
   font-weight: 600;
   text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: #d05583;
 }
 
 .stats {
@@ -507,7 +502,6 @@ onMounted(() => {
   height: 50px;
   border-radius: 6px;
   object-fit: cover;
-  background: #2D2121; /* DUNKELBRAUNER HINTERGRUND */
 }
 
 .item-details {
@@ -534,7 +528,23 @@ onMounted(() => {
   gap: 0.75rem;
 }
 
-.btn-view, .btn-ship, .btn-deliver {
+.btn-view {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.btn-view:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.btn-ship, .btn-deliver {
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
   border: none;
@@ -545,19 +555,22 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.btn-view {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-}
-
 .btn-ship {
   background: rgba(40, 167, 69, 0.2);
   color: #28a745;
 }
 
+.btn-ship:hover {
+  background: rgba(40, 167, 69, 0.3);
+}
+
 .btn-deliver {
   background: rgba(111, 66, 193, 0.2);
   color: #6f42c1;
+}
+
+.btn-deliver:hover {
+  background: rgba(111, 66, 193, 0.3);
 }
 
 @media (max-width: 768px) {
