@@ -275,8 +275,12 @@ const handleLogin = () => {
   closeAllMenus()
 }
 const handleLogout = () => {
-  logout({ logoutParams: { returnTo: window.location.origin } })
-  closeAllMenus()
+   logout({ 
+    logoutParams: { 
+      returnTo: window.location.origin + window.location.pathname 
+    }
+    })
+    closeAllMenus()
 }
 
 // Menu Functions
