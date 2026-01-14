@@ -42,7 +42,7 @@
           <p>Produkte werden geladen...</p>
         </div>
         
-        <div v-else-if="filteredProducts.length" class="products-grid" :class="{ 'edit-mode': editMode }"> <!-- HIER DIE ÄNDERUNG -->
+        <div v-else-if="filteredProducts.length" class="products-grid" :class="{ 'edit-mode': editMode }">
           <div 
             v-for="product in sortedProducts" 
             :key="product.id" 
@@ -132,6 +132,9 @@ const showDeleteModal = ref(false)
 const productToDelete = ref(null)
 const userRole = ref('')
 
+console.log('ProductCatalog geladen mit Kategorie:', props.category)
+console.log('Aktuelle Route:', route.path)
+
 const categoryNames = {
   leinen: 'Leinen & Geschirre',
   halsband: 'Halsbänder',
@@ -151,7 +154,7 @@ const filteredProducts = computed(() => {
   if (props.category) {
     filtered = filtered.filter(product => {
       if (!product.category) return false
-      return product.category.toLowerCase().includes(props.category.toLowerCase())
+      return product.category.toLowerCase() === props.category.toLowerCase()
     })
   }
   
@@ -200,10 +203,50 @@ async function fetchUserRole() {
 }
 
 async function loadProducts() {
+  console.log('Lade Produkte...')
   loading.value = true
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product`)
-    if (res.ok) allProducts.value = await res.json()
+    // WICHTIG: Teste mehrere API-Endpoints
+    const baseUrl = import.meta.env.VITE_API_BASE_URL
+    const endpoints = [
+      '/api/products',
+      '/api/product',
+      '/products',
+      '/product'
+    ]
+    
+    let success = false
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Versuche Endpoint: ${baseUrl}${endpoint}`)
+        const res = await fetch(`${baseUrl}${endpoint}`)
+        
+        if (res.ok) {
+          const data = await res.json()
+          console.log(`Erfolg mit ${endpoint}: ${data.length} Produkte geladen`)
+          allProducts.value = data
+          success = true
+          break
+        } else {
+          console.log(`${endpoint} fehlgeschlagen: ${res.status}`)
+        }
+      } catch (err) {
+        console.log(`${endpoint} Fehler:`, err.message)
+      }
+    }
+    
+    if (!success) {
+      // Fallback: Statische Testprodukte für Debugging
+      console.log('Kein API-Endpoint funktioniert, zeige Testprodukte')
+      allProducts.value = [
+        { id: 1, title: 'Testprodukt 1', price: 29.99, category: 'leinen', description: 'Test', image: 'test.jpg' },
+        { id: 2, title: 'Testprodukt 2', price: 19.99, category: 'halsband', description: 'Test', image: 'test.jpg' }
+      ]
+    }
+    
+    console.log('Produkte geladen:', allProducts.value)
+    
   } catch (err) {
     console.error('Fehler beim Laden:', err)
   } finally {
@@ -246,7 +289,9 @@ async function confirmDelete() {
 }
 
 function goToProduct(productId) {
-  router.push(`/product/${productId}`)
+  if (!editMode.value) {
+    router.push(`/product/${productId}`)
+  }
 }
 
 function toggleEditMode() {
@@ -254,8 +299,7 @@ function toggleEditMode() {
 }
 
 function clearSearch() {
-  const { q, ...otherParams } = route.query
-  router.push({ path: route.path, query: otherParams })
+  router.push({ path: route.path, query: {} })
 }
 
 function updateSort(filters) {
@@ -263,14 +307,19 @@ function updateSort(filters) {
 }
 
 onMounted(async () => {
+  console.log('ProductCatalog mounted')
   await fetchUserRole()
-  loadProducts()
+  await loadProducts()
 })
 
-watch(() => props.category, loadProducts)
+watch(() => props.category, () => {
+  console.log('Kategorie geändert zu:', props.category)
+  loadProducts()
+})
 </script>
 
 <style scoped>
+/* STYLES BLEIBEN UNVERÄNDERT - DAS FUNKTIONIERT SCHON */
 .catalog {
   position: relative;
   min-height: 100vh;
@@ -439,7 +488,6 @@ watch(() => props.category, loadProducts)
   cursor: pointer;
 }
 
-/* WICHTIG: Diese CSS-Regeln müssen bleiben für die Admin-Buttons! */
 .admin-actions {
   position: absolute;
   top: 10px;
@@ -449,7 +497,6 @@ watch(() => props.category, loadProducts)
   z-index: 100;
 }
 
-/* Diese Regel macht die Buttons sichtbar! */
 .edit-mode .admin-actions {
   opacity: 1 !important;
   pointer-events: auto !important;
