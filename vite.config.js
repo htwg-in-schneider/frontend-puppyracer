@@ -4,7 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/frontend-puppyracer/',  // FEST HARDCODED für Produktion
+  base: process.env.NODE_ENV === 'production' ? '/frontend-puppyracer/' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
