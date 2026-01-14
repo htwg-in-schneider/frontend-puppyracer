@@ -52,8 +52,8 @@
           
           <!-- Eingeloggt: User Menu -->
           <div v-else class="user-menu">
-            <!-- Admin Menu (nur für Admin) -->
-            <div v-if="isAdmin" class="admin-dropdown">
+            <!-- Admin Button nebeneinander mit Profil/Logout -->
+            <div v-if="isAdmin" class="admin-btn-container">
               <button class="user-btn admin-btn" @click="toggleAdminMenu" :aria-expanded="adminMenuOpen">
                 <i class="bi bi-shield"></i>
                 <span class="btn-text">Admin</span>
@@ -76,8 +76,8 @@
               </div>
             </div>
             
-            <!-- Normale User (KEIN Admin) - Nur Profil-Button -->
-            <router-link v-else to="/account" class="user-btn account-btn" aria-label="Mein Profil">
+            <!-- Profil Button (für alle User) -->
+            <router-link to="/account" class="user-btn account-btn" aria-label="Mein Profil">
               <i class="bi bi-person-circle"></i>
               <span class="btn-text">Profil</span>
             </router-link>
@@ -355,17 +355,17 @@ onUnmounted(() => {
   top: 0;
   width: 100%;
   background: var(--color-accent-brown); /* #B48665 - HELLBRAUN */
-  padding: 1.25rem 0; /* MEHR PADDING = HÖHER */
+  padding: 1rem 0; /* Etwas weniger Padding */
   z-index: 1100;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  min-height: 80px; /* Mindesthöhe */
+  min-height: 70px; /* Etwas niedriger */
   display: flex;
   align-items: center;
 }
 
 .navbar.scrolled {
-  padding: 0.75rem 0;
+  padding: 0.6rem 0;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
@@ -377,18 +377,20 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem; /* WICHTIG: Lücken zwischen Elementen */
 }
 
-/* Logo - etwas größer für höhere Navbar */
+/* Logo - angepasst für responsive */
 .logo-link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   text-decoration: none;
+  flex-shrink: 0; /* Verhindert das Schrumpfen */
 }
 
 .logo img {
-  height: 50px; /* Größeres Logo */
+  height: 45px; /* Etwas kleiner */
   width: auto;
   transition: transform 0.3s;
 }
@@ -400,38 +402,43 @@ onUnmounted(() => {
 .logo-text {
   font-family: var(--font-roboto);
   font-weight: 800;
-  font-size: 1.8rem; /* Größere Schrift */
+  font-size: 1.6rem; /* Kleinere Schrift */
   color: var(--color-primary-dark); /* #2D2121 */
   letter-spacing: -0.5px;
+  white-space: nowrap; /* Verhindert Zeilenumbruch */
 }
 
-/* Desktop Navigation */
+/* Desktop Navigation - FLEXIBLE LAYOUT */
 .desktop-nav {
   display: flex;
   align-items: center;
-  gap: 2rem;
   flex: 1;
-  margin-left: 2rem;
+  min-width: 0; /* WICHTIG: Erlaubt shrinking */
+  gap: 1rem; /* Weniger Abstand */
+  justify-content: flex-end;
 }
 
-/* Kategorien als Buttons - KLEINER & DEINE FARBEN */
+/* Kategorien - responsive */
 .categories {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  flex-wrap: wrap; /* Erlaubt Umbruch bei wenig Platz */
+  min-width: 0; /* Erlaubt shrinking */
 }
 
 .category-btn {
-  padding: 0.5rem 1rem; /* KLEINER */
+  padding: 0.4rem 0.8rem; /* Noch kleiner */
   background: var(--color-background-light); /* #EFE1D6 - CREME */
   color: var(--color-primary-dark); /* #2D2121 */
   border: 2px solid var(--color-accent-brown); /* #B48665 - Rahmen */
-  border-radius: 6px; /* Weniger rund */
+  border-radius: 5px; /* Weniger rund */
   font-family: var(--font-roboto);
   font-weight: 600;
-  font-size: 0.85rem; /* Kleinere Schrift */
+  font-size: 0.8rem; /* Kleinere Schrift */
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .category-btn:hover {
@@ -445,30 +452,32 @@ onUnmounted(() => {
   transform: translateY(0);
 }
 
-/* Suchleiste */
+/* Suchleiste - RESPONSIVE */
 .search {
   flex: 1;
-  max-width: 400px;
-  min-width: 200px;
+  min-width: 150px; /* Mindestbreite */
+  max-width: 300px; /* Maximale Breite */
 }
 
 .search-form {
   display: flex;
   background: var(--color-background-light); /* #EFE1D6 */
-  border-radius: 6px;
+  border-radius: 5px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 2px solid var(--color-accent-brown); /* #B48665 */
+  width: 100%; /* Füllt verfügbaren Platz */
 }
 
 .search-input {
   flex: 1;
-  padding: 0.6rem 1rem;
+  padding: 0.5rem 0.8rem; /* Weniger Padding */
   border: none;
   font-family: var(--font-roboto);
-  font-size: 0.9rem;
+  font-size: 0.85rem; /* Kleinere Schrift */
   color: var(--color-primary-dark);
   background: transparent;
+  min-width: 80px; /* Mindestbreite für Input */
 }
 
 .search-input:focus {
@@ -477,45 +486,61 @@ onUnmounted(() => {
 
 .search-input::placeholder {
   color: #888;
+  font-size: 0.85rem; /* Kleinere Platzhalter-Schrift */
 }
 
 .search-btn {
-  padding: 0 1rem;
+  padding: 0 0.8rem; /* Weniger Padding */
   background: var(--color-accent-pink); /* #E26191 */
   color: white;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  flex-shrink: 0; /* Verhindert Schrumpfen */
 }
 
 .search-btn:hover {
   background: #d04a7c; /* Dunkleres Pink */
 }
 
-/* User Actions */
+/* User Actions - NEBENEINANDER */
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem; /* Weniger Abstand */
+  flex-shrink: 0; /* Verhindert Schrumpfen */
+}
+
+/* User Menu Container für nebeneinander Anordnung */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Admin Button Container */
+.admin-btn-container {
+  position: relative;
 }
 
 /* Gemeinsame Button-Stile - DEINE FARBEN */
 .user-btn {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.8rem; /* KLEINER */
+  gap: 0.3rem; /* Weniger Abstand */
+  padding: 0.35rem 0.7rem; /* KLEINER */
   background: var(--color-background-light); /* #EFE1D6 */
   color: var(--color-primary-dark); /* #2D2121 */
   border: 2px solid var(--color-accent-brown); /* #B48665 */
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
   font-family: var(--font-roboto);
   font-weight: 600;
-  font-size: 0.8rem; /* Kleinere Schrift */
+  font-size: 0.75rem; /* Kleinere Schrift */
   transition: all 0.3s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .user-btn:hover {
@@ -551,9 +576,9 @@ onUnmounted(() => {
 }
 
 .dropdown-icon {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   transition: transform 0.3s;
-  margin-left: 0.25rem;
+  margin-left: 0.2rem;
 }
 
 .dropdown-icon.rotate {
@@ -561,19 +586,15 @@ onUnmounted(() => {
 }
 
 /* Dropdown Menu */
-.admin-dropdown {
-  position: relative;
-}
-
 .dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
-  margin-top: 0.5rem;
+  margin-top: 0.3rem;
   background: var(--color-background-light); /* #EFE1D6 */
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 160px;
+  min-width: 150px;
   z-index: 1001;
   border: 2px solid var(--color-accent-brown); /* #B48665 */
   overflow: hidden;
@@ -582,12 +603,12 @@ onUnmounted(() => {
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 1rem;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
   color: var(--color-primary-dark);
   text-decoration: none;
   border-bottom: 1px solid var(--color-accent-brown); /* #B48665 */
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   transition: all 0.2s;
 }
 
@@ -601,8 +622,8 @@ onUnmounted(() => {
 }
 
 .dropdown-item i {
-  font-size: 0.9rem;
-  width: 16px;
+  font-size: 0.8rem;
+  width: 14px;
 }
 
 /* Warenkorb */
@@ -610,16 +631,17 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.8rem; /* KLEINER */
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem; /* KLEINER */
   background: var(--color-accent-pink); /* #E26191 */
   color: white;
   border: 2px solid var(--color-accent-pink);
-  border-radius: 6px;
+  border-radius: 5px;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.8rem; /* Kleinere Schrift */
+  font-size: 0.75rem; /* Kleinere Schrift */
   transition: all 0.3s;
+  flex-shrink: 0;
 }
 
 .cart-btn:hover {
@@ -629,15 +651,15 @@ onUnmounted(() => {
 
 .cart-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -5px;
+  right: -5px;
   background: #ff4757;
   color: white;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -653,6 +675,7 @@ onUnmounted(() => {
   border: none;
   cursor: pointer;
   padding: 0.5rem;
+  flex-shrink: 0;
 }
 
 .burger-menu span {
@@ -678,12 +701,12 @@ onUnmounted(() => {
 /* Mobile Navigation */
 .mobile-nav {
   position: fixed;
-  top: 80px; /* Höhere Navbar = höhere Position */
+  top: 70px; /* Höhere Navbar = höhere Position */
   left: 0;
   right: 0;
   background: var(--color-accent-brown);
   padding: 1.5rem;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 70px);
   overflow-y: auto;
   z-index: 999;
 }
@@ -851,44 +874,79 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-/* Responsive */
+/* =========== RESPONSIVE ANPASSUNGEN =========== */
+
+/* Mittlere Screens (900px - 1100px) */
+@media (max-width: 1100px) {
+  .desktop-nav {
+    gap: 0.8rem;
+  }
+  
+  .category-btn {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+  
+  .user-btn {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .cart-btn {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+/* Standard Mobile Breakpoint */
 @media (max-width: 899px) {
   .desktop-nav { display: none; }
   .burger-menu { display: flex; }
-}
-
-@media (max-width: 768px) {
-  .navbar {
-    padding: 1rem 0;
-    min-height: 70px;
-  }
   
   .navbar-container {
     padding: 0 1rem;
   }
-  
-  .logo img {
-    height: 45px;
-  }
-  
-  .logo-text {
-    font-size: 1.6rem;
-  }
-  
-  .mobile-nav {
+}
+
+/* Kleine Screens (768px - 899px) */
+@media (min-width: 768px) and (max-width: 899px) {
+  .desktop-nav {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
     top: 70px;
-    padding: 1.25rem;
+    left: 0;
+    right: 0;
+    background: var(--color-accent-brown);
+    padding: 1rem;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .categories {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .search {
+    max-width: 100%;
+  }
+  
+  .user-actions {
+    justify-content: center;
+    flex-wrap: wrap;
   }
 }
 
-@media (max-width: 480px) {
+/* Mittlere Mobile Screens (480px - 767px) */
+@media (max-width: 767px) {
   .navbar {
-    padding: 0.875rem 0;
-    min-height: 65px;
+    padding: 0.8rem 0;
+    min-height: 60px;
   }
   
   .navbar-container {
-    padding: 0 0.75rem;
+    padding: 0 0.8rem;
   }
   
   .logo img {
@@ -900,7 +958,32 @@ onUnmounted(() => {
   }
   
   .mobile-nav {
-    top: 65px;
+    top: 60px;
+    padding: 1.25rem;
+  }
+}
+
+/* Sehr kleine Screens (< 480px) */
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0.6rem 0;
+    min-height: 55px;
+  }
+  
+  .navbar-container {
+    padding: 0 0.6rem;
+  }
+  
+  .logo img {
+    height: 35px;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+  }
+  
+  .mobile-nav {
+    top: 55px;
     padding: 1rem;
   }
   
@@ -909,6 +992,70 @@ onUnmounted(() => {
   .mobile-btn {
     padding: 0.75rem;
     font-size: 0.85rem;
+  }
+}
+
+/* Extreme kleine Screens (< 360px) */
+@media (max-width: 360px) {
+  .logo-text {
+    font-size: 1rem;
+  }
+  
+  .burger-menu {
+    padding: 0.3rem;
+  }
+  
+  .burger-menu span {
+    width: 20px;
+    height: 2px;
+  }
+}
+
+/* Responsive Hide/Show Elemente */
+@media (max-width: 1100px) {
+  .btn-text {
+    display: none; /* Text ausblenden bei kleinen Screens */
+  }
+  
+  .user-btn,
+  .cart-btn {
+    padding: 0.4rem 0.4rem; /* Nur Icon */
+  }
+  
+  .user-btn i,
+  .cart-btn i {
+    margin: 0;
+  }
+}
+
+@media (max-width: 1000px) {
+  .category-btn {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
+  }
+  
+  .search {
+    min-width: 120px;
+  }
+  
+  .search-input {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .search-btn {
+    padding: 0 0.6rem;
+  }
+}
+
+/* Für sehr breite Screens (> 1400px) */
+@media (min-width: 1400px) {
+  .navbar-container {
+    max-width: 1600px;
+  }
+  
+  .desktop-nav {
+    gap: 2rem;
   }
 }
 </style>
