@@ -4,26 +4,24 @@
       <h2>Beliebte Produkte</h2>
     </div>
     
-    <div class="products-container">
-      <div class="products-scroll">
-        <div 
-          v-for="product in products" 
-          :key="product.id" 
-          class="product-item"
-        >
-          <router-link :to="`/product/${product.id}`" class="product-link">
-            <img 
-              :src="getImageUrl(product.imageUrl)" 
-              :alt="product.title" 
-              class="product-image"
-              @error="handleImageError"
-            />
-            <div class="product-info">
-              <h3>{{ product.title }}</h3>
-              <div class="price">{{ formatCurrency(product.price) }}</div>
-            </div>
-          </router-link>
-        </div>
+    <div class="products-scroll">
+      <div 
+        v-for="product in products" 
+        :key="product.id" 
+        class="product-item"
+      >
+        <router-link :to="`/product/${product.id}`" class="product-link">
+          <img 
+            :src="getImageUrl(product.imageUrl)" 
+            :alt="product.title" 
+            class="product-image"
+            @error="handleImageError"
+          />
+          <div class="product-info">
+            <h3>{{ product.title }}</h3>
+            <div class="price">{{ formatCurrency(product.price) }}</div>
+          </div>
+        </router-link>
       </div>
     </div>
   </div>
@@ -56,7 +54,7 @@ const loadProducts = async () => {
     
     if (response.ok) {
       const data = await response.json()
-      products.value = data.slice(0, 12) // Bis zu 12 Produkte zum Scrollen
+      products.value = data.slice(0, 12)
     }
   } catch (err) {
     console.error('Fehler beim Laden:', err)
@@ -71,12 +69,10 @@ onMounted(() => {
 <style scoped>
 .product-carousel {
   background: rgba(30, 30, 30, 0.8);
-  padding: 1rem 0;
-  margin-top: 1rem;
+  padding: 1.5rem 0;
+  margin-top: 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
 }
 
 .carousel-header {
@@ -87,21 +83,15 @@ onMounted(() => {
 }
 
 .carousel-header h2 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   margin: 0;
 }
 
-.products-container {
-  padding: 0 1rem;
-}
-
 .products-scroll {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: calc(25% - 0.75rem); /* 4 Produkte pro Ansicht */
-  gap: 1rem;
+  display: flex;
   overflow-x: auto;
-  padding-bottom: 1rem;
+  gap: 1rem;
+  padding: 0 1rem 1.5rem;
   scrollbar-width: thin;
   scrollbar-color: #e26191 rgba(255, 255, 255, 0.1);
 }
@@ -121,7 +111,8 @@ onMounted(() => {
 }
 
 .product-item {
-  width: 100%;
+  flex: 0 0 calc(25% - 0.75rem); /* 4 Produkte pro Ansicht bei voller Breite */
+  min-width: 280px;
 }
 
 .product-link {
@@ -137,27 +128,27 @@ onMounted(() => {
 }
 
 .product-link:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
 .product-image {
   width: 100%;
-  height: 200px;
+  height: 220px;
   object-fit: cover;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .product-info {
-  padding: 1rem;
+  padding: 1.2rem;
   color: white;
 }
 
 .product-info h3 {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   margin: 0 0 0.75rem 0;
   line-height: 1.3;
-  height: 2.8rem;
+  height: 3rem;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -165,56 +156,63 @@ onMounted(() => {
 }
 
 .price {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #e26191;
 }
 
-/* Responsive - Anpassung der Anzahl der sichtbaren Produkte */
+/* Responsive Anpassungen */
 @media (max-width: 1200px) {
-  .products-scroll {
-    grid-auto-columns: calc(33.333% - 0.67rem); /* 3 Produkte pro Ansicht */
+  .product-item {
+    flex: 0 0 calc(33.333% - 0.67rem); /* 3 Produkte */
+    min-width: 260px;
+  }
+  
+  .product-image {
+    height: 200px;
+  }
+}
+
+@media (max-width: 900px) {
+  .product-item {
+    flex: 0 0 calc(50% - 0.5rem); /* 2 Produkte */
+    min-width: 220px;
   }
   
   .product-image {
     height: 180px;
   }
-}
-
-@media (max-width: 900px) {
-  .products-scroll {
-    grid-auto-columns: calc(50% - 0.5rem); /* 2 Produkte pro Ansicht */
+  
+  .product-info h3 {
+    font-size: 1.1rem;
+    height: 2.6rem;
   }
   
-  .product-image {
-    height: 160px;
+  .price {
+    font-size: 1.3rem;
   }
 }
 
 @media (max-width: 600px) {
   .product-carousel {
-    padding: 0.75rem 0;
-  }
-  
-  .carousel-header {
-    margin-bottom: 1rem;
+    padding: 1rem 0;
   }
   
   .carousel-header h2 {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
   }
   
-  .products-scroll {
-    grid-auto-columns: calc(100% - 0.5rem); /* 1 Produkt pro Ansicht */
-    gap: 0.75rem;
+  .product-item {
+    flex: 0 0 calc(100% - 0.5rem); /* 1 Produkt */
+    min-width: 280px;
   }
   
   .product-image {
-    height: 140px;
+    height: 160px;
   }
   
   .product-info {
-    padding: 0.75rem;
+    padding: 1rem;
   }
   
   .product-info h3 {
@@ -223,7 +221,18 @@ onMounted(() => {
   }
   
   .price {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+  }
+}
+
+/* Für sehr große Bildschirme */
+@media (min-width: 1600px) {
+  .product-item {
+    flex: 0 0 calc(20% - 0.8rem); /* 5 Produkte auf sehr großen Bildschirmen */
+  }
+  
+  .product-image {
+    height: 240px;
   }
 }
 </style>
