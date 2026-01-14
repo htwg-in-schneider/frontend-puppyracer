@@ -42,7 +42,7 @@
 
         <!-- User Actions -->
         <div class="user-actions">
-          <!-- Authentifizierung -->
+          <!-- Nicht eingeloggt: Login Button -->
           <div v-if="!isAuthenticated" class="auth-actions">
             <button @click="handleLogin" class="user-btn login-btn" aria-label="Login">
               <i class="bi bi-person"></i>
@@ -50,8 +50,9 @@
             </button>
           </div>
           
+          <!-- Eingeloggt: User Menu -->
           <div v-else class="user-menu">
-            <!-- Admin Menu -->
+            <!-- Admin Menu (wenn Admin) -->
             <div v-if="isAdmin" class="admin-dropdown">
               <button class="user-btn admin-btn" @click="toggleAdminMenu" :aria-expanded="adminMenuOpen">
                 <i class="bi bi-shield"></i>
@@ -69,23 +70,42 @@
                 <router-link to="/admin/products" class="dropdown-item" @click="closeAdminMenu">
                   <i class="bi bi-box"></i> Produkte
                 </router-link>
+                <!-- Profil im Admin Dropdown -->
+                <router-link to="/account" class="dropdown-item" @click="closeAdminMenu">
+                  <i class="bi bi-person-circle"></i> Mein Profil
+                </router-link>
               </div>
             </div>
             
-            <!-- User Profile -->
-            <router-link to="/account" class="user-btn account-btn" aria-label="Mein Konto">
-              <i class="bi bi-person-circle"></i>
-              <span class="btn-text">Konto</span>
-            </router-link>
+            <!-- Normale User (kein Admin) -->
+            <div v-else class="user-dropdown">
+              <button class="user-btn user-main-btn" @click="toggleUserMenu" :aria-expanded="userMenuOpen">
+                <i class="bi bi-person-circle"></i>
+                <span class="btn-text">Mein Konto</span>
+                <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': userMenuOpen }"></i>
+              </button>
+              
+              <div v-if="userMenuOpen" class="dropdown-menu">
+                <router-link to="/account" class="dropdown-item" @click="closeUserMenu">
+                  <i class="bi bi-person-circle"></i> Mein Profil
+                </router-link>
+                <router-link to="/warenkorb" class="dropdown-item" @click="closeUserMenu">
+                  <i class="bi bi-cart3"></i> Warenkorb
+                </router-link>
+                <button @click="handleLogout" class="dropdown-item logout-dropdown">
+                  <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+              </div>
+            </div>
             
-            <!-- Logout -->
+            <!-- Logout Button (außerhalb vom Dropdown für einfachen Zugriff) -->
             <button @click="handleLogout" class="user-btn logout-btn" aria-label="Abmelden">
               <i class="bi bi-box-arrow-right"></i>
               <span class="btn-text">Logout</span>
             </button>
           </div>
           
-          <!-- Warenkorb -->
+          <!-- Warenkorb (immer sichtbar) -->
           <router-link to="/warenkorb" class="cart-btn" aria-label="Warenkorb">
             <i class="bi bi-cart3"></i>
             <span class="btn-text">Warenkorb</span>
@@ -134,7 +154,7 @@
           </button>
         </div>
 
-        <!-- User Actions -->
+        <!-- User Actions Mobile -->
         <div class="mobile-user-actions">
           <div v-if="!isAuthenticated">
             <button @click="handleLogin" class="mobile-btn login-mobile">
@@ -144,11 +164,13 @@
           </div>
           
           <div v-else>
+            <!-- Profil Button -->
             <button @click="goToAccount" class="mobile-nav-item">
               <i class="bi bi-person-circle"></i>
               <span>Mein Profil</span>
             </button>
             
+            <!-- Admin Bereich (wenn Admin) -->
             <div v-if="isAdmin" class="admin-section">
               <div class="admin-title">
                 <i class="bi bi-shield"></i>
@@ -165,19 +187,19 @@
               </button>
             </div>
             
+            <!-- Warenkorb im Mobile Menu -->
+            <button @click="goToCart" class="mobile-nav-item">
+              <i class="bi bi-cart3"></i>
+              <span>Warenkorb</span>
+              <span class="badge" v-if="cartCount > 0">{{ cartCount }}</span>
+            </button>
+            
+            <!-- Logout -->
             <button @click="handleLogout" class="mobile-btn logout">
               <i class="bi bi-box-arrow-right"></i>
               <span>Logout</span>
             </button>
           </div>
-          
-          <button @click="goToCart" class="mobile-nav-item cart-item">
-            <div>
-              <i class="bi bi-cart3"></i>
-              <span>Warenkorb</span>
-            </div>
-            <span class="badge" v-if="cartCount > 0">{{ cartCount }}</span>
-          </button>
         </div>
       </div>
     </div>
@@ -198,6 +220,7 @@ const { loginWithRedirect, logout, user, isAuthenticated, getAccessTokenSilently
 const isScrolled = ref(false)
 const menuOpen = ref(false)
 const adminMenuOpen = ref(false)
+const userMenuOpen = ref(false)
 const searchQuery = ref('')
 const isAdmin = ref(false)
 const windowWidth = ref(window.innerWidth)
@@ -240,68 +263,28 @@ const goToCart = () => {
   closeMenu()
 }
 
-// Admin Check - Direkt aus Auth0 User Object
+// Admin Check - Laut PDF: Roles kommen vom Backend
 async function checkAdminStatus() {
-  console.log('checkAdminStatus called')
-  
   if (!isAuthenticated.value) {
-    console.log('User not authenticated')
     isAdmin.value = false
     return
   }
   
-  console.log('User is authenticated, checking roles...')
-  console.log('User object:', user.value)
-  
-  // 1. Direkt aus Auth0 User Object lesen (Standard-Weg)
-  const rolesClaimPaths = [
-    'puppyracer/roles',
-    'https://puppyracer.api/roles',
-    'https://puppyracer.com/roles',
-    'roles'
-  ]
-  
-  let userRoles = []
-  
-  // Alle möglichen Role-Pfade prüfen
-  rolesClaimPaths.forEach(path => {
-    if (user.value && user.value[path]) {
-      console.log(`Found roles at path '${path}':`, user.value[path])
-      const roles = user.value[path]
-      if (Array.isArray(roles)) {
-        userRoles = [...userRoles, ...roles]
-      } else if (typeof roles === 'string') {
-        userRoles.push(roles)
-      }
+  try {
+    const token = await getAccessTokenSilently()
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
+      const userData = await response.json()
+      // Laut PDF: Backend gibt Role zurück
+      isAdmin.value = userData.role === 'ADMIN'
+      console.log('Admin status from backend:', isAdmin.value)
     }
-  })
-  
-  console.log('All found roles:', userRoles)
-  
-  // Admin prüfen
-  isAdmin.value = userRoles.includes('ADMIN') || userRoles.includes('admin')
-  console.log('Admin status from Auth0:', isAdmin.value)
-  
-  // 2. Fallback: Backend /api/profile versuchen (wenn Auth0 keine Roles hat)
-  if (userRoles.length === 0) {
-    console.log('No roles found in Auth0, trying backend...')
-    try {
-      const token = await getAccessTokenSilently()
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      
-      if (response.ok) {
-        const userData = await response.json()
-        console.log('Backend user data:', userData)
-        isAdmin.value = userData.role === 'ADMIN'
-        console.log('Admin status from backend:', isAdmin.value)
-      } else {
-        console.log('Backend returned status:', response.status)
-      }
-    } catch (error) {
-      console.log('Backend call failed:', error.message)
-    }
+  } catch (error) {
+    console.log('Admin check failed:', error.message)
+    isAdmin.value = false
   }
 }
 
@@ -320,9 +303,14 @@ const handleLogin = () => {
   closeAllMenus()
 }
 const handleLogout = () => {
+  // Zurück zur Startseite (nicht zu Admin-Seiten)
+  const baseUrl = window.location.origin + window.location.pathname
+  // Entferne Admin-Pfade
+  const cleanUrl = baseUrl.replace(/\/admin\/.*/, '')
+  
   logout({ 
     logoutParams: { 
-      returnTo: window.location.origin + window.location.pathname 
+      returnTo: cleanUrl || window.location.origin
     }
   })
   closeAllMenus()
@@ -331,17 +319,22 @@ const handleLogout = () => {
 // Menu Functions
 const toggleMenu = () => menuOpen.value = !menuOpen.value
 const toggleAdminMenu = () => adminMenuOpen.value = !adminMenuOpen.value
+const toggleUserMenu = () => userMenuOpen.value = !userMenuOpen.value
 const closeMenu = () => menuOpen.value = false
 const closeAdminMenu = () => adminMenuOpen.value = false
+const closeUserMenu = () => userMenuOpen.value = false
 const closeAllMenus = () => {
   menuOpen.value = false
   adminMenuOpen.value = false
+  userMenuOpen.value = false
 }
 
 // Resize Handler
 const handleResize = () => {
   windowWidth.value = window.innerWidth
-  if (windowWidth.value >= 900) menuOpen.value = false
+  if (windowWidth.value >= 900) {
+    menuOpen.value = false
+  }
 }
 
 // Watch for authentication changes
@@ -352,14 +345,6 @@ watch(isAuthenticated, (newVal) => {
   } else {
     console.log('User logged out')
     isAdmin.value = false
-  }
-})
-
-// Watch for user object changes
-watch(user, () => {
-  if (isAuthenticated.value) {
-    console.log('User object updated, rechecking admin status...')
-    checkAdminStatus()
   }
 })
 
@@ -943,5 +928,43 @@ onUnmounted(() => {
     padding: 0.75rem;
     font-size: 0.85rem;
   }
+  .user-dropdown {
+  position: relative;
+}
+
+.user-main-btn {
+  background: var(--color-background-light);
+  border-color: var(--color-accent-brown);
+  position: relative;
+}
+
+.user-main-btn:hover {
+  background: var(--color-accent-pink);
+  color: white;
+  border-color: var(--color-accent-pink);
+}
+
+/* Dropdown Item für Logout im Menu */
+.logout-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-accent-brown);
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.logout-dropdown:hover {
+  background: rgba(226, 97, 145, 0.1);
+  color: var(--color-accent-pink);
+}
 }
 </style>
