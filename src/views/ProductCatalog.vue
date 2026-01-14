@@ -18,10 +18,6 @@
           <i :class="editMode ? 'bi bi-check-lg' : 'bi bi-pencil'"></i>
           {{ editMode ? 'Bearbeiten beenden' : 'Bearbeiten' }}
         </button>
-        
-        <router-link v-if="isAdmin" to="/admin/products/create" class="btn-create">
-          <i class="bi bi-plus-circle"></i> Neues Produkt
-        </router-link>
       </div>
     </div>
     
@@ -37,18 +33,6 @@
           <button @click="clearSearch" class="clear-search">
             <i class="bi bi-x-circle"></i> Suche löschen
           </button>
-        </div>
-        
-        <div v-if="isAdmin" class="admin-stats">
-          <h4><i class="bi bi-graph-up"></i> Admin Statistiken</h4>
-          <div class="stat">
-            <span class="number">{{ allProducts.length }}</span>
-            <span class="label">Produkte</span>
-          </div>
-          <div class="stat">
-            <span class="number">{{ totalValue.toFixed(2) }} €</span>
-            <span class="label">Gesamtwert</span>
-          </div>
         </div>
       </aside>
       
@@ -71,7 +55,7 @@
                 @click="goToProduct(product.id)"
               />
               
-              <div v-if="isAdmin" class="admin-actions">
+              <div v-if="isAdmin && editMode" class="admin-actions">
                 <router-link 
                   :to="`/admin/products/edit/${product.id}`" 
                   class="btn-action btn-edit"
@@ -81,7 +65,6 @@
                 </router-link>
                 
                 <button 
-                  v-if="editMode"
                   @click.stop="openDeleteModal(product)"
                   class="btn-action btn-delete"
                 >
@@ -102,9 +85,6 @@
             <template v-else>
               <i class="bi bi-box"></i>
               <h3>Keine Produkte verfügbar</h3>
-              <router-link v-if="isAdmin" to="/admin/products/create" class="btn-create-empty">
-                <i class="bi bi-plus-circle"></i> Erstes Produkt erstellen
-              </router-link>
             </template>
           </div>
         </div>
@@ -181,10 +161,6 @@ const categoryName = computed(() => {
 })
 
 const searchTerm = computed(() => route.query.q || '')
-
-const totalValue = computed(() => {
-  return allProducts.value.reduce((sum, product) => sum + (product.price || 0), 0)
-})
 
 const filteredProducts = computed(() => {
   let filtered = allProducts.value
@@ -381,9 +357,6 @@ watch(() => props.category, () => {
 
 .admin-area {
   margin-top: 1rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
 }
 
 .btn-admin {
@@ -410,24 +383,6 @@ watch(() => props.category, () => {
 
 .btn-admin.active:hover {
   background: rgba(226, 97, 145, 0.6);
-}
-
-.btn-create {
-  padding: 0.5rem 1rem;
-  background: rgba(40, 167, 69, 0.7);
-  border: 1px solid rgba(40, 167, 69, 0.9);
-  border-radius: 8px;
-  color: white;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-create:hover {
-  background: rgba(40, 167, 69, 0.9);
 }
 
 .layout {
@@ -485,45 +440,6 @@ watch(() => props.category, () => {
 
 .clear-search:hover {
   background: rgba(255, 255, 255, 0.2);
-}
-
-.admin-stats {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-top: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.admin-stats h4 {
-  color: white;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-}
-
-.stat {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 0.9rem;
-}
-
-.stat:last-child {
-  border-bottom: none;
-}
-
-.stat .number {
-  color: #e26191;
-  font-weight: bold;
-}
-
-.stat .label {
-  color: rgba(255, 255, 255, 0.7);
 }
 
 .loading {
@@ -599,23 +515,6 @@ watch(() => props.category, () => {
   background: rgba(226, 97, 145, 1);
 }
 
-.btn-create-empty {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(90deg, #e26191, #d05583);
-  border-radius: 8px;
-  color: white;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  transition: all 0.3s;
-}
-
-.btn-create-empty:hover {
-  background: linear-gradient(90deg, #d05583, #c14a78);
-}
-
 .admin-actions {
   position: absolute;
   top: 10px;
@@ -623,12 +522,6 @@ watch(() => props.category, () => {
   display: flex;
   gap: 8px;
   z-index: 100;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.product-wrapper:hover .admin-actions {
-  opacity: 1;
 }
 
 .btn-action {
@@ -791,12 +684,6 @@ watch(() => props.category, () => {
   
   .header h1 {
     font-size: 1.7rem;
-  }
-  
-  .admin-area {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
   }
   
   .products-grid {
