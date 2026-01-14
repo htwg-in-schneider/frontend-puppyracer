@@ -33,8 +33,8 @@
 
         <div class="order-summary">
           <div class="summary-header">
-            <h2><i class="bi bi-receipt"></i> Bestellung #{{ order.id }}</h2>
-            <div class="order-status">
+            <h2><i class="bi bi-receipt"></i> Bestellung #{{ order.orderNumber || order.id }}</h2>
+            <div class="order-status" :class="getStatusClass(order.status)">
               {{ getStatusText(order.status) }}
             </div>
           </div>
@@ -42,11 +42,19 @@
           <div class="order-info">
             <div class="info-row">
               <span>Bestelldatum:</span>
-              <span>{{ formatDate(order.createdAt) }}</span>
+              <span>{{ formatDate(order.orderDate || order.createdAt) }}</span>
             </div>
             <div class="info-row">
-              <span>Zahlung:</span>
-              <span>Rechnung</span>
+              <span>Bestellnummer:</span>
+              <span class="order-number">{{ order.orderNumber || order.id }}</span>
+            </div>
+            <div class="info-row">
+              <span>Zahlungsmethode:</span>
+              <span>{{ getPaymentMethodText(order.paymentMethod) }}</span>
+            </div>
+            <div v-if="order.phone" class="info-row">
+              <span>Telefon:</span>
+              <span>{{ order.phone }}</span>
             </div>
           </div>
 
@@ -54,7 +62,7 @@
             <h3><i class="bi bi-person-circle"></i> Lieferadresse</h3>
             <p><strong>{{ order.firstName }} {{ order.lastName }}</strong></p>
             <p>{{ order.street }}, {{ order.zipCode }} {{ order.city }}</p>
-            <p>Deutschland</p>
+            <p>{{ order.country || 'Deutschland' }}</p>
             <p><i class="bi bi-envelope"></i> {{ order.email }}</p>
             <p v-if="order.phone"><i class="bi bi-telephone"></i> {{ order.phone }}</p>
           </div>
@@ -62,12 +70,12 @@
           <div class="order-items">
             <h3><i class="bi bi-cart"></i> Artikel</h3>
             <div class="items-list">
-              <div v-for="item in order.items" :key="item.productId" class="item">
+              <div v-for="item in order.items" :key="item.productId || item.id" class="item">
                 <div class="item-image">
-                  <img :src="getImageUrl(item.productImage)" :alt="item.productName" />
+                  <img :src="getImageUrl(item.productImage || item.image)" :alt="item.productName || item.name" />
                 </div>
                 <div class="item-details">
-                  <h4>{{ item.productName }}</h4>
+                  <h4>{{ item.productName || item.name }}</h4>
                   <div class="item-quantity">{{ item.quantity }} × {{ formatCurrency(item.price) }}</div>
                 </div>
                 <div class="item-total">
@@ -88,7 +96,7 @@
             </div>
             <div class="total-row grand-total">
               <span>Gesamtsumme:</span>
-              <span>{{ formatCurrency(order.totalAmount) }}</span>
+              <span>{{ formatCurrency(order.totalAmount || order.total) }}</span>
             </div>
           </div>
 
@@ -96,9 +104,12 @@
             <router-link to="/" class="btn-continue">
               <i class="bi bi-shop"></i> Weiter einkaufen
             </router-link>
-            <router-link v-if="isAdmin" :to="`/admin/orders`" class="btn-admin">
+            <router-link v-if="isAdmin" to="/admin/orders" class="btn-admin">
               <i class="bi bi-list"></i> Alle Bestellungen
             </router-link>
+            <button @click="printOrder" class="btn-print">
+              <i class="bi bi-printer"></i> Drucken
+            </button>
           </div>
         </div>
       </div>
@@ -119,13 +130,16 @@ const loading = ref(true)
 const error = ref('')
 const isAdmin = ref(false)
 
+// Hilfsfunktionen
 const formatDate = (dateString) => {
   if (!dateString) return ''
   try {
     return new Date(dateString).toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     })
   } catch {
     return dateString
@@ -133,7 +147,7 @@ const formatDate = (dateString) => {
 }
 
 const formatCurrency = (amount) => {
-  return `${(parseFloat(amount) || 0).toFixed(2)}€`
+  return `${(parseFloat(amount) || 0).toFixed(2).replace('.', ',')} €`
 }
 
 const getStatusText = (status) => {
@@ -141,9 +155,31 @@ const getStatusText = (status) => {
     'PENDING': 'Ausstehend',
     'PAID': 'Bezahlt',
     'SHIPPED': 'Versendet',
-    'DELIVERED': 'Geliefert'
+    'DELIVERED': 'Geliefert',
+    'CANCELLED': 'Storniert'
   }
-  return map[status] || status
+  return map[status] || status || 'Ausstehend'
+}
+
+const getStatusClass = (status) => {
+  const map = {
+    'PENDING': 'status-pending',
+    'PAID': 'status-paid',
+    'SHIPPED': 'status-shipped',
+    'DELIVERED': 'status-delivered',
+    'CANCELLED': 'status-cancelled'
+  }
+  return map[status] || 'status-pending'
+}
+
+const getPaymentMethodText = (method) => {
+  const map = {
+    'INVOICE': 'Rechnung',
+    'CREDITCARD': 'Kreditkarte',
+    'PAYPAL': 'PayPal',
+    'DEBIT': 'Lastschrift'
+  }
+  return map[method] || method || 'Rechnung'
 }
 
 const getImageUrl = (imageName) => {
@@ -152,11 +188,26 @@ const getImageUrl = (imageName) => {
   return `/frontend-puppyracer/product_pics/${imageName}`
 }
 
+const printOrder = () => {
+  window.print()
+}
+
+// Bestellung laden
 const loadOrder = async () => {
   loading.value = true
   
   try {
     const orderId = route.params.id
+    
+    // Prüfe ob ID vorhanden
+    if (!orderId) {
+      error.value = 'Keine Bestellnummer angegeben'
+      loading.value = false
+      return
+    }
+    
+    console.log('Lade Bestellung mit ID:', orderId)
+    
     const token = await getAccessTokenSilently()
     
     // Admin-Status prüfen
@@ -168,7 +219,9 @@ const loadOrder = async () => {
         const userData = await profileRes.json()
         isAdmin.value = userData.role === 'ADMIN'
       }
-    } catch {}
+    } catch (err) {
+      console.log('Admin-Check fehlgeschlagen:', err)
+    }
     
     // Bestellung laden
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}`, {
@@ -178,18 +231,27 @@ const loadOrder = async () => {
       }
     })
     
+    console.log('API Response Status:', response.status)
+    
     if (!response.ok) {
       if (response.status === 404) {
         error.value = 'Bestellung nicht gefunden'
+      } else if (response.status === 403) {
+        error.value = 'Sie haben keine Berechtigung, diese Bestellung anzusehen'
+      } else if (response.status === 400) {
+        error.value = 'Ungültige Bestellnummer'
       } else {
-        throw new Error('Bestellung konnte nicht geladen werden')
+        const errorText = await response.text()
+        throw new Error(`Bestellung konnte nicht geladen werden (${response.status}): ${errorText}`)
       }
     } else {
       order.value = await response.json()
+      console.log('Bestellung geladen:', order.value)
     }
     
   } catch (err) {
-    error.value = 'Bestellung konnte nicht geladen werden'
+    console.error('Load order error:', err)
+    error.value = 'Bestellung konnte nicht geladen werden. Bitte versuchen Sie es später erneut.'
   } finally {
     loading.value = false
   }
@@ -203,7 +265,7 @@ onMounted(() => {
 <style scoped>
 .order-confirmation {
   min-height: 100vh;
-  background: #1a1a1a;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 80px 20px 40px;
   color: #fff;
 }
@@ -225,6 +287,7 @@ onMounted(() => {
   color: #e26191;
   text-decoration: none;
   margin-bottom: 1rem;
+  font-weight: 500;
 }
 
 .back-btn:hover {
@@ -257,7 +320,9 @@ onMounted(() => {
   margin: 0 auto 1rem;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
+}
 
 .error i {
   font-size: 2.5rem;
@@ -345,8 +410,31 @@ onMounted(() => {
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.status-pending {
   background: rgba(255, 193, 7, 0.2);
   color: #ffc107;
+}
+
+.status-paid {
+  background: rgba(0, 123, 255, 0.2);
+  color: #007bff;
+}
+
+.status-shipped {
+  background: rgba(32, 201, 151, 0.2);
+  color: #20c997;
+}
+
+.status-delivered {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.status-cancelled {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
 }
 
 .order-info {
@@ -354,6 +442,8 @@ onMounted(() => {
   border-radius: 10px;
   padding: 1rem;
   margin-bottom: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
 }
 
 .info-row {
@@ -363,8 +453,14 @@ onMounted(() => {
   color: rgba(255,255,255,0.8);
 }
 
-.info-row:first-child {
+.info-row:not(:last-child) {
   border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.order-number {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #e26191;
 }
 
 .customer-info {
@@ -424,8 +520,8 @@ onMounted(() => {
 }
 
 .item-image {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
 }
 
@@ -487,7 +583,7 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.btn-continue, .btn-admin {
+.btn-continue, .btn-admin, .btn-print {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   text-decoration: none;
@@ -495,6 +591,8 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .btn-continue {
@@ -515,6 +613,17 @@ onMounted(() => {
 
 .btn-admin:hover {
   background: rgba(0, 123, 255, 0.3);
+}
+
+.btn-print {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+  border: none;
+}
+
+.btn-print:hover {
+  background: rgba(108, 117, 125, 0.3);
 }
 
 @media (max-width: 768px) {
@@ -550,6 +659,39 @@ onMounted(() => {
   
   .actions {
     flex-direction: column;
+  }
+  
+  .btn-continue, .btn-admin, .btn-print {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media print {
+  .order-confirmation {
+    background: white !important;
+    color: black !important;
+    padding: 20px !important;
+  }
+  
+  .back-btn, .actions, .btn-print {
+    display: none !important;
+  }
+  
+  .order-summary {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    color: black !important;
+  }
+  
+  .success-message, .customer-info, .order-items, .order-totals {
+    border: 1px solid #ddd !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  .item {
+    border-bottom: 1px solid #ddd !important;
   }
 }
 </style>
