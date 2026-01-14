@@ -28,7 +28,7 @@
 
           <div class="products">
             <div v-for="item in cartItems" :key="item.id" class="product">
-              <img :src="item.image || '/src/assets/placeholder.jpg'" :alt="item.name" class="product-img">
+              <img :src="getImageUrl(item.image)" :alt="item.name" class="product-img">
               
               <div class="product-details">
                 <h3 @click="viewProduct(item.id)">{{ item.name }}</h3>
@@ -131,6 +131,15 @@ const viewProduct = (productId) => {
 
 const proceedToCheckout = () => {
   router.push('/checkout')
+}
+const getImageUrl = (imageName) => {
+  if (!imageName) return ''
+  
+  if (import.meta.env.DEV) {
+    return `/src/assets/product_pics/${imageName}`
+  }
+  
+  return `/frontend-puppyracer/product_pics/${imageName}`
 }
 </script>
 

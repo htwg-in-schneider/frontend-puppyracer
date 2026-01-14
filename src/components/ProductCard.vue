@@ -32,7 +32,6 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { productImages } from '@/images'
 
 const props = defineProps({
   product: { type: Object, required: true }
@@ -41,14 +40,24 @@ const props = defineProps({
 const router = useRouter()
 const imageError = ref(false)
 
-// Computed Properties - KORRIGIERT
+// KORREKT: Bild-URL aus Backend-Daten
 const imageUrl = computed(() => {
-  // Fallback auf erstes Bild (ID 1)
-  return productImages[props.product.id] || productImages[1] || ''
+  // 1. Falls product.imageUrl schon vollständige URL ist
+  if (props.product.imageUrl?.startsWith('http') || props.product.imageUrl?.startsWith('/')) {
+    return props.product.imageUrl
+  }
+  
+  // 2. Für Entwicklung: localhost
+  if (import.meta.env.DEV) {
+    return `/src/assets/product_pics/${props.product.imageUrl}`
+  }
+  
+  // 3. Für Produktion: GitHub Pages
+  return `/frontend-puppyracer/product_pics/${props.product.imageUrl}`
 })
 
 const productRoute = computed(() => `/product/${props.product.id}`)
-const formattedPrice = computed(() => `${props.product.price.toFixed(2)} €`)
+const formattedPrice = computed(() => `${props.product.price?.toFixed(2) || '0.00'} €`)
 const truncatedDescription = computed(() => {
   const desc = props.product.description || ''
   return desc.length > 100 ? desc.substring(0, 100) + '...' : desc
@@ -57,6 +66,7 @@ const truncatedDescription = computed(() => {
 // Methods
 const handleImageError = () => {
   imageError.value = true
+  console.warn(`Bild konnte nicht geladen werden: ${props.product.imageUrl}`)
 }
 
 const goToProduct = () => {
@@ -65,7 +75,7 @@ const goToProduct = () => {
 </script>
 
 <style scoped>
-/* DEIN CSS BLEIBT UNVERÄNDERT */
+/* Dein CSS bleibt gleich */
 .product-card {
   --card-bg: rgba(50, 50, 50, 0.8);
   --card-text: #f5f1e7;
@@ -104,7 +114,7 @@ const goToProduct = () => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
-  background: #f0f0f0;
+  background: #2D2121; /* DUNKELBRAUNER HINTERGRUND statt weiß */
 }
 
 .product-card:hover .card-img {

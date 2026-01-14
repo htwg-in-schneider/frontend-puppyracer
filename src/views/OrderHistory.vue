@@ -158,9 +158,19 @@ const totalRevenue = computed(() => {
     .toFixed(2)
 })
 
+// KORREKT: Bild-URLs für GitHub Pages
 const getImageUrl = (imageName) => {
-  if (!imageName) return '/src/assets/placeholder.jpg'
-  return `/src/assets/product_pics/${imageName}`
+  if (!imageName || imageName.trim() === '') {
+    return ''
+  }
+  
+  // Für Entwicklung: localhost
+  if (import.meta.env.DEV) {
+    return `/src/assets/product_pics/${imageName}`
+  }
+  
+  // Für Produktion: GitHub Pages
+  return `/frontend-puppyracer/product_pics/${imageName}`
 }
 
 const formatDate = (dateString) => {
@@ -276,6 +286,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Dein CSS bleibt gleich */
 .order-history {
   min-height: 100vh;
   background: #1a1a1a;
@@ -496,6 +507,7 @@ onMounted(() => {
   height: 50px;
   border-radius: 6px;
   object-fit: cover;
+  background: #2D2121; /* DUNKELBRAUNER HINTERGRUND */
 }
 
 .item-details {

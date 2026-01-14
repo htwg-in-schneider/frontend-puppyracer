@@ -2,7 +2,7 @@
 <section class="product-carousel" aria-label="Produktvorschau">
   <div class="product-profiles" role="list" aria-label="Produktliste">
     <div 
-      v-for="product in products" 
+      v-for="product in displayedProducts" 
       :key="product.id" 
       class="product-card"
       role="listitem"
@@ -12,7 +12,7 @@
       :aria-label="`${product.name} ansehen`"
     >
       <img 
-        :src="product.image" 
+        :src="getImageUrl(product.imageUrl)" 
         :alt="`Bild von ${product.name}`"
         loading="lazy"
         :style="{ height: imageHeight }"
@@ -28,13 +28,57 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { productCarouselData } from '@/images'
 
 const router = useRouter()
-const products = productCarouselData
+const products = ref([])
+const loading = ref(true)
 const imageError = ref(false)
+
+// Bild-URLs korrekt erstellen
+const getImageUrl = (imageName) => {
+  if (!imageName) return ''
+  
+  // Für Entwicklung: localhost
+  if (import.meta.env.DEV) {
+    return `/src/assets/product_pics/${imageName}`
+  }
+  
+  // Für Produktion: GitHub Pages
+  return `/frontend-puppyracer/product_pics/${imageName}`
+}
+
+// Produkte vom Backend laden
+onMounted(async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products`)
+    if (response.ok) {
+      const data = await response.json()
+      // Nur 4 Produkte für Carousel nehmen
+      products.value = data.slice(0, 4).map(p => ({
+        id: p.id,
+        name: p.title,
+        imageUrl: p.imageUrl
+      }))
+    }
+  } catch (error) {
+    console.error('Fehler beim Laden der Produkte:', error)
+    // Fallback: Hardcoded Daten
+    products.value = [
+      { id: 1, name: 'Premium Lederleine', imageUrl: 'Hundeleine-dunklesLeder.png' },
+      { id: 2, name: 'Leine in Rot', imageUrl: 'Hundeleine-rot.png' },
+      { id: 3, name: 'Stoffleine mit Griff', imageUrl: 'Hundeleine-Stoff.png' },
+      { id: 4, name: 'Türkises Halsband', imageUrl: 'Hundehalsband-Türkis.png' }
+    ]
+  } finally {
+    loading.value = false
+  }
+})
+
+const displayedProducts = computed(() => {
+  return loading.value ? [] : products.value
+})
 
 // Responsive Bildhöhe
 const imageHeight = computed(() => {
@@ -45,7 +89,6 @@ const imageHeight = computed(() => {
 })
 
 const handleImageError = (event) => {
-  // Einfach nur Warnung loggen, Bild bleibt wie es ist
   console.warn(`Bild konnte nicht geladen werden: ${event.target.alt}`)
   event.target.style.opacity = '0.7'
 }
@@ -58,7 +101,7 @@ const goToProduct = (productId) => {
 </script>
 
 <style scoped>
-/* DEIN CSS BLEIBT UNVERÄNDERT */
+/* Dein CSS bleibt gleich */
 .product-carousel {
     width: 100%;
     overflow-x: auto;
@@ -118,7 +161,7 @@ const goToProduct = (productId) => {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    background: #f0f0f0;
+    background: #2D2121; /* DUNKELBRAUNER HINTERGRUND statt weiß */
     transition: transform 0.3s ease;
 }
 
