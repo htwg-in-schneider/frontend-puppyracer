@@ -21,7 +21,6 @@
             v-for="(product, index) in products" 
             :key="product.id" 
             class="carousel-slide"
-            :class="{ 'active': index === currentSlide }"
           >
             <div class="slide-content">
               <router-link :to="`/product/${product.id}`" class="product-link">
@@ -33,7 +32,6 @@
                 />
                 <div class="product-info">
                   <h3>{{ product.title }}</h3>
-                  <p class="description">{{ truncateText(product.description, 60) }}</p>
                   <div class="price-category">
                     <span class="price">{{ formatCurrency(product.price) }}</span>
                     <span class="category">{{ getCategoryName(product.category) }}</span>
@@ -93,11 +91,6 @@ const formatCurrency = (amount) => {
   return `${parseFloat(amount || 0).toFixed(2)}€`
 }
 
-const truncateText = (text, length) => {
-  if (!text) return ''
-  return text.length > length ? text.substring(0, length) + '...' : text
-}
-
 const getCategoryName = (category) => {
   const names = {
     'LEINEN': 'Leinen',
@@ -144,11 +137,10 @@ const stopAutoSlide = () => {
   }
 }
 
-// Produkte laden - KORRIGIERTER ENDPOINT
+// Produkte laden
 const loadProducts = async () => {
   loading.value = true
   try {
-    // WICHTIG: Korrekter Endpoint ist /api/product (Singular)
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product`)
     
     if (response.ok) {
@@ -156,12 +148,9 @@ const loadProducts = async () => {
       // Nimm die ersten 5 Produkte oder alle falls weniger
       products.value = data.slice(0, 5)
       
-      // Starte Auto-Slide nur wenn genug Produkte vorhanden
       if (products.value.length > 1) {
         startAutoSlide()
       }
-    } else {
-      console.error('Fehler beim Laden der Produkte:', response.status)
     }
   } catch (err) {
     console.error('Fehler beim Laden:', err)
@@ -181,65 +170,67 @@ onUnmounted(() => {
 
 <style scoped>
 .product-carousel {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d1b2d 100%);
-  padding: 3rem 1rem;
-  margin-top: 2rem;
+  background: rgba(30, 30, 30, 0.8);
+  padding: 1.5rem 0;
+  margin-top: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .carousel-container {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
   position: relative;
+  padding: 0 1rem;
 }
 
 .carousel-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   color: white;
 }
 
 .carousel-header h2 {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .carousel-header p {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
 .carousel-wrapper {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   position: relative;
+  margin: 0 auto;
+  max-width: 800px;
 }
 
 .carousel-btn {
-  width: 50px;
-  height: 50px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: rgba(226, 97, 145, 0.9);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  font-size: 1.2rem;
+  font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: all 0.2s;
   flex-shrink: 0;
   z-index: 10;
 }
 
 .carousel-btn:hover:not(:disabled) {
   background: rgba(226, 97, 145, 1);
-  transform: scale(1.1);
   border-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -250,34 +241,30 @@ onUnmounted(() => {
 
 .carousel-track {
   display: flex;
-  transition: transform 0.5s ease-in-out;
+  transition: transform 0.3s ease-in-out;
   width: 100%;
+  overflow: hidden;
 }
 
 .carousel-slide {
   flex: 0 0 100%;
-  padding: 0 1rem;
-  transition: opacity 0.3s;
-}
-
-.carousel-slide.active {
-  opacity: 1;
+  padding: 0 0.25rem;
+  box-sizing: border-box;
 }
 
 .slide-content {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
   height: 100%;
 }
 
 .slide-content:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .product-link {
@@ -289,49 +276,46 @@ onUnmounted(() => {
 
 .product-image {
   width: 100%;
-  height: 250px;
+  height: 160px;
   object-fit: cover;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .product-info {
-  padding: 1.5rem;
+  padding: 0.75rem;
   color: white;
 }
 
 .product-info h3 {
-  font-size: 1.4rem;
-  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
   color: white;
-  min-height: 3.5rem;
-}
-
-.description {
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.5;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-  min-height: 4.5rem;
+  line-height: 1.3;
+  height: 2.6rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .price-category {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .price {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #e26191;
 }
 
 .category {
   background: rgba(226, 97, 145, 0.2);
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #e26191;
   border: 1px solid rgba(226, 97, 145, 0.3);
@@ -341,17 +325,17 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.3);
   border: none;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
   padding: 0;
 }
 
@@ -376,49 +360,73 @@ onUnmounted(() => {
   border: 0;
 }
 
+/* Responsive Anpassungen */
 @media (max-width: 768px) {
   .product-carousel {
-    padding: 2rem 0.5rem;
+    padding: 1rem 0;
+  }
+  
+  .carousel-container {
+    padding: 0 0.75rem;
   }
   
   .carousel-header h2 {
-    font-size: 1.7rem;
+    font-size: 1.3rem;
+  }
+  
+  .carousel-header p {
+    font-size: 0.85rem;
   }
   
   .carousel-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 1rem;
-  }
-  
-  .product-image {
-    height: 200px;
-  }
-  
-  .product-info h3 {
-    font-size: 1.2rem;
-  }
-  
-  .description {
+    width: 32px;
+    height: 32px;
     font-size: 0.9rem;
   }
   
+  .product-image {
+    height: 140px;
+  }
+  
+  .product-info {
+    padding: 0.5rem;
+  }
+  
+  .product-info h3 {
+    font-size: 0.95rem;
+    height: 2.4rem;
+  }
+  
   .price {
-    font-size: 1.3rem;
+    font-size: 1rem;
+  }
+  
+  .category {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
   }
 }
 
 @media (max-width: 480px) {
   .carousel-wrapper {
-    gap: 0.5rem;
+    gap: 0.25rem;
   }
   
   .carousel-slide {
-    padding: 0 0.5rem;
+    padding: 0 0.125rem;
   }
   
-  .product-info {
-    padding: 1rem;
+  .product-image {
+    height: 120px;
+  }
+  
+  .product-info h3 {
+    font-size: 0.9rem;
+    height: 2.2rem;
+  }
+  
+  .carousel-dots {
+    margin-top: 0.75rem;
   }
 }
 </style>
