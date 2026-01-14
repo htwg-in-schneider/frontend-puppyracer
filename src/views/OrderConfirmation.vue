@@ -27,55 +27,48 @@
           <i class="bi bi-check-circle"></i>
           <div>
             <h3>Bestellung erfolgreich!</h3>
-            <p>Vielen Dank für Ihre Bestellung</p>
+            <p>Wir haben Ihre Bestellung erhalten.</p>
           </div>
         </div>
 
         <div class="order-summary">
           <div class="summary-header">
-            <h2><i class="bi bi-receipt"></i> Bestellübersicht</h2>
-            <div class="order-status pending">
-              Ausstehend
+            <h2><i class="bi bi-receipt"></i> Bestellung #{{ order.id }}</h2>
+            <div class="order-status">
+              {{ getStatusText(order.status) }}
             </div>
           </div>
 
-          <div class="summary-grid">
-            <div class="info-card">
-              <h3><i class="bi bi-info-circle"></i> Bestellinformationen</h3>
-              <div class="info-row">
-                <span>Bestelldatum:</span>
-                <span>{{ formatDate(order.createdAt) }}</span>
-              </div>
-              <div class="info-row">
-                <span>Zahlungsmethode:</span>
-                <span>Rechnung</span>
-              </div>
+          <div class="order-info">
+            <div class="info-row">
+              <span>Bestelldatum:</span>
+              <span>{{ formatDate(order.createdAt) }}</span>
             </div>
+            <div class="info-row">
+              <span>Zahlung:</span>
+              <span>Rechnung</span>
+            </div>
+          </div>
 
-            <div class="info-card">
-              <h3><i class="bi bi-person-circle"></i> Lieferadresse</h3>
-              <div class="address">
-                <p><strong>{{ order.firstName }} {{ order.lastName }}</strong></p>
-                <p>{{ order.street }}</p>
-                <p>{{ order.zipCode }} {{ order.city }}</p>
-                <p>Deutschland</p>
-                <p v-if="order.phone"><i class="bi bi-telephone"></i> {{ order.phone }}</p>
-                <p><i class="bi bi-envelope"></i> {{ order.email }}</p>
-              </div>
-            </div>
+          <div class="customer-info">
+            <h3><i class="bi bi-person-circle"></i> Lieferadresse</h3>
+            <p><strong>{{ order.firstName }} {{ order.lastName }}</strong></p>
+            <p>{{ order.street }}, {{ order.zipCode }} {{ order.city }}</p>
+            <p>Deutschland</p>
+            <p><i class="bi bi-envelope"></i> {{ order.email }}</p>
+            <p v-if="order.phone"><i class="bi bi-telephone"></i> {{ order.phone }}</p>
           </div>
 
           <div class="order-items">
-            <h3><i class="bi bi-cart"></i> Artikelübersicht</h3>
+            <h3><i class="bi bi-cart"></i> Artikel</h3>
             <div class="items-list">
               <div v-for="item in order.items" :key="item.productId" class="item">
-                <img :src="item.productImage || '/placeholder.jpg'" :alt="item.productName" />
+                <div class="item-image">
+                  <img :src="getImageUrl(item.productImage)" :alt="item.productName" />
+                </div>
                 <div class="item-details">
                   <h4>{{ item.productName }}</h4>
-                  <div class="item-meta">
-                    <span>Menge: {{ item.quantity }}</span>
-                    <span>{{ formatCurrency(item.price) }} / Stück</span>
-                  </div>
+                  <div class="item-quantity">{{ item.quantity }} × {{ formatCurrency(item.price) }}</div>
                 </div>
                 <div class="item-total">
                   {{ formatCurrency(item.price * item.quantity) }}
@@ -90,12 +83,12 @@
               <span>{{ formatCurrency(order.subtotal) }}</span>
             </div>
             <div class="total-row">
-              <span>Versandkosten:</span>
+              <span>Versand:</span>
               <span>{{ formatCurrency(order.shippingCost) }}</span>
             </div>
             <div class="total-row grand-total">
               <span>Gesamtsumme:</span>
-              <span class="highlight">{{ formatCurrency(order.totalAmount) }}</span>
+              <span>{{ formatCurrency(order.totalAmount) }}</span>
             </div>
           </div>
 
@@ -103,11 +96,9 @@
             <router-link to="/" class="btn-continue">
               <i class="bi bi-shop"></i> Weiter einkaufen
             </router-link>
-            <button @click="downloadInvoice" class="btn-download" :disabled="downloading">
-              <i v-if="downloading" class="bi bi-arrow-clockwise spin"></i>
-              <i v-else class="bi bi-download"></i>
-              {{ downloading ? 'Wird erstellt...' : 'Rechnung herunterladen' }}
-            </button>
+            <router-link v-if="isAdmin" :to="`/admin/orders`" class="btn-admin">
+              <i class="bi bi-list"></i> Alle Bestellungen
+            </router-link>
           </div>
         </div>
       </div>
@@ -117,17 +108,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 const route = useRoute()
-const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
 
 const order = ref(null)
 const loading = ref(true)
 const error = ref('')
-const downloading = ref(false)
+const isAdmin = ref(false)
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
@@ -146,6 +136,22 @@ const formatCurrency = (amount) => {
   return `${(parseFloat(amount) || 0).toFixed(2)}€`
 }
 
+const getStatusText = (status) => {
+  const map = {
+    'PENDING': 'Ausstehend',
+    'PAID': 'Bezahlt',
+    'SHIPPED': 'Versendet',
+    'DELIVERED': 'Geliefert'
+  }
+  return map[status] || status
+}
+
+const getImageUrl = (imageName) => {
+  if (!imageName) return '/placeholder.jpg'
+  if (imageName.startsWith('http')) return imageName
+  return `/frontend-puppyracer/product_pics/${imageName}`
+}
+
 const loadOrder = async () => {
   loading.value = true
   
@@ -153,6 +159,18 @@ const loadOrder = async () => {
     const orderId = route.params.id
     const token = await getAccessTokenSilently()
     
+    // Admin-Status prüfen
+    try {
+      const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (profileRes.ok) {
+        const userData = await profileRes.json()
+        isAdmin.value = userData.role === 'ADMIN'
+      }
+    } catch {}
+    
+    // Bestellung laden
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}`, {
       headers: { 
         'Authorization': `Bearer ${token}`,
@@ -163,8 +181,6 @@ const loadOrder = async () => {
     if (!response.ok) {
       if (response.status === 404) {
         error.value = 'Bestellung nicht gefunden'
-      } else if (response.status === 403) {
-        error.value = 'Keine Berechtigung'
       } else {
         throw new Error('Bestellung konnte nicht geladen werden')
       }
@@ -177,14 +193,6 @@ const loadOrder = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const downloadInvoice = () => {
-  downloading.value = true
-  setTimeout(() => {
-    alert('Rechnung wird generiert...')
-    downloading.value = false
-  }, 1000)
 }
 
 onMounted(() => {
@@ -201,7 +209,7 @@ onMounted(() => {
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
@@ -248,6 +256,8 @@ onMounted(() => {
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .error i {
   font-size: 2.5rem;
@@ -301,6 +311,11 @@ onMounted(() => {
   margin: 0 0 0.5rem 0;
 }
 
+.success-message p {
+  margin: 0;
+  color: rgba(255,255,255,0.8);
+}
+
 .order-summary {
   background: rgba(255,255,255,0.05);
   border-radius: 12px;
@@ -312,7 +327,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -330,24 +345,36 @@ onMounted(() => {
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
 }
 
-.order-status.pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+.order-info {
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.info-card {
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  color: rgba(255,255,255,0.8);
+}
+
+.info-row:first-child {
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.customer-info {
   background: rgba(255,255,255,0.03);
   border-radius: 10px;
   padding: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.info-card h3 {
+.customer-info h3 {
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
   display: flex;
@@ -355,34 +382,27 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.8);
-}
-
-.info-row:last-child { border-bottom: none; }
-
-.highlight { color: #e26191; font-weight: 600; }
-
-.address p {
+.customer-info p {
   margin: 0.5rem 0;
   color: rgba(255,255,255,0.8);
 }
 
-.address p:first-child { font-size: 1.1rem; }
+.customer-info p:first-of-type {
+  font-size: 1.1rem;
+}
 
-.address i { color: #bb9580; margin-right: 0.5rem; }
+.customer-info i {
+  color: #bb9580;
+  margin-right: 0.5rem;
+}
 
 .order-items {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .order-items h3 {
-  font-size: 1.3rem;
-  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+  margin: 0 0 1rem 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -397,15 +417,21 @@ onMounted(() => {
 .item {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: 1rem;
   background: rgba(255,255,255,0.03);
   border-radius: 10px;
 }
 
-.item img {
-  width: 80px;
-  height: 80px;
+.item-image {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
   border-radius: 8px;
   object-fit: cover;
 }
@@ -415,23 +441,20 @@ onMounted(() => {
 }
 
 .item-details h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
 }
 
-.item-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+.item-quantity {
   color: rgba(255,255,255,0.6);
   font-size: 0.9rem;
 }
 
 .item-total {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #e26191;
-  min-width: 100px;
+  min-width: 80px;
   text-align: right;
 }
 
@@ -440,24 +463,22 @@ onMounted(() => {
   border-radius: 10px;
   padding: 1.5rem;
   margin-bottom: 2rem;
-  max-width: 400px;
-  margin-left: auto;
 }
 
 .total-row {
   display: flex;
   justify-content: space-between;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.8);
 }
 
 .grand-total {
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e26191;
+  border-top: 2px solid rgba(255,255,255,0.1);
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 2px solid rgba(255,255,255,0.2);
 }
 
 .actions {
@@ -466,7 +487,7 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.btn-continue, .btn-download {
+.btn-continue, .btn-admin {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   text-decoration: none;
@@ -474,8 +495,6 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
-  cursor: pointer;
-  border: none;
 }
 
 .btn-continue {
@@ -488,33 +507,39 @@ onMounted(() => {
   background: rgba(255,255,255,0.15);
 }
 
-.btn-download {
-  background: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-  border: 1px solid rgba(40, 167, 69, 0.3);
-  margin-left: auto;
+.btn-admin {
+  background: rgba(0, 123, 255, 0.2);
+  color: #007bff;
+  border: 1px solid rgba(0, 123, 255, 0.3);
 }
 
-.btn-download:hover:not(:disabled) {
-  background: rgba(40, 167, 69, 0.3);
+.btn-admin:hover {
+  background: rgba(0, 123, 255, 0.3);
 }
-
-.btn-download:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.spin { animation: spin 1s linear infinite; }
-
-@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 768px) {
-  .summary-grid { grid-template-columns: 1fr; }
+  .order-confirmation {
+    padding: 70px 15px 30px;
+  }
+  
+  .container {
+    padding: 0;
+  }
+  
+  .order-summary {
+    padding: 1.5rem;
+  }
+  
+  .summary-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
   
   .item {
     flex-direction: column;
     text-align: center;
-    gap: 1rem;
+    gap: 0.75rem;
   }
   
   .item-total {
@@ -523,10 +548,8 @@ onMounted(() => {
     width: 100%;
   }
   
-  .actions { flex-direction: column; }
-  
-  .btn-download { margin-left: 0; }
-  
-  .order-totals { margin-left: 0; max-width: none; }
+  .actions {
+    flex-direction: column;
+  }
 }
 </style>

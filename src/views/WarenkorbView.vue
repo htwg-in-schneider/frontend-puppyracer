@@ -28,7 +28,15 @@
 
           <div class="products">
             <div v-for="item in cartItems" :key="item.id" class="product">
-              <img :src="getImageUrl(item.image)" :alt="item.name" class="product-img">
+              <!-- Produktbild hinzugefügt -->
+              <div class="product-image-container">
+                <img 
+                  :src="getImageUrl(item.image || item.productImage)" 
+                  :alt="item.name" 
+                  class="product-img"
+                  @error="handleImageError"
+                />
+              </div>
               
               <div class="product-details">
                 <h3 @click="viewProduct(item.id)">{{ item.name }}</h3>
@@ -132,14 +140,30 @@ const viewProduct = (productId) => {
 const proceedToCheckout = () => {
   router.push('/checkout')
 }
+
+// Bild-URL Funktion
 const getImageUrl = (imageName) => {
-  if (!imageName) return ''
+  if (!imageName) return '/placeholder.jpg'
   
+  // Wenn es bereits eine vollständige URL ist
+  if (imageName.startsWith('http')) {
+    return imageName
+  }
+  
+  // Für lokale Bilder in der Entwicklung
   if (import.meta.env.DEV) {
     return `/src/assets/product_pics/${imageName}`
   }
   
+  // Für Produktion
   return `/frontend-puppyracer/product_pics/${imageName}`
+}
+
+// Fehlerbehandlung für Bilder
+const handleImageError = (event) => {
+  console.log('Bild konnte nicht geladen werden:', event.target.src)
+  event.target.src = '/placeholder.jpg'
+  event.target.onerror = null // Verhindere Endlosschleife
 }
 </script>
 
@@ -280,8 +304,8 @@ const getImageUrl = (imageName) => {
 
 .product {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.5rem;
+  padding: 1.2rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -293,12 +317,25 @@ const getImageUrl = (imageName) => {
   transform: translateY(-2px);
 }
 
-.product-img {
-  width: 100px;
-  height: 100px;
-  border-radius: 10px;
-  object-fit: cover;
+/* Bild-Container */
+.product-image-container {
   flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.product:hover .product-img {
+  transform: scale(1.05);
 }
 
 .product-details {
@@ -310,7 +347,7 @@ const getImageUrl = (imageName) => {
 
 .product-details h3 {
   margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   transition: color 0.3s;
 }
@@ -329,30 +366,34 @@ const getImageUrl = (imageName) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .quantity {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
 }
 
 .quantity button {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.9rem;
 }
 
 .quantity button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .quantity button:disabled {
@@ -364,13 +405,14 @@ const getImageUrl = (imageName) => {
   min-width: 30px;
   text-align: center;
   font-weight: 600;
+  font-size: 1rem;
 }
 
 .price {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
 .price .single {
@@ -379,8 +421,9 @@ const getImageUrl = (imageName) => {
 }
 
 .price .total {
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #e26191;
 }
 
 .btn-remove {
@@ -388,17 +431,19 @@ const getImageUrl = (imageName) => {
   border: 1px solid rgba(226, 97, 145, 0.2);
   border-radius: 6px;
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s;
+  font-size: 1.1rem;
 }
 
 .btn-remove:hover {
   background: rgba(226, 97, 145, 0.3);
+  transform: scale(1.1);
 }
 
 /* Zusammenfassung */
@@ -428,14 +473,17 @@ const getImageUrl = (imageName) => {
   justify-content: space-between;
   padding: 0.75rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
 }
 
 .summary-row.total {
   border-top: 2px solid rgba(255, 255, 255, 0.2);
   border-bottom: none;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: bold;
   margin-top: 0.5rem;
+  padding-top: 1rem;
+  color: #e26191;
 }
 
 .btn-checkout {
@@ -512,11 +560,32 @@ const getImageUrl = (imageName) => {
   
   .product {
     flex-direction: column;
+    align-items: flex-start;
   }
   
-  .product-img {
+  .product-image-container {
     width: 100%;
-    height: 150px;
+    height: 160px;
+  }
+  
+  .product-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .quantity {
+    justify-content: center;
+  }
+  
+  .price {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .btn-remove {
+    align-self: flex-end;
   }
   
   .header h1 {
@@ -529,15 +598,16 @@ const getImageUrl = (imageName) => {
     padding: 80px 15px 30px;
   }
   
-  .product-controls {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  .product-image-container {
+    height: 140px;
   }
   
-  .price {
-    flex-direction: row;
-    gap: 1rem;
+  .summary-row {
+    font-size: 0.9rem;
+  }
+  
+  .summary-row.total {
+    font-size: 1.2rem;
   }
 }
 </style>
