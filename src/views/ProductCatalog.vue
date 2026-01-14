@@ -42,7 +42,7 @@
           <p>Produkte werden geladen...</p>
         </div>
         
-        <div v-else-if="filteredProducts.length" class="products-grid">
+        <div v-else-if="filteredProducts.length" class="products-grid" :class="{ 'edit-mode': editMode }"> <!-- HIER DIE ÄNDERUNG -->
           <div 
             v-for="product in sortedProducts" 
             :key="product.id" 
@@ -439,6 +439,7 @@ watch(() => props.category, loadProducts)
   cursor: pointer;
 }
 
+/* WICHTIG: Diese CSS-Regeln müssen bleiben für die Admin-Buttons! */
 .admin-actions {
   position: absolute;
   top: 10px;
@@ -446,6 +447,12 @@ watch(() => props.category, loadProducts)
   display: flex;
   gap: 8px;
   z-index: 100;
+}
+
+/* Diese Regel macht die Buttons sichtbar! */
+.edit-mode .admin-actions {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .btn-action {
