@@ -18,6 +18,10 @@
           <i :class="editMode ? 'bi bi-check-lg' : 'bi bi-pencil'"></i>
           {{ editMode ? 'Bearbeiten beenden' : 'Bearbeiten' }}
         </button>
+        
+        <router-link v-if="isAdmin" to="/admin/products/create" class="btn-create">
+          <i class="bi bi-plus-circle"></i> Neues Produkt
+        </router-link>
       </div>
     </div>
     
@@ -34,6 +38,18 @@
             <i class="bi bi-x-circle"></i> Suche löschen
           </button>
         </div>
+        
+        <div v-if="isAdmin" class="admin-stats">
+          <h4><i class="bi bi-graph-up"></i> Admin Statistiken</h4>
+          <div class="stat">
+            <span class="number">{{ allProducts.length }}</span>
+            <span class="label">Produkte</span>
+          </div>
+          <div class="stat">
+            <span class="number">{{ totalValue.toFixed(2) }} €</span>
+            <span class="label">Gesamtwert</span>
+          </div>
+        </div>
       </aside>
       
       <main class="products-area">
@@ -42,25 +58,20 @@
           <p>Produkte werden geladen...</p>
         </div>
         
-        <!-- WICHTIG: Dieser Block MUSS angezeigt werden -->
         <div v-else class="products-container">
-          <div v-if="filteredProducts.length > 0" class="products-grid" :class="{ 'edit-mode': editMode }">
+          <div v-if="filteredProducts.length > 0" class="products-grid">
             <div 
               v-for="product in sortedProducts" 
               :key="product.id" 
               class="product-wrapper"
+              :class="{ 'edit-mode': editMode }"
             >
-              <!-- DEBUG: Zeige Produkt-Daten direkt -->
-              <div class="debug-info" v-if="false">
-                ID: {{ product.id }} | Title: {{ product.title }} | Category: {{ product.category }}
-              </div>
-              
               <ProductCard
                 :product="product"
                 @click="goToProduct(product.id)"
               />
               
-              <div v-if="isAdmin && editMode" class="admin-actions">
+              <div v-if="isAdmin" class="admin-actions">
                 <router-link 
                   :to="`/admin/products/edit/${product.id}`" 
                   class="btn-action btn-edit"
@@ -68,7 +79,9 @@
                 >
                   <i class="bi bi-pencil-square"></i>
                 </router-link>
+                
                 <button 
+                  v-if="editMode"
                   @click.stop="openDeleteModal(product)"
                   class="btn-action btn-delete"
                 >
@@ -89,6 +102,9 @@
             <template v-else>
               <i class="bi bi-box"></i>
               <h3>Keine Produkte verfügbar</h3>
+              <router-link v-if="isAdmin" to="/admin/products/create" class="btn-create-empty">
+                <i class="bi bi-plus-circle"></i> Erstes Produkt erstellen
+              </router-link>
             </template>
           </div>
         </div>
@@ -140,11 +156,21 @@ const showDeleteModal = ref(false)
 const productToDelete = ref(null)
 const userRole = ref('')
 
-console.log('ProductCatalog geladen mit Kategorie:', props.category)
-console.log('Aktuelle Route:', route.path)
+const categoryMapping = {
+  'LEINEN': 'leinen',
+  'HALSBAENDER': 'halsbaender',
+  'BEKLEIDUNG': 'bekleidung',
+  'SNACKS': 'snacks',
+  'leinen': 'LEINEN',
+  'halsbaender': 'HALSBAENDER',
+  'halsband': 'HALSBAENDER',
+  'bekleidung': 'BEKLEIDUNG',
+  'snacks': 'SNACKS'
+}
 
 const categoryNames = {
   leinen: 'Leinen & Geschirre',
+  halsbaender: 'Halsbänder',
   halsband: 'Halsbänder',
   bekleidung: 'Bekleidung',
   snacks: 'Snacks'
@@ -156,20 +182,29 @@ const categoryName = computed(() => {
 
 const searchTerm = computed(() => route.query.q || '')
 
+const totalValue = computed(() => {
+  return allProducts.value.reduce((sum, product) => sum + (product.price || 0), 0)
+})
+
 const filteredProducts = computed(() => {
   let filtered = allProducts.value
   
   if (props.category) {
-    console.log('Filtere nach Kategorie:', props.category)
-    filtered = filtered.filter(product => {
-      if (!product.category) return false
-      
-      // Debug: Zeige alle Kategorien
-      console.log(`Produkt ${product.id}: ${product.category} = ${props.category}?`, 
-        product.category.toLowerCase() === props.category.toLowerCase())
-      
-      return product.category.toLowerCase() === props.category.toLowerCase()
-    })
+    const backendCategory = categoryMapping[props.category]
+    
+    if (backendCategory) {
+      filtered = filtered.filter(product => {
+        if (!product.category) return false
+        const productCategory = product.category.toUpperCase()
+        const targetCategory = backendCategory.toUpperCase()
+        return productCategory === targetCategory
+      })
+    } else {
+      filtered = filtered.filter(product => {
+        if (!product.category) return false
+        return product.category.toLowerCase() === props.category.toLowerCase()
+      })
+    }
   }
   
   if (searchTerm.value) {
@@ -182,13 +217,11 @@ const filteredProducts = computed(() => {
     })
   }
   
-  console.log('Gefilterte Produkte:', filtered.length)
   return filtered
 })
 
 const sortedProducts = computed(() => {
   const sorted = [...filteredProducts.value]
-  console.log('Sortierte Produkte:', sorted.length)
   
   switch(sortBy.value) {
     case 'newest': return sorted.sort((a, b) => b.id - a.id)
@@ -219,26 +252,14 @@ async function fetchUserRole() {
 }
 
 async function loadProducts() {
-  console.log('Lade Produkte...')
   loading.value = true
   try {
-    // Dein Backend funktioniert unter /api/product (Singular!)
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product`)
     
     if (response.ok) {
       const data = await response.json()
-      console.log(`Erfolg: ${data.length} Produkte geladen`)
       allProducts.value = data
-      
-      // DEBUG: Zeige alle Produkte mit Kategorien
-      console.log('Alle Produkte mit Kategorien:')
-      data.forEach(p => {
-        console.log(`- ${p.id}: ${p.title} (${p.category})`)
-      })
-    } else {
-      console.error('API Fehler:', response.status)
     }
-    
   } catch (err) {
     console.error('Fehler beim Laden:', err)
   } finally {
@@ -299,13 +320,11 @@ function updateSort(filters) {
 }
 
 onMounted(async () => {
-  console.log('ProductCatalog mounted')
   await fetchUserRole()
   await loadProducts()
 })
 
 watch(() => props.category, () => {
-  console.log('Kategorie geändert zu:', props.category)
   loadProducts()
 })
 </script>
@@ -355,8 +374,16 @@ watch(() => props.category, () => {
   gap: 0.75rem;
 }
 
+.header p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+}
+
 .admin-area {
   margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
 }
 
 .btn-admin {
@@ -369,11 +396,38 @@ watch(() => props.category, () => {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-admin:hover {
+  background: rgba(60, 60, 60, 0.7);
 }
 
 .btn-admin.active {
   background: rgba(226, 97, 145, 0.4);
   border-color: rgba(226, 97, 145, 0.6);
+}
+
+.btn-admin.active:hover {
+  background: rgba(226, 97, 145, 0.6);
+}
+
+.btn-create {
+  padding: 0.5rem 1rem;
+  background: rgba(40, 167, 69, 0.7);
+  border: 1px solid rgba(40, 167, 69, 0.9);
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-create:hover {
+  background: rgba(40, 167, 69, 0.9);
 }
 
 .layout {
@@ -414,6 +468,7 @@ watch(() => props.category, () => {
   gap: 0.5rem;
   color: white;
   margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .clear-search {
@@ -424,6 +479,51 @@ watch(() => props.category, () => {
   border-radius: 8px;
   color: white;
   cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s;
+}
+
+.clear-search:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-stats {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-stats h4 {
+  color: white;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.9rem;
+}
+
+.stat:last-child {
+  border-bottom: none;
+}
+
+.stat .number {
+  color: #e26191;
+  font-weight: bold;
+}
+
+.stat .label {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .loading {
@@ -457,16 +557,14 @@ watch(() => props.category, () => {
   gap: 1.5rem;
 }
 
-.debug-info {
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: red;
-  color: white;
-  padding: 5px;
-  font-size: 10px;
-  z-index: 1000;
-  display: none; /* Auf false setzen um zu sehen */
+.product-wrapper {
+  position: relative;
+}
+
+.product-wrapper.edit-mode {
+  border: 2px solid rgba(226, 97, 145, 0.3);
+  border-radius: 12px;
+  padding: 4px;
 }
 
 .empty {
@@ -484,6 +582,7 @@ watch(() => props.category, () => {
 .empty h3 {
   color: white;
   margin-bottom: 1rem;
+  font-size: 1.3rem;
 }
 
 .btn-clear {
@@ -493,6 +592,28 @@ watch(() => props.category, () => {
   color: white;
   border: none;
   cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-clear:hover {
+  background: rgba(226, 97, 145, 1);
+}
+
+.btn-create-empty {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, #e26191, #d05583);
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  transition: all 0.3s;
+}
+
+.btn-create-empty:hover {
+  background: linear-gradient(90deg, #d05583, #c14a78);
 }
 
 .admin-actions {
@@ -502,11 +623,12 @@ watch(() => props.category, () => {
   display: flex;
   gap: 8px;
   z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-.edit-mode .admin-actions {
-  opacity: 1 !important;
-  pointer-events: auto !important;
+.product-wrapper:hover .admin-actions {
+  opacity: 1;
 }
 
 .btn-action {
@@ -520,15 +642,29 @@ watch(() => props.category, () => {
   cursor: pointer;
   font-size: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  color: white !important;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s;
 }
 
 .btn-edit {
-  background-color: rgba(40, 167, 69, 0.8);
+  background-color: rgba(40, 167, 69, 0.9);
+  border-color: rgba(40, 167, 69, 1);
+}
+
+.btn-edit:hover {
+  background-color: rgba(40, 167, 69, 1);
+  transform: scale(1.1);
 }
 
 .btn-delete {
-  background-color: rgba(220, 53, 69, 0.8);
+  background-color: rgba(220, 53, 69, 0.9);
+  border-color: rgba(220, 53, 69, 1);
+}
+
+.btn-delete:hover {
+  background-color: rgba(220, 53, 69, 1);
+  transform: scale(1.1);
 }
 
 .modal-overlay {
@@ -550,15 +686,44 @@ watch(() => props.category, () => {
   width: 90%;
   max-width: 400px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
 }
 
 .modal-header {
   background: linear-gradient(90deg, #e26191, #d05583);
   color: white;
-  padding: 1rem;
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .modal-body {
@@ -578,6 +743,8 @@ watch(() => props.category, () => {
   border-radius: 8px;
   cursor: pointer;
   border: none;
+  font-weight: 600;
+  transition: all 0.3s;
 }
 
 .btn-cancel {
@@ -585,9 +752,17 @@ watch(() => props.category, () => {
   color: white;
 }
 
+.btn-cancel:hover {
+  background: rgba(108, 117, 125, 1);
+}
+
 .btn-confirm-delete {
   background: linear-gradient(90deg, #dc3545, #c82333);
   color: white;
+}
+
+.btn-confirm-delete:hover {
+  background: linear-gradient(90deg, #c82333, #bd2130);
 }
 
 @media (max-width: 1024px) {
@@ -598,6 +773,10 @@ watch(() => props.category, () => {
   
   .filter-sidebar {
     position: static;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
 }
 
@@ -610,14 +789,37 @@ watch(() => props.category, () => {
     padding: 0 1rem;
   }
   
+  .header h1 {
+    font-size: 1.7rem;
+  }
+  
+  .admin-area {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .products-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel, .btn-confirm-delete {
+    width: 100%;
   }
 }
 </style>
