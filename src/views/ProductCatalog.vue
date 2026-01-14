@@ -42,7 +42,7 @@
           <p>Produkte werden geladen...</p>
         </div>
         
-        <div v-else-if="filteredProducts.length" class="products-grid" :class="{ 'edit-mode': editMode }">
+        <div v-else-if="filteredProducts.length" class="products-grid">
           <div 
             v-for="product in sortedProducts" 
             :key="product.id" 
@@ -132,10 +132,6 @@ const showDeleteModal = ref(false)
 const productToDelete = ref(null)
 const userRole = ref('')
 
-// Debugging hinzufügen
-console.log('ProductCatalog mounted, Category:', props.category)
-console.log('Route:', route.path)
-
 const categoryNames = {
   leinen: 'Leinen & Geschirre',
   halsband: 'Halsbänder',
@@ -155,7 +151,7 @@ const filteredProducts = computed(() => {
   if (props.category) {
     filtered = filtered.filter(product => {
       if (!product.category) return false
-      return product.category.toLowerCase() === props.category.toLowerCase()
+      return product.category.toLowerCase().includes(props.category.toLowerCase())
     })
   }
   
@@ -206,14 +202,8 @@ async function fetchUserRole() {
 async function loadProducts() {
   loading.value = true
   try {
-    // WICHTIG: API-Endpoint korrigieren
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products`)
-    if (res.ok) {
-      allProducts.value = await res.json()
-      console.log('Produkte geladen:', allProducts.value.length)
-    } else {
-      console.error('Fehler beim Laden der Produkte:', res.status)
-    }
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product`)
+    if (res.ok) allProducts.value = await res.json()
   } catch (err) {
     console.error('Fehler beim Laden:', err)
   } finally {
@@ -224,7 +214,7 @@ async function loadProducts() {
 async function deleteProduct(productId) {
   try {
     const token = await getAccessTokenSilently()
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products/${productId}`, {
+    await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${productId}`, {
       method: 'DELETE',
       headers: { 
         'Authorization': `Bearer ${token}`,
@@ -232,15 +222,9 @@ async function deleteProduct(productId) {
       }
     })
     
-    if (response.ok) {
-      allProducts.value = allProducts.value.filter(p => p.id !== productId)
-    } else {
-      console.error('Löschen fehlgeschlagen:', response.status)
-      alert('Löschen fehlgeschlagen')
-    }
+    allProducts.value = allProducts.value.filter(p => p.id !== productId)
   } catch (err) {
     console.error('Fehler beim Löschen:', err)
-    alert('Fehler beim Löschen: ' + err.message)
   }
 }
 
@@ -262,9 +246,7 @@ async function confirmDelete() {
 }
 
 function goToProduct(productId) {
-  if (!editMode.value) {
-    router.push(`/product/${productId}`)
-  }
+  router.push(`/product/${productId}`)
 }
 
 function toggleEditMode() {
@@ -272,7 +254,8 @@ function toggleEditMode() {
 }
 
 function clearSearch() {
-  router.push({ path: route.path, query: {} })
+  const { q, ...otherParams } = route.query
+  router.push({ path: route.path, query: otherParams })
 }
 
 function updateSort(filters) {
@@ -280,15 +263,11 @@ function updateSort(filters) {
 }
 
 onMounted(async () => {
-  console.log('ProductCatalog onMounted')
   await fetchUserRole()
-  await loadProducts()
-})
-
-watch(() => props.category, () => {
-  console.log('Category changed:', props.category)
   loadProducts()
 })
+
+watch(() => props.category, loadProducts)
 </script>
 
 <style scoped>
@@ -350,12 +329,6 @@ watch(() => props.category, () => {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-admin:hover {
-  background: rgba(60, 60, 60, 0.7);
-  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .btn-admin.active {
@@ -411,11 +384,6 @@ watch(() => props.category, () => {
   border-radius: 8px;
   color: white;
   cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.clear-search:hover {
-  background: rgba(255, 255, 255, 0.2);
 }
 
 .loading {
@@ -445,60 +413,6 @@ watch(() => props.category, () => {
   gap: 1.5rem;
 }
 
-.product-wrapper {
-  position: relative; /* WICHTIG für absolute Positionierung der Buttons */
-  transition: transform 0.2s ease;
-}
-
-.product-wrapper:hover {
-  transform: translateY(-5px);
-}
-
-/* Admin Actions Styling */
-.admin-actions {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  gap: 8px;
-  z-index: 100;
-}
-
-.edit-mode .admin-actions {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-.btn-action {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  color: white;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.btn-action:hover {
-  transform: scale(1.1);
-  border-color: white;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
-}
-
-.btn-edit {
-  background-color: rgba(40, 167, 69, 0.95);
-}
-
-.btn-delete {
-  background-color: rgba(220, 53, 69, 0.95);
-}
-
 .empty {
   text-align: center;
   padding: 3rem 2rem;
@@ -523,14 +437,39 @@ watch(() => props.category, () => {
   color: white;
   border: none;
   cursor: pointer;
-  transition: background 0.3s ease;
 }
 
-.btn-clear:hover {
-  background: rgba(226, 97, 145, 1);
+.admin-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 100;
 }
 
-/* Modal Styles */
+.btn-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: white !important;
+}
+
+.btn-edit {
+  background-color: rgba(40, 167, 69, 0.8);
+}
+
+.btn-delete {
+  background-color: rgba(220, 53, 69, 0.8);
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -542,7 +481,6 @@ watch(() => props.category, () => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
 }
 
 .modal-content {
@@ -551,8 +489,6 @@ watch(() => props.category, () => {
   width: 90%;
   max-width: 400px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
 }
 
 .modal-header {
@@ -564,42 +500,9 @@ watch(() => props.category, () => {
   align-items: center;
 }
 
-.modal-header h3 {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.2rem;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.3s ease;
-}
-
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
 .modal-body {
   padding: 1.5rem;
   color: rgba(255, 255, 255, 0.9);
-}
-
-.modal-body p {
-  margin: 0;
-  line-height: 1.5;
 }
 
 .modal-actions {
@@ -610,12 +513,10 @@ watch(() => props.category, () => {
 }
 
 .btn-cancel, .btn-confirm-delete {
-  padding: 0.6rem 1.2rem;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
   cursor: pointer;
   border: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
 }
 
 .btn-cancel {
@@ -623,20 +524,9 @@ watch(() => props.category, () => {
   color: white;
 }
 
-.btn-cancel:hover {
-  background: rgba(108, 117, 125, 1);
-}
-
 .btn-confirm-delete {
   background: linear-gradient(90deg, #dc3545, #c82333);
   color: white;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-confirm-delete:hover {
-  background: linear-gradient(90deg, #e04a59, #d12b3b);
 }
 
 @media (max-width: 1024px) {
@@ -667,14 +557,6 @@ watch(() => props.category, () => {
 @media (max-width: 480px) {
   .products-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .modal-actions {
-    flex-direction: column;
-  }
-  
-  .btn-cancel, .btn-confirm-delete {
-    width: 100%;
   }
 }
 </style>
