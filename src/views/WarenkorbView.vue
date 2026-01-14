@@ -28,12 +28,11 @@
 
           <div class="products">
             <div v-for="item in cartItems" :key="item.id" class="product">
-              <!-- Produktbild hinzugefügt -->
-              <div class="product-image-container">
+              <!-- Produktbild -->
+              <div class="product-image">
                 <img 
-                  :src="getImageUrl(item.image || item.productImage)" 
+                  :src="getImageUrl(item.imageUrl)" 
                   :alt="item.name" 
-                  class="product-img"
                   @error="handleImageError"
                 />
               </div>
@@ -141,21 +140,10 @@ const proceedToCheckout = () => {
   router.push('/checkout')
 }
 
-// Bild-URL Funktion
+// GLEICHE BILD-LOGIK WIE IN ORDERCONFIRMATION
 const getImageUrl = (imageName) => {
   if (!imageName) return '/placeholder.jpg'
-  
-  // Wenn es bereits eine vollständige URL ist
-  if (imageName.startsWith('http')) {
-    return imageName
-  }
-  
-  // Für lokale Bilder in der Entwicklung
-  if (import.meta.env.DEV) {
-    return `/src/assets/product_pics/${imageName}`
-  }
-  
-  // Für Produktion
+  if (imageName.startsWith('http')) return imageName
   return `/frontend-puppyracer/product_pics/${imageName}`
 }
 
@@ -163,7 +151,7 @@ const getImageUrl = (imageName) => {
 const handleImageError = (event) => {
   console.log('Bild konnte nicht geladen werden:', event.target.src)
   event.target.src = '/placeholder.jpg'
-  event.target.onerror = null // Verhindere Endlosschleife
+  event.target.onerror = null
 }
 </script>
 
@@ -317,24 +305,24 @@ const handleImageError = (event) => {
   transform: translateY(-2px);
 }
 
-/* Bild-Container */
-.product-image-container {
+/* Produktbild - WICHTIG: Gleiches Styling wie OrderConfirmation */
+.product-image {
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
-  width: 120px;
-  height: 120px;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
-.product-img {
+.product-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s;
 }
 
-.product:hover .product-img {
+.product:hover .product-image img {
   transform: scale(1.05);
 }
 
@@ -563,9 +551,10 @@ const handleImageError = (event) => {
     align-items: flex-start;
   }
   
-  .product-image-container {
-    width: 100%;
-    height: 160px;
+  .product-image {
+    width: 100px;
+    height: 100px;
+    align-self: center;
   }
   
   .product-controls {
@@ -598,8 +587,9 @@ const handleImageError = (event) => {
     padding: 80px 15px 30px;
   }
   
-  .product-image-container {
-    height: 140px;
+  .product-image {
+    width: 80px;
+    height: 80px;
   }
   
   .summary-row {
