@@ -1,127 +1,121 @@
 <template>
-  <div class="order-history">
+  <div class="order-confirmation">
     <div class="container">
       <div class="header">
         <router-link to="/" class="back-btn">
           <i class="bi bi-arrow-left"></i> Zurück
         </router-link>
-        <h1>
-          <i :class="isAdmin ? 'bi bi-shield-check' : 'bi bi-receipt'"></i>
-          {{ isAdmin ? 'Bestellverwaltung' : 'Meine Bestellungen' }}
-        </h1>
-      </div>
-
-      <div v-if="isAdmin" class="admin-filters">
-        <div class="search">
-          <i class="bi bi-search"></i>
-          <input v-model="searchQuery" placeholder="Suche nach Name oder Email..." />
-        </div>
-        <select v-model="statusFilter">
-          <option value="">Alle Status</option>
-          <option value="PENDING">Ausstehend</option>
-          <option value="PAID">Bezahlt</option>
-          <option value="SHIPPED">Versendet</option>
-          <option value="DELIVERED">Geliefert</option>
-        </select>
+        <h1><i class="bi bi-check-circle"></i> Bestellbestätigung</h1>
       </div>
 
       <div v-if="loading" class="loading">
         <div class="spinner"></div>
-        <p>{{ isAdmin ? 'Lade Bestellungen...' : 'Lade Ihre Bestellungen...' }}</p>
+        <p>Bestellung wird geladen...</p>
       </div>
 
       <div v-else-if="error" class="error">
         <i class="bi bi-exclamation-triangle"></i>
-        <h3>Fehler beim Laden</h3>
+        <h3>Fehler</h3>
         <p>{{ error }}</p>
-        <button @click="loadOrders" class="btn-primary">
-          <i class="bi bi-arrow-clockwise"></i> Erneut versuchen
-        </button>
-      </div>
-
-      <div v-else-if="filteredOrders.length === 0" class="no-orders">
-        <i class="bi bi-inbox"></i>
-        <h3>{{ isAdmin ? 'Keine Bestellungen' : 'Noch keine Bestellungen' }}</h3>
         <router-link to="/" class="btn-primary">
-          <i class="bi bi-shop"></i> Zum Shop
+          <i class="bi bi-shop"></i> Zurück zum Shop
         </router-link>
       </div>
 
-      <div v-else class="orders">
-        <div v-if="isAdmin" class="stats">
-          <div class="stat">
-            <span class="number">{{ orders.length }}</span>
-            <span class="label">Gesamt</span>
-          </div>
-          <div class="stat">
-            <span class="number">{{ totalRevenue }} €</span>
-            <span class="label">Umsatz</span>
+      <div v-else class="order-details">
+        <div class="success-message">
+          <i class="bi bi-check-circle"></i>
+          <div>
+            <h3>Bestellung erfolgreich!</h3>
+            <p>Vielen Dank für Ihre Bestellung #{{ order.orderNumber }}.</p>
+            <p>Eine Bestätigung wurde an {{ order.email }} gesendet.</p>
           </div>
         </div>
 
-        <div class="order-list">
-          <div v-for="order in filteredOrders" :key="order.id" class="order-card">
-            <div class="order-header">
-              <div>
-                <div class="order-number">Bestellung #{{ order.orderNumber }}</div>
-                <div class="order-date">{{ formatDate(order.createdAt) }}</div>
-              </div>
-              <div class="order-right">
-                <div class="status" :class="order.status.toLowerCase()">
-                  {{ getStatusText(order.status) }}
+        <div class="order-summary">
+          <div class="summary-header">
+            <h2><i class="bi bi-receipt"></i> Bestellung #{{ order.orderNumber }}</h2>
+            <div class="order-status" :class="getStatusClass(order.status)">
+              {{ getStatusText(order.status) }}
+            </div>
+          </div>
+
+          <div class="order-info">
+            <div class="info-row">
+              <span>Bestelldatum:</span>
+              <span>{{ formatDate(order.orderDate) }}</span>
+            </div>
+            <div class="info-row">
+              <span>Bestellnummer:</span>
+              <span class="order-number">{{ order.orderNumber }}</span>
+            </div>
+            <div class="info-row">
+              <span>Zahlungsmethode:</span>
+              <span>{{ getPaymentMethodText(order.paymentMethod) }}</span>
+            </div>
+            <div v-if="order.phone" class="info-row">
+              <span>Telefon:</span>
+              <span>{{ order.phone }}</span>
+            </div>
+          </div>
+
+          <div class="customer-info">
+            <h3><i class="bi bi-person-circle"></i> Lieferadresse</h3>
+            <p><strong>{{ order.firstName }} {{ order.lastName }}</strong></p>
+            <p>{{ order.street }}, {{ order.zipCode }} {{ order.city }}</p>
+            <p>{{ order.country }}</p>
+            <p><i class="bi bi-envelope"></i> {{ order.email }}</p>
+          </div>
+
+          <div class="order-items">
+            <h3><i class="bi bi-cart"></i> Artikel</h3>
+            <div class="items-list">
+              <div v-for="item in order.items" :key="item.productId" class="item">
+                <div class="item-image">
+                  <img :src="getImageUrl(item.productImage)" :alt="item.productName" />
                 </div>
-                <div class="total">{{ formatCurrency(order.totalAmount) }}</div>
-              </div>
-            </div>
-
-            <div v-if="isAdmin" class="customer">
-              <span>{{ order.firstName }} {{ order.lastName }}</span>
-              <span class="email">{{ order.email }}</span>
-            </div>
-
-            <div class="items">
-              <div v-for="item in order.items" :key="item.id" class="item">
-                <img v-if="item.productImage" 
-                     :src="getImageUrl(item.productImage)" 
-                     :alt="item.productName" />
                 <div class="item-details">
-                  <span>{{ item.productName }}</span>
-                  <span>{{ item.quantity }} × {{ formatCurrency(item.price) }}</span>
+                  <h4>{{ item.productName }}</h4>
+                  <div class="item-meta">
+                    <span class="item-quantity">{{ item.quantity }} × {{ formatCurrency(item.price) }}</span>
+                    <span class="item-total">Summe: {{ formatCurrency(item.price * item.quantity) }}</span>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div class="order-info">
-              <div class="info-row">
-                <span>Adresse:</span>
-                <span>{{ order.street }}, {{ order.zipCode }} {{ order.city }}</span>
-              </div>
-              <div class="info-row">
-                <span>Zahlung:</span>
-                <span>{{ getPaymentMethod(order.paymentMethod) }}</span>
-              </div>
+          <div class="order-totals">
+            <div class="total-row">
+              <span>Zwischensumme:</span>
+              <span>{{ formatCurrency(order.subtotal) }}</span>
             </div>
+            <div class="total-row">
+              <span>Versandkosten:</span>
+              <span>{{ formatCurrency(order.shippingCost) }}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>Gesamtsumme:</span>
+              <span>{{ formatCurrency(order.totalAmount) }}</span>
+            </div>
+          </div>
 
-            <div class="actions">
-              <button 
-                v-if="isAdmin && (order.status === 'PAID' || order.status === 'PENDING')" 
-                @click="updateOrderStatus(order, 'SHIPPED')"
-                class="btn-ship"
-                :disabled="updatingOrderId === order.id"
-              >
-                <i class="bi bi-truck"></i> 
-                {{ updatingOrderId === order.id ? 'Aktualisiere...' : 'Versendet' }}
-              </button>
-              <button 
-                v-if="isAdmin && order.status === 'SHIPPED'" 
-                @click="updateOrderStatus(order, 'DELIVERED')"
-                class="btn-deliver"
-                :disabled="updatingOrderId === order.id"
-              >
-                <i class="bi bi-check-circle"></i> 
-                {{ updatingOrderId === order.id ? 'Aktualisiere...' : 'Geliefert' }}
-              </button>
-            </div>
+          <div class="actions">
+            <router-link to="/" class="btn-continue">
+              <i class="bi bi-shop"></i> Weiter einkaufen
+            </router-link>
+            <router-link v-if="isAdmin" :to="`/admin/orders`" class="btn-admin">
+              <i class="bi bi-list"></i> Alle Bestellungen
+            </router-link>
+            <button @click="printOrder" class="btn-print">
+              <i class="bi bi-printer"></i> Drucken
+            </button>
+          </div>
+
+          <div class="shipping-info">
+            <h4><i class="bi bi-truck"></i> Lieferinformation</h4>
+            <p>Die Lieferung erfolgt innerhalb von 2-4 Werktagen.</p>
+            <p>Sie erhalten eine E-Mail mit Tracking-Informationen, sobald Ihr Paket versendet wird.</p>
           </div>
         </div>
       </div>
@@ -130,62 +124,29 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 const route = useRoute()
 const { getAccessTokenSilently } = useAuth0()
 
-const orders = ref([])
+const order = ref(null)
 const loading = ref(true)
 const error = ref('')
-const searchQuery = ref('')
-const statusFilter = ref('')
-const updatingOrderId = ref(null)
+const isAdmin = ref(false)
 
-const isAdmin = computed(() => {
-  return route.name === 'AdminOrders'
-})
-
-const filteredOrders = computed(() => {
-  let filtered = orders.value
-  
-  if (statusFilter.value) {
-    filtered = filtered.filter(o => o.status === statusFilter.value)
-  }
-  
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(o => 
-      o.firstName?.toLowerCase().includes(query) ||
-      o.lastName?.toLowerCase().includes(query) ||
-      o.email?.toLowerCase().includes(query)
-    )
-  }
-  
-  return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-})
-
-const totalRevenue = computed(() => {
-  return orders.value
-    .filter(o => o.status === 'PAID' || o.status === 'SHIPPED' || o.status === 'DELIVERED')
-    .reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0)
-    .toFixed(2)
-})
-
-const getImageUrl = (imageName) => {
-  if (!imageName) return ''
-  return `/frontend-puppyracer/product_pics/${imageName}`
-}
-
+// Hilfsfunktionen
 const formatDate = (dateString) => {
   if (!dateString) return ''
   try {
-    return new Date(dateString).toLocaleDateString('de-DE', {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     })
   } catch {
     return dateString
@@ -193,12 +154,13 @@ const formatDate = (dateString) => {
 }
 
 const formatCurrency = (amount) => {
-  return `${(parseFloat(amount) || 0).toFixed(2)}€`
+  const num = parseFloat(amount) || 0
+  return `${num.toFixed(2).replace('.', ',')} €`
 }
 
 const getStatusText = (status) => {
   const map = {
-    'PENDING': 'Ausstehend',
+    'PENDING': 'In Bearbeitung',
     'PAID': 'Bezahlt',
     'SHIPPED': 'Versendet',
     'DELIVERED': 'Geliefert',
@@ -207,33 +169,60 @@ const getStatusText = (status) => {
   return map[status] || status
 }
 
-const getPaymentMethod = (method) => {
+const getStatusClass = (status) => {
   const map = {
-    'PAYPAL': 'PayPal',
+    'PENDING': 'status-pending',
+    'PAID': 'status-paid',
+    'SHIPPED': 'status-shipped',
+    'DELIVERED': 'status-delivered',
+    'CANCELLED': 'status-cancelled'
+  }
+  return map[status] || ''
+}
+
+const getPaymentMethodText = (method) => {
+  const map = {
+    'INVOICE': 'Rechnung',
     'CREDITCARD': 'Kreditkarte',
-    'INVOICE': 'Rechnung'
+    'PAYPAL': 'PayPal',
+    'DEBIT': 'Lastschrift'
   }
   return map[method] || method
 }
 
-const loadOrders = async () => {
+const getImageUrl = (imageName) => {
+  if (!imageName) return '/placeholder.jpg'
+  if (imageName.startsWith('http')) return imageName
+  return `/frontend-puppyracer/product_pics/${imageName}`
+}
+
+const printOrder = () => {
+  window.print()
+}
+
+// Bestellung laden
+const loadOrder = async () => {
   loading.value = true
-  error.value = ''
   
   try {
+    const orderId = route.params.id
     const token = await getAccessTokenSilently()
     
-    // Bestimme den richtigen Endpoint basierend auf der Route
-    let endpoint
-    if (isAdmin.value) {
-      endpoint = '/api/orders/admin'  // Admin: alle Bestellungen
-    } else {
-      endpoint = '/api/orders/my-orders'  // User: eigene Bestellungen
+    // Admin-Status prüfen
+    try {
+      const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (profileRes.ok) {
+        const userData = await profileRes.json()
+        isAdmin.value = userData.role === 'ADMIN'
+      }
+    } catch (err) {
+      console.log('Admin check failed:', err)
     }
     
-    console.log('Lade Bestellungen von:', endpoint)
-    
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
+    // Bestellung laden
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${orderId}`, {
       headers: { 
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json'
@@ -241,79 +230,46 @@ const loadOrders = async () => {
     })
     
     if (!response.ok) {
-      if (response.status === 403) {
-        error.value = 'Keine Berechtigung'
+      if (response.status === 404) {
+        error.value = 'Bestellung nicht gefunden'
+      } else if (response.status === 403) {
+        error.value = 'Sie haben keine Berechtigung, diese Bestellung anzusehen'
       } else {
-        throw new Error(`Fehler ${response.status}`)
+        throw new Error('Bestellung konnte nicht geladen werden')
       }
     } else {
-      const data = await response.json()
-      console.log('Geladene Bestellungen:', data)
-      orders.value = data
+      order.value = await response.json()
+      console.log('Order loaded:', order.value)
     }
     
   } catch (err) {
-    console.error('Fehler beim Laden der Bestellungen:', err)
-    error.value = 'Bestellungen konnten nicht geladen werden'
+    console.error('Load order error:', err)
+    error.value = 'Bestellung konnte nicht geladen werden. Bitte versuchen Sie es später erneut.'
   } finally {
     loading.value = false
   }
 }
 
-const updateOrderStatus = async (order, newStatus) => {
-  if (!confirm(`Bestellung #${order.orderNumber} auf "${getStatusText(newStatus)}" setzen?`)) return
-  
-  updatingOrderId.value = order.id
-  
-  try {
-    const token = await getAccessTokenSilently()
-    
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders/${order.id}/status`, {
-      method: 'PUT',
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ status: newStatus })
-    })
-    
-    if (response.ok) {
-      // Status lokal aktualisieren
-      order.status = newStatus
-      alert(`Status erfolgreich aktualisiert`)
-    } else {
-      throw new Error('Status konnte nicht aktualisiert werden')
-    }
-    
-  } catch (err) {
-    console.error('Fehler beim Status-Update:', err)
-    alert(`Fehler: ${err.message}`)
-  } finally {
-    updatingOrderId.value = null
-  }
-}
-
 onMounted(() => {
-  loadOrders()
+  loadOrder()
 })
 </script>
 
 <style scoped>
-.order-history {
+.order-confirmation {
   min-height: 100vh;
-  background: #1a1a1a;
+  background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
   padding: 80px 20px 40px;
   color: #fff;
 }
 
 .container {
-  max-width: 900px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
 .header {
   margin-bottom: 2rem;
-  text-align: center;
 }
 
 .back-btn {
@@ -323,6 +279,7 @@ onMounted(() => {
   color: #e26191;
   text-decoration: none;
   margin-bottom: 1rem;
+  font-weight: 500;
 }
 
 .back-btn:hover {
@@ -333,51 +290,20 @@ onMounted(() => {
   font-size: 2rem;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.75rem;
   margin: 0;
 }
 
-.admin-filters {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.search {
-  flex: 1;
-  position: relative;
-}
-
-.search i {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-}
-
-.search input, select {
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 8px;
-  color: #fff;
-  font-size: 1rem;
-}
-
-.loading, .error, .no-orders {
+.loading, .error {
   text-align: center;
   padding: 3rem;
   background: rgba(255,255,255,0.05);
   border-radius: 12px;
-  margin-bottom: 2rem;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border: 3px solid rgba(255,255,255,0.2);
   border-top: 3px solid #e26191;
   border-radius: 50%;
@@ -385,17 +311,24 @@ onMounted(() => {
   margin: 0 auto 1rem;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
 }
 
-.error i, .no-orders i {
-  font-size: 2rem;
+.error i {
+  font-size: 2.5rem;
+  color: #ff4757;
   margin-bottom: 1rem;
 }
 
-.error i { color: #ff6b6b; }
-.no-orders i { color: #bb9580; }
+.error h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.error p {
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 1.5rem;
+}
 
 .btn-primary {
   padding: 0.75rem 1.5rem;
@@ -403,235 +336,367 @@ onMounted(() => {
   color: white;
   border: none;
   border-radius: 8px;
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
+  font-weight: 600;
 }
 
-.stats {
+.btn-primary:hover {
+  background: #d05583;
+}
+
+.success-message {
+  background: rgba(46, 213, 115, 0.15);
+  border: 1px solid rgba(46, 213, 115, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
   display: flex;
+  align-items: center;
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.stat {
-  flex: 1;
+.success-message i {
+  font-size: 2.5rem;
+  color: #2ed573;
+}
+
+.success-message h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.success-message p {
+  margin: 0.25rem 0;
+  color: rgba(255,255,255,0.8);
+}
+
+.order-summary {
   background: rgba(255,255,255,0.05);
   border-radius: 12px;
-  padding: 1rem;
-  text-align: center;
-}
-
-.stat .number {
-  display: block;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #e26191;
-  margin-bottom: 0.25rem;
-}
-
-.stat .label {
-  color: rgba(255,255,255,0.7);
-  font-size: 0.9rem;
-}
-
-.order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.order-card {
-  background: rgba(255,255,255,0.05);
-  border-radius: 12px;
-  padding: 1.5rem;
+  padding: 2rem;
   border: 1px solid rgba(255,255,255,0.1);
 }
 
-.order-header {
+.summary-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
-.order-number {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: #e26191;
+.summary-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.order-date {
-  color: rgba(255,255,255,0.6);
-  font-size: 0.9rem;
-}
-
-.order-right {
-  text-align: right;
-}
-
-.status {
+.order-status {
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
-  display: inline-block;
 }
 
-.status.pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
-.status.paid { background: rgba(0, 123, 255, 0.2); color: #007bff; }
-.status.shipped { background: rgba(40, 167, 69, 0.2); color: #28a745; }
-.status.delivered { background: rgba(111, 66, 193, 0.2); color: #6f42c1; }
+.status-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
 
-.total {
-  font-size: 1.3rem;
-  font-weight: 700;
+.status-paid {
+  background: rgba(0, 123, 255, 0.2);
+  color: #007bff;
+}
+
+.status-shipped {
+  background: rgba(32, 201, 151, 0.2);
+  color: #20c997;
+}
+
+.status-delivered {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.status-cancelled {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.order-info {
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  color: rgba(255,255,255,0.8);
+}
+
+.info-row:not(:last-child) {
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.order-number {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
   color: #e26191;
 }
 
-.customer {
+.customer-info {
   background: rgba(255,255,255,0.03);
-  padding: 0.75rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.customer-info h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
 }
 
-.customer .email {
-  color: rgba(255,255,255,0.6);
-  font-size: 0.9rem;
+.customer-info p {
+  margin: 0.5rem 0;
+  color: rgba(255,255,255,0.8);
 }
 
-.items {
-  margin-bottom: 1rem;
+.customer-info p:first-of-type {
+  font-size: 1.1rem;
+}
+
+.customer-info i {
+  color: #bb9580;
+  margin-right: 0.5rem;
+}
+
+.order-items {
+  margin-bottom: 1.5rem;
+}
+
+.order-items h3 {
+  font-size: 1.2rem;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .item {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem;
+  padding: 1rem;
   background: rgba(255,255,255,0.03);
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
+  border-radius: 10px;
 }
 
-.item img {
-  width: 50px;
-  height: 50px;
-  border-radius: 6px;
+.item-image {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
   object-fit: cover;
 }
 
 .item-details {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
-.item-details span:last-child {
-  color: rgba(255,255,255,0.6);
-  font-size: 0.85rem;
+.item-details h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
 }
 
-.order-info {
-  background: rgba(255,255,255,0.03);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.info-row {
+.item-meta {
   display: flex;
   justify-content: space-between;
-  padding: 0.25rem 0;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.6);
   font-size: 0.9rem;
+}
+
+.item-total {
+  color: #e26191;
+  font-weight: 600;
+}
+
+.order-totals {
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  color: rgba(255,255,255,0.8);
+}
+
+.grand-total {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e26191;
+  border-top: 2px solid rgba(255,255,255,0.1);
+  margin-top: 0.5rem;
+  padding-top: 1rem;
 }
 
 .actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
 }
 
-.btn-ship, .btn-deliver {
+.btn-continue, .btn-admin, .btn-print {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
-  border: none;
-  cursor: pointer;
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.btn-ship {
-  background: rgba(40, 167, 69, 0.2);
-  color: #28a745;
+.btn-continue {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
-.btn-ship:hover:not(:disabled) {
-  background: rgba(40, 167, 69, 0.3);
+.btn-continue:hover {
+  background: rgba(255,255,255,0.15);
 }
 
-.btn-deliver {
-  background: rgba(111, 66, 193, 0.2);
-  color: #6f42c1;
+.btn-admin {
+  background: rgba(0, 123, 255, 0.2);
+  color: #007bff;
+  border: 1px solid rgba(0, 123, 255, 0.3);
 }
 
-.btn-deliver:hover:not(:disabled) {
-  background: rgba(111, 66, 193, 0.3);
+.btn-admin:hover {
+  background: rgba(0, 123, 255, 0.3);
 }
 
-.btn-ship:disabled,
-.btn-deliver:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.btn-print {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.btn-print:hover {
+  background: rgba(108, 117, 125, 0.3);
+}
+
+.shipping-info {
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 1.5rem;
+  border-left: 4px solid #e26191;
+}
+
+.shipping-info h4 {
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shipping-info p {
+  margin: 0.5rem 0;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.95rem;
 }
 
 @media (max-width: 768px) {
-  .admin-filters {
+  .order-confirmation {
+    padding: 70px 15px 30px;
+  }
+  
+  .order-summary {
+    padding: 1.5rem;
+  }
+  
+  .summary-header {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
   
-  .stats {
+  .item {
     flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
   }
   
-  .order-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .order-right {
-    text-align: left;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .customer {
+  .item-meta {
     flex-direction: column;
     gap: 0.5rem;
-    align-items: flex-start;
   }
   
   .actions {
     flex-direction: column;
   }
   
-  .btn-ship, .btn-deliver {
+  .btn-continue, .btn-admin, .btn-print {
     width: 100%;
     justify-content: center;
+  }
+}
+
+@media print {
+  .order-confirmation {
+    background: white !important;
+    color: black !important;
+    padding: 20px !important;
+  }
+  
+  .back-btn, .actions, .btn-print, .shipping-info {
+    display: none !important;
+  }
+  
+  .order-summary {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    color: black !important;
+  }
+  
+  .success-message, .customer-info, .order-items, .order-totals {
+    border: 1px solid #ddd !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  .item {
+    border-bottom: 1px solid #ddd !important;
   }
 }
 </style>
