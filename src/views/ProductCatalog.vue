@@ -42,47 +42,55 @@
           <p>Produkte werden geladen...</p>
         </div>
         
-        <div v-else-if="filteredProducts.length" class="products-grid" :class="{ 'edit-mode': editMode }">
-          <div 
-            v-for="product in sortedProducts" 
-            :key="product.id" 
-            class="product-wrapper"
-          >
-            <ProductCard
-              :product="product"
-              @click="goToProduct(product.id)"
-            />
-            
-            <div v-if="isAdmin && editMode" class="admin-actions">
-              <router-link 
-                :to="`/admin/products/edit/${product.id}`" 
-                class="btn-action btn-edit"
-                @click.stop
-              >
-                <i class="bi bi-pencil-square"></i>
-              </router-link>
-              <button 
-                @click.stop="openDeleteModal(product)"
-                class="btn-action btn-delete"
-              >
-                <i class="bi bi-x-circle"></i>
-              </button>
+        <!-- WICHTIG: Dieser Block MUSS angezeigt werden -->
+        <div v-else class="products-container">
+          <div v-if="filteredProducts.length > 0" class="products-grid" :class="{ 'edit-mode': editMode }">
+            <div 
+              v-for="product in sortedProducts" 
+              :key="product.id" 
+              class="product-wrapper"
+            >
+              <!-- DEBUG: Zeige Produkt-Daten direkt -->
+              <div class="debug-info" v-if="false">
+                ID: {{ product.id }} | Title: {{ product.title }} | Category: {{ product.category }}
+              </div>
+              
+              <ProductCard
+                :product="product"
+                @click="goToProduct(product.id)"
+              />
+              
+              <div v-if="isAdmin && editMode" class="admin-actions">
+                <router-link 
+                  :to="`/admin/products/edit/${product.id}`" 
+                  class="btn-action btn-edit"
+                  @click.stop
+                >
+                  <i class="bi bi-pencil-square"></i>
+                </router-link>
+                <button 
+                  @click.stop="openDeleteModal(product)"
+                  class="btn-action btn-delete"
+                >
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div v-else class="empty">
-          <template v-if="searchTerm">
-            <i class="bi bi-search"></i>
-            <h3>Keine Ergebnisse für "{{ searchTerm }}"</h3>
-            <button @click="clearSearch" class="btn-clear">
-              <i class="bi bi-arrow-left"></i> Zurück
-            </button>
-          </template>
-          <template v-else>
-            <i class="bi bi-box"></i>
-            <h3>Keine Produkte verfügbar</h3>
-          </template>
+          
+          <div v-else class="empty">
+            <template v-if="searchTerm">
+              <i class="bi bi-search"></i>
+              <h3>Keine Ergebnisse für "{{ searchTerm }}"</h3>
+              <button @click="clearSearch" class="btn-clear">
+                <i class="bi bi-arrow-left"></i> Zurück
+              </button>
+            </template>
+            <template v-else>
+              <i class="bi bi-box"></i>
+              <h3>Keine Produkte verfügbar</h3>
+            </template>
+          </div>
         </div>
       </main>
     </div>
@@ -152,8 +160,14 @@ const filteredProducts = computed(() => {
   let filtered = allProducts.value
   
   if (props.category) {
+    console.log('Filtere nach Kategorie:', props.category)
     filtered = filtered.filter(product => {
       if (!product.category) return false
+      
+      // Debug: Zeige alle Kategorien
+      console.log(`Produkt ${product.id}: ${product.category} = ${props.category}?`, 
+        product.category.toLowerCase() === props.category.toLowerCase())
+      
       return product.category.toLowerCase() === props.category.toLowerCase()
     })
   }
@@ -168,11 +182,13 @@ const filteredProducts = computed(() => {
     })
   }
   
+  console.log('Gefilterte Produkte:', filtered.length)
   return filtered
 })
 
 const sortedProducts = computed(() => {
   const sorted = [...filteredProducts.value]
+  console.log('Sortierte Produkte:', sorted.length)
   
   switch(sortBy.value) {
     case 'newest': return sorted.sort((a, b) => b.id - a.id)
@@ -206,46 +222,22 @@ async function loadProducts() {
   console.log('Lade Produkte...')
   loading.value = true
   try {
-    // WICHTIG: Teste mehrere API-Endpoints
-    const baseUrl = import.meta.env.VITE_API_BASE_URL
-    const endpoints = [
-      '/api/products',
-      '/api/product',
-      '/products',
-      '/product'
-    ]
+    // Dein Backend funktioniert unter /api/product (Singular!)
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product`)
     
-    let success = false
-    
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Versuche Endpoint: ${baseUrl}${endpoint}`)
-        const res = await fetch(`${baseUrl}${endpoint}`)
-        
-        if (res.ok) {
-          const data = await res.json()
-          console.log(`Erfolg mit ${endpoint}: ${data.length} Produkte geladen`)
-          allProducts.value = data
-          success = true
-          break
-        } else {
-          console.log(`${endpoint} fehlgeschlagen: ${res.status}`)
-        }
-      } catch (err) {
-        console.log(`${endpoint} Fehler:`, err.message)
-      }
+    if (response.ok) {
+      const data = await response.json()
+      console.log(`Erfolg: ${data.length} Produkte geladen`)
+      allProducts.value = data
+      
+      // DEBUG: Zeige alle Produkte mit Kategorien
+      console.log('Alle Produkte mit Kategorien:')
+      data.forEach(p => {
+        console.log(`- ${p.id}: ${p.title} (${p.category})`)
+      })
+    } else {
+      console.error('API Fehler:', response.status)
     }
-    
-    if (!success) {
-      // Fallback: Statische Testprodukte für Debugging
-      console.log('Kein API-Endpoint funktioniert, zeige Testprodukte')
-      allProducts.value = [
-        { id: 1, title: 'Testprodukt 1', price: 29.99, category: 'leinen', description: 'Test', image: 'test.jpg' },
-        { id: 2, title: 'Testprodukt 2', price: 19.99, category: 'halsband', description: 'Test', image: 'test.jpg' }
-      ]
-    }
-    
-    console.log('Produkte geladen:', allProducts.value)
     
   } catch (err) {
     console.error('Fehler beim Laden:', err)
@@ -319,7 +311,6 @@ watch(() => props.category, () => {
 </script>
 
 <style scoped>
-/* STYLES BLEIBEN UNVERÄNDERT - DAS FUNKTIONIERT SCHON */
 .catalog {
   position: relative;
   min-height: 100vh;
@@ -456,10 +447,26 @@ watch(() => props.category, () => {
   100% { transform: rotate(360deg); }
 }
 
+.products-container {
+  min-height: 300px;
+}
+
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.5rem;
+}
+
+.debug-info {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: red;
+  color: white;
+  padding: 5px;
+  font-size: 10px;
+  z-index: 1000;
+  display: none; /* Auf false setzen um zu sehen */
 }
 
 .empty {
