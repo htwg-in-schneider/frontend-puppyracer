@@ -133,7 +133,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/Warenkorb.js'
 import ProductReviews from '@/components/ProductReviews.vue'
-import { productImages } from '@/images' // WICHTIGER IMPORT
 
 const route = useRoute()
 const router = useRouter()
@@ -156,12 +155,20 @@ const categoryNames = {
 
 // Computed Properties - KORRIGIERT
 const imageUrl = computed(() => {
-  if (imageError.value) return ''
+  if (imageError.value || !product.value || !product.value.imageUrl) {
+    return ''
+  }
   
-  if (!product.value) return ''
+  // KORREKT: Bild-URL aus Backend-Daten erstellen
+  const imageName = product.value.imageUrl
   
-  // Direkter Zugriff über die zentrale Bildermap
-  return productImages[product.value.id] || productImages[1] || ''
+  // Für Entwicklung: localhost
+  if (import.meta.env.DEV) {
+    return `/src/assets/product_pics/${imageName}`
+  }
+  
+  // Für Produktion: GitHub Pages
+  return `/frontend-puppyracer/product_pics/${imageName}`
 })
 
 const formattedPrice = computed(() => {
@@ -181,7 +188,7 @@ const loadProduct = async () => {
   imageError.value = false
   
   try {
-    // WICHTIG: Backend-URL korrigieren
+    // Backend-URL korrigiert
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${route.params.id}`)
     
     if (response.ok) {
@@ -232,11 +239,14 @@ const addToCart = async () => {
   addingToCart.value = true
   
   try {
+    // Bild-URL für Warenkorb
+    const cartImageUrl = imageUrl.value
+    
     cartStore.addToCart({
       id: product.value.id,
       name: product.value.title,
       price: product.value.price,
-      image: imageUrl.value,
+      image: cartImageUrl, // Hier verwenden wir die korrekte URL
       description: product.value.description,
       category: product.value.category,
       quantity: quantity.value
@@ -265,7 +275,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* DEIN BEREITS EXISTIERENDER CSS-CODE BLEIBT UNVERÄNDERT */
+/* Dein CSS bleibt unverändert */
 .detail-page {
   padding-top: 120px;
   min-height: 100vh;
@@ -366,6 +376,7 @@ onMounted(() => {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease;
+  background: #2D2121; /* Dunkelbrauner Hintergrund */
 }
 
 .main-img:hover {
