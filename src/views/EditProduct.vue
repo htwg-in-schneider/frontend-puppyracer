@@ -65,24 +65,7 @@
             <label>Bild-URL</label>
             <input v-model="formData.image" :disabled="isSubmitting" />
             <div v-if="formData.image" class="image-preview">
-              <img :src="getImageUrl(formData.image)" :alt="formData.title" />
-            </div>
-            <div v-else class="image-placeholder">
-              <i class="bi bi-image"></i>
-              <p>Kein Bild ausgewählt</p>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Verfügbare Menge</label>
-            <input v-model.number="formData.stock" type="number" min="0" :disabled="isSubmitting" />
-          </div>
-
-          <div class="form-group">
-            <label>Aktiv</label>
-            <div class="checkbox-group">
-              <input type="checkbox" v-model="formData.active" id="active" :disabled="isSubmitting" />
-              <label for="active">Produkt ist aktiv und sichtbar</label>
+              <img :src="formData.image" :alt="formData.title" />
             </div>
           </div>
         </div>
@@ -92,16 +75,11 @@
             <i class="bi bi-trash"></i> Löschen
           </button>
           
-          <div class="save-buttons">
-            <button type="button" @click="cancelEdit" class="btn-cancel" :disabled="isSubmitting">
-              <i class="bi bi-x-lg"></i> Abbrechen
-            </button>
-            <button type="submit" class="btn-save" :disabled="isSubmitting || !hasChanges">
-              <i v-if="isSubmitting" class="bi bi-arrow-clockwise spin"></i>
-              <i v-else class="bi bi-check-lg"></i>
-              {{ isSubmitting ? 'Speichern...' : 'Speichern' }}
-            </button>
-          </div>
+          <button type="submit" class="btn-save" :disabled="isSubmitting || !hasChanges">
+            <i v-if="isSubmitting" class="bi bi-arrow-clockwise spin"></i>
+            <i v-else class="bi bi-check-lg"></i>
+            {{ isSubmitting ? 'Speichern...' : 'Speichern' }}
+          </button>
         </div>
       </form>
     </div>
@@ -124,15 +102,12 @@ const isSubmitting = ref(false)
 const successMessage = ref('')
 const submitError = ref('')
 
-// Formular-Daten mit allen Feldern
 const formData = reactive({
   title: '',
   price: 0,
   description: '',
   category: '',
-  image: '',
-  stock: 0,
-  active: true
+  image: ''
 })
 
 const originalData = reactive({})
@@ -141,176 +116,90 @@ const hasChanges = computed(() => {
   return JSON.stringify(formData) !== JSON.stringify(originalData)
 })
 
-const getImageUrl = (imageName) => {
-  if (!imageName) return ''
-  if (imageName.startsWith('http')) return imageName
-  return `/frontend-puppyracer/product_pics/${imageName}`
-}
-
-// Produkt laden
-const loadProduct = async () => {
+onMounted(async () => {
   try {
     const token = await getAccessTokenSilently()
-    const productId = route.params.id
-    
-    console.log(`Lade Produkt ${productId}...`)
-    
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products/${productId}`, {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${route.params.id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     })
     
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Produkt nicht gefunden')
-      } else if (response.status === 403) {
-        throw new Error('Keine Berechtigung')
-      } else {
-        throw new Error(`Fehler ${response.status}`)
-      }
-    }
+    if (!response.ok) throw new Error('Produkt nicht gefunden')
     
-    const data = await response.json()
-    console.log('Produkt geladen:', data)
+    product.value = await response.json()
     
-    product.value = data
-    
-    // Formular mit Daten füllen
-    formData.title = product.value.title || product.value.name || ''
-    formData.price = parseFloat(product.value.price) || 0
+    formData.title = product.value.title || ''
+    formData.price = product.value.price || 0
     formData.description = product.value.description || ''
     formData.category = product.value.category || ''
-    formData.image = product.value.image || product.value.imageUrl || ''
-    formData.stock = parseInt(product.value.stock) || 0
-    formData.active = product.value.active !== false
+    formData.image = product.value.image || ''
     
-    // Originaldaten für Änderungsprüfung speichern
     Object.assign(originalData, { ...formData })
     
   } catch (err) {
-    console.error('Fehler beim Laden:', err)
     error.value = err.message
   } finally {
     loading.value = false
   }
-}
-
-onMounted(() => {
-  loadProduct()
 })
 
-// Produkt speichern
 const updateProduct = async () => {
-  if (!hasChanges.value) {
-    submitError.value = 'Keine Änderungen vorgenommen'
-    return
-  }
-  
   isSubmitting.value = true
   submitError.value = ''
-  successMessage.value = ''
   
   try {
     const token = await getAccessTokenSilently()
-    
-    // Vorbereiten der Daten fürs Backend
-    const updateData = {
-      name: formData.title.trim(),
-      title: formData.title.trim(),
-      price: parseFloat(formData.price),
-      description: formData.description.trim(),
-      category: formData.category,
-      image: formData.image.trim(),
-      imageUrl: formData.image.trim(),
-      stock: parseInt(formData.stock) || 0,
-      active: formData.active
-    }
-    
-    console.log('Sende Update:', updateData)
-    
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products/${product.value.id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${product.value.id}`, {
       method: 'PUT',
       headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(formData)
     })
     
-    console.log('Update Response Status:', response.status)
-    
     if (!response.ok) {
-      let errorMsg = `Update fehlgeschlagen (${response.status})`
-      try {
-        const errorData = await response.json()
-        errorMsg = errorData.message || errorMsg
-      } catch {
-        const text = await response.text()
-        if (text) errorMsg = text
-      }
-      throw new Error(errorMsg)
+      const err = await response.json()
+      throw new Error(err.message || 'Update fehlgeschlagen')
     }
     
-    const updatedProduct = await response.json()
-    console.log('Produkt aktualisiert:', updatedProduct)
-    
-    // Lokale Daten aktualisieren
-    product.value = updatedProduct
+    successMessage.value = 'Produkt gespeichert!'
     Object.assign(originalData, { ...formData })
     
-    successMessage.value = 'Produkt erfolgreich gespeichert!'
-    
-    // Nach 2 Sekunden zurück zur Übersicht
-    setTimeout(() => {
-      router.push('/admin/products')
-    }, 2000)
+    setTimeout(() => router.push('/admin/products'), 1500)
     
   } catch (err) {
-    console.error('Update error:', err)
-    submitError.value = `Fehler beim Speichern: ${err.message}`
+    submitError.value = err.message
   } finally {
     isSubmitting.value = false
   }
 }
 
-// Löschen bestätigen
 const confirmDelete = async () => {
-  if (!confirm(`Produkt "${formData.title}" wirklich löschen?`)) return
+  if (!confirm('Produkt wirklich löschen?')) return
   
   try {
     const token = await getAccessTokenSilently()
-    
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products/${product.value.id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/product/${product.value.id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     })
     
     if (response.ok) {
-      alert('Produkt wurde gelöscht!')
+      alert('Produkt gelöscht!')
       router.push('/admin/products')
     } else {
       throw new Error('Löschen fehlgeschlagen')
     }
   } catch (err) {
-    alert(`Löschen fehlgeschlagen: ${err.message}`)
+    alert('Löschen fehlgeschlagen: ' + err.message)
   }
-}
-
-// Bearbeitung abbrechen
-const cancelEdit = () => {
-  if (hasChanges.value) {
-    if (!confirm('Änderungen verwerfen?')) return
-  }
-  router.push('/admin/products')
 }
 </script>
 
 <style scoped>
 .edit-product {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: #1a1a1a;
   padding: 80px 20px 40px;
   color: #fff;
 }
@@ -332,7 +221,6 @@ const cancelEdit = () => {
   color: #e26191;
   text-decoration: none;
   margin-bottom: 1rem;
-  font-weight: 500;
 }
 
 .back-btn:hover {
@@ -363,10 +251,6 @@ const cancelEdit = () => {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
-}
-
-@keyframes spin { 
-  to { transform: rotate(360deg); } 
 }
 
 .error i {
@@ -413,7 +297,6 @@ label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.9);
 }
 
 input, select, textarea {
@@ -424,28 +307,20 @@ input, select, textarea {
   border-radius: 8px;
   color: #fff;
   font-size: 1rem;
-  transition: all 0.2s;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: #e26191;
   background: rgba(255,255,255,0.12);
-  box-shadow: 0 0 0 3px rgba(226, 97, 145, 0.2);
-}
-
-input:disabled, select:disabled, textarea:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 textarea {
   resize: vertical;
   min-height: 100px;
-  font-family: inherit;
 }
 
-.image-preview, .image-placeholder {
+.image-preview {
   margin-top: 1rem;
   text-align: center;
 }
@@ -455,40 +330,10 @@ textarea {
   max-height: 200px;
   border-radius: 8px;
   border: 2px solid rgba(255,255,255,0.1);
-  object-fit: cover;
-}
-
-.image-placeholder {
-  background: rgba(255,255,255,0.05);
-  border: 2px dashed rgba(255,255,255,0.2);
-  border-radius: 8px;
-  padding: 2rem;
-}
-
-.image-placeholder i {
-  font-size: 3rem;
-  color: rgba(255,255,255,0.3);
-  margin-bottom: 0.5rem;
-}
-
-.image-placeholder p {
-  color: rgba(255,255,255,0.5);
-  margin: 0;
-}
-
-.checkbox-group {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.checkbox-group input[type="checkbox"] {
-  width: auto;
-  margin: 0;
 }
 
 .success, .error-message {
-  padding: 1rem 1.25rem;
+  padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
   display: flex;
@@ -511,17 +356,11 @@ textarea {
 .actions {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding-top: 2rem;
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-.save-buttons {
-  display: flex;
-  gap: 1rem;
-}
-
-.btn-delete, .btn-cancel, .btn-save {
+.btn-delete, .btn-save {
   padding: 0.875rem 1.75rem;
   border-radius: 8px;
   font-weight: 600;
@@ -530,7 +369,6 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
 }
 
 .btn-delete {
@@ -541,18 +379,6 @@ textarea {
 
 .btn-delete:hover:not(:disabled) {
   background: rgba(220, 53, 69, 0.3);
-  transform: translateY(-2px);
-}
-
-.btn-cancel {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background: rgba(255,255,255,0.15);
-  transform: translateY(-2px);
 }
 
 .btn-save {
@@ -562,20 +388,22 @@ textarea {
 
 .btn-save:hover:not(:disabled) {
   background: #d05583;
-  transform: translateY(-2px);
 }
 
-.btn-save:disabled, .btn-delete:disabled, .btn-cancel:disabled {
+.btn-save:disabled, .btn-delete:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none !important;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .spin {
   animation: spin 1s linear infinite;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -583,16 +411,6 @@ textarea {
   .actions {
     flex-direction: column;
     gap: 1rem;
-    align-items: stretch;
-  }
-  
-  .save-buttons {
-    flex-direction: column;
-  }
-  
-  .btn-delete, .btn-cancel, .btn-save {
-    width: 100%;
-    justify-content: center;
   }
 }
 </style>
