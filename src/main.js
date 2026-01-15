@@ -8,14 +8,11 @@ import { createAuth0 } from '@auth0/auth0-vue'
 
 const app = createApp(App)
 
-// Pinia (State Management) zuerst
 const pinia = createPinia()
 app.use(pinia)
 
-// Dann Router
 app.use(router)
 
-// Auth0 KONFIGURATION
 app.use(
   createAuth0({
     domain: import.meta.env.VITE_AUTH0_DOMAIN,
@@ -29,7 +26,6 @@ app.use(
   })
 )
 
-// Debug: Prüfe ob Auth0 korrekt initialisiert
 console.log('=== AUTH0 INIT CHECK ===')
 console.log('Redirect URI:', window.location.origin + window.location.pathname)
 console.log('Domain:', import.meta.env.VITE_AUTH0_DOMAIN)

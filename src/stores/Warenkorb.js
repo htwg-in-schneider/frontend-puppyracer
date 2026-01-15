@@ -77,7 +77,6 @@ export const useCartStore = defineStore('cart', () => {
       item.quantity--
       persistCart()
     } else if (item && item.quantity === 1) {
-      // Bei Menge 1 -> entfernen
       removeFromCart(productId)
     }
   }
@@ -104,7 +103,6 @@ export const useCartStore = defineStore('cart', () => {
     return cartItems.value.find(item => item.id === productId)
   }
 
-  // Persistenz (optional)
   const persistCart = () => {
     try {
       localStorage.setItem('puppyracer-cart', JSON.stringify(cartItems.value))

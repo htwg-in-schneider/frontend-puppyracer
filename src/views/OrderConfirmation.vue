@@ -175,9 +175,7 @@ const getStatusClass = (status) => {
 const getPaymentMethodText = (method) => {
   const map = {
     'INVOICE': 'Rechnung',
-    'CREDITCARD': 'Kreditkarte',
-    'PAYPAL': 'PayPal',
-    'DEBIT': 'Lastschrift'
+
   }
   return map[method] || method || 'Rechnung'
 }

@@ -40,7 +40,7 @@ const props = defineProps({
 const router = useRouter()
 const imageError = ref(false)
 
-// KORREKT: Bild-URL aus Backend-Daten
+//Bild-URL aus Backend-Daten
 const imageUrl = computed(() => {
   // 1. Falls product.imageUrl schon vollständige URL ist
   if (props.product.imageUrl?.startsWith('http') || props.product.imageUrl?.startsWith('/')) {
@@ -75,7 +75,6 @@ const goToProduct = () => {
 </script>
 
 <style scoped>
-/* Dein CSS bleibt gleich */
 .product-card {
   --card-bg: rgba(50, 50, 50, 0.8);
   --card-text: #f5f1e7;
@@ -114,7 +113,7 @@ const goToProduct = () => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
-  background: #2D2121; /* DUNKELBRAUNER HINTERGRUND statt weiß */
+  background: #2D2121; 
 }
 
 .product-card:hover .card-img {

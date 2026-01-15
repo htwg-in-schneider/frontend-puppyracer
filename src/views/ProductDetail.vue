@@ -153,13 +153,12 @@ const categoryNames = {
   'snacks': 'Snacks & Futter'
 }
 
-// Computed Properties - KORRIGIERT
 const imageUrl = computed(() => {
   if (imageError.value || !product.value || !product.value.imageUrl) {
     return ''
   }
   
-  // KORREKT: Bild-URL aus Backend-Daten erstellen
+  // Bild-URL aus Backend-Daten erstellen
   const imageName = product.value.imageUrl
   
   // Für Entwicklung: localhost
@@ -246,7 +245,7 @@ const addToCart = async () => {
       id: product.value.id,
       name: product.value.title,
       price: product.value.price,
-      image: cartImageUrl, // Hier verwenden wir die korrekte URL
+      image: cartImageUrl, 
       description: product.value.description,
       category: product.value.category,
       quantity: quantity.value
@@ -275,7 +274,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Dein CSS bleibt unverändert */
 .detail-page {
   padding-top: 120px;
   min-height: 100vh;
@@ -376,7 +374,7 @@ onMounted(() => {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease;
-  background: #2D2121; /* Dunkelbrauner Hintergrund */
+  background: #2D2121; 
 }
 
 .main-img:hover {

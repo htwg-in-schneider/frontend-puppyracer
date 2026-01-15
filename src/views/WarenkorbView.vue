@@ -140,7 +140,6 @@ const proceedToCheckout = () => {
   router.push('/checkout')
 }
 
-// GLEICHE BILD-LOGIK WIE IN ORDERCONFIRMATION
 const getImageUrl = (imageName) => {
   if (!imageName) return '/placeholder.jpg'
   if (imageName.startsWith('http')) return imageName
@@ -156,7 +155,7 @@ const handleImageError = (event) => {
 </script>
 
 <style scoped>
-/* Grundlayout */
+
 .cart {
   min-height: 100vh;
   background: linear-gradient(135deg, #8b7355 0%, #a8916d 100%);
@@ -305,7 +304,6 @@ const handleImageError = (event) => {
   transform: translateY(-2px);
 }
 
-/* Produktbild - WICHTIG: Gleiches Styling wie OrderConfirmation */
 .product-image {
   width: 80px;
   height: 80px;

@@ -1,7 +1,6 @@
 <template>
   <nav class="navbar" :class="{ 'scrolled': isScrolled }">
     <div class="navbar-container">
-      <!-- Logo -->
       <div class="logo">
         <router-link to="/" class="logo-link" aria-label="Startseite">
           <img src="../assets/Puppy_Racer_Logo.png" alt="PuppyRacer Logo" />
@@ -9,7 +8,6 @@
         </router-link>
       </div>
 
-      <!-- Desktop Navigation -->
       <div class="desktop-nav" v-if="!isMobile">
         <!-- Kategorien -->
         <div class="categories">
@@ -50,7 +48,6 @@
           
           <!-- Eingeloggt: User Menu -->
           <div v-else class="user-menu">
-            <!-- Admin Button mit Dropdown (Profil ist im Dropdown enthalten) -->
             <div v-if="isAdmin" class="admin-btn-container">
               <button class="user-btn admin-btn" @click="toggleAdminMenu" :aria-expanded="adminMenuOpen">
                 <i class="bi bi-shield"></i>
@@ -73,8 +70,7 @@
                 </router-link>
               </div>
             </div>
-            
-            <!-- Normale User (KEIN Admin) - Nur Profil-Button -->
+          
             <router-link v-if="!isAdmin" to="/account" class="user-btn account-btn">
               <i class="bi bi-person-circle"></i>
               <span class="btn-text">Profil</span>
@@ -296,7 +292,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Basis Navbar */
 .navbar {
   position: fixed;
   top: 0;
@@ -327,7 +322,6 @@ onUnmounted(() => {
   gap: 1rem;
 }
 
-/* Logo */
 .logo-link {
   display: flex;
   align-items: center;

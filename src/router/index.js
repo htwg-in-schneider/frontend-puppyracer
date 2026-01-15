@@ -42,7 +42,6 @@ const routes = [
     meta: { title: 'Datenschutz - PuppyRacer' }
   },
   
-  // === ADMIN ROUTES (MÜSSEN ZUERST KOMMEN!) ===
   {
     path: '/admin/products/create',
     name: 'CreateProduct',
@@ -96,7 +95,6 @@ const routes = [
     }
   },
   
-  // === PRODUCT ROUTES MÜSSEN VOR DEN REDIRECTS KOMMEN! ===
   {
     path: '/product/:id',
     name: 'product-detail',
@@ -119,15 +117,13 @@ const routes = [
     meta: { title: 'Suchergebnisse - PuppyRacer' }
   },
   
-  // === KORRIGIERTE REDIRECTS ===
-  // WICHTIG: Auf dasselbe umleiten wie in deiner ProductCatalog erwartet wird
   {
     path: '/leinen',
     redirect: '/produkte/leinen'
   },
   {
     path: '/halsbaender',
-    redirect: '/produkte/halsband' // Hier geändert von 'halsbaender' zu 'halsband'
+    redirect: '/produkte/halsband' 
   },
   {
     path: '/bekleidung',
@@ -138,7 +134,6 @@ const routes = [
     redirect: '/produkte/snacks'
   },
   
-  // === USER ACCOUNT ROUTES ===
   {
     path: '/account',
     name: 'account',
@@ -164,7 +159,6 @@ const routes = [
     }
   },
   
-  // === ORDER ROUTES ===
   {
     path: '/order-confirmation/:id',
     name: 'OrderConfirmation',
@@ -185,7 +179,6 @@ const routes = [
     }
   },
   
-  // 404 Fallback - Sollte immer die letzte Route sein
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'

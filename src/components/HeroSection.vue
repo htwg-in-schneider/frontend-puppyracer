@@ -165,7 +165,6 @@ Gesendet von PuppyRacer Website
   object-fit: cover;
 }
 
-/* KORREKTUR: Hero-Overlay ohne Pink */
 .hero-overlay {
   position: absolute;
   inset: 0;
@@ -297,7 +296,7 @@ textarea {
 }
 
 .btn-primary:hover:not(:disabled) { 
-  background: #d04a7c; /* Dunkleres Pink für Hover */
+  background: #d04a7c; 
 }
 
 .btn-primary:disabled {

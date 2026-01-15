@@ -12,10 +12,6 @@
 </footer>
 </template>
 
-<script setup>
-// Footer benötigt keine Logik
-</script>
-
 <style scoped>
 footer {
     background-color: var(--color-accent-brown); /* #B48665 - HELLBRAUN */

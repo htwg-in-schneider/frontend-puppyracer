@@ -1,7 +1,6 @@
 <template>
   <Navbar />
-  
-  <!-- SpecialBanner NUR auf Startseite -->
+
   <SpecialBanner v-if="route.path === '/'" />
   
 
