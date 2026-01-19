@@ -1,0 +1,129 @@
+Projektdokumentation – PuppyRacer
+Kurs: Web-Technologien (WIN), WS 25/26
+Entwickler: Jonas Neugebauer
+1. Einleitung
+PuppyRacer ist eine vollständige E-Commerce Web-Applikation für den Verkauf von Hundezubehör.
+Die Anwendung umfasst einen Online-Shop für Kunden sowie einen Admin-Bereich zur Verwaltung von Produkten, Bestellungen und Benutzern.
+Live-System:
+Frontend: https://htwg-in-schneider.github.io/frontend-puppyracer/
+Backend: https://backend-puppyracer.onrender.com
+
+2. Implementierte Features
+2.1 Kunden-Funktionen
+•	Produktkatalog durchsuchen
+•	Warenkorb verwenden
+•	Bestellungen aufgeben
+•	Bestellbestätigungen ansehen
+•	Eigenes Profil bearbeiten
+2.2 Admin-Funktionen
+•	Produkte verwalten (CRUD)
+•	Benutzer verwalten
+•	Alle Bestellungen einsehen
+•	Bestellstatus ändern
+
+3. Technologie-Stack
+Frontend
+•	Vue.js 3 mit Composition API
+•	Vue Router für Navigation
+•	Pinia für State Management
+•	Auth0 für Authentifizierung
+Backend
+•	Spring Boot 3.x mit Java 17
+•	Spring Security mit JWT
+•	Spring Data JPA / Hibernate
+•	H2 Datenbank
+Deployment
+•	Frontend: GitHub Pages
+•	Backend: Render.com
+
+4. Test-Zugänge
+Administrator
+E-Mail: maxmuster+admin@gmail.com
+Passwort: Passwort12345
+Auth0 ID: auth0|6942b5a749c4d1b989dbf9ad
+Kunde
+E-Mail: maxmuster+kunde@gmail.com
+Passwort: Passwort2468
+Auth0 ID: auth0|6942b6bd49c4d1b989dbfa45
+
+5. Erfüllte Anforderungen 
+a) Startseite 
+•	Kontaktformular mit mailto:-Link
+•	Impressum & Datenschutzerklärung
+•	Voll responsive Design
+b) Stammdaten 
+•	Admin-CRUD für Produkte
+•	Suchfunktion in Produktliste
+•	Validierung Frontend + Backend
+c) Transaktionen 
+•	Kompletter Checkout-Prozess
+•	Admin: Alle Bestellungen einsehen
+•	Validierung auf beiden Schichten
+d) Consistency 
+•	Einheitliches Design
+•	Funktionierende Navigation
+•	Fehlerbehandlung
+e) Security 
+•	Auth0 Integration
+•	JWT Authentifizierung
+•	Rolle-basierte Autorisierung
+•	Profilbearbeitung für Benutzer
+f) Deployment 
+•	Frontend: GitHub Pages
+•	Backend: Render.com (nur H2 Datenbank)
+•	Öffentlich erreichbar
+g) Code Qualität 
+•	Vue Router für Navigation
+•	Komponenten-Architektur
+•	Pinia State Management
+•	Sauberer, dokumentierter Code
+
+6. Architektur-Übersicht
+Frontend-Komponenten
+•	HeroSection– Startseite
+•	ProductCatalog.vue – Produktübersicht
+•	Checkout.vue – Bestellprozess
+•	OrderConfirmation.vue – Bestätigung
+•	OrderHistory.vue – Bestellübersicht
+•	EditProduct.vue – Admin-Editor
+Backend-Entities
+•	Product – Produktinformationen
+•	Order – Bestellungen
+•	User – Benutzer mit Auth0
+•	OrderItem – Bestellpositionen
+API-Endpunkte
+•	GET/POST/PUT/DELETE /api/products
+•	GET/POST /api/orders
+•	GET /api/orders/admin (nur Admin)
+•	GET/PUT /api/profile
+
+7. Datenbank-Schema
+PRODUCTS: id, name, price, description, category, image, stock, active
+ORDERS: id, order_number, user_id, status, total_amount, shipping_address
+ORDER_ITEMS: id, order_id, product_id, quantity, price
+USERS: id, email, role, auth0_id
+
+8. Besondere Implementierungen
+Bestellprozess
+•	Warenkorb füllen
+•	Checkout mit Adresseingabe
+•	POST an /api/orders
+•	Backend generiert Bestellnummer (ORD-Timestamp-Zufall)
+•	Bestätigungsseite
+Bilderverwaltung
+Bilder liegen im Verzeichnis /public/product_pics/. In der Datenbank wird ausschließlich der Dateiname gespeichert. Das Frontend generiert den vollständigen Pfad dynamisch.
+Responsive Design
+•	Mobile-first Ansatz
+•	CSS Grid und Flexbox
+•	Media Queries für alle Geräte
+9. GitHub Repositories
+Frontend:
+https://github.com/htwg-in-schneider/frontend-puppyracer
+
+Backend:
+https://github.com/htwg-in-schneider/backend-puppyracer
+10. Fazit
+Die PuppyRacer Applikation erfüllt alle Anforderungen aus Aufgabenblatt 5 vollständig. Sie bietet einen funktionsfähigen Online-Shop mit moderner Technologie, professioneller Sicherheit und vollständigem Deployment.
+Die Anwendung ist funktionsbereit für Präsentationen und kann sowohl über die Live-URLs als auch lokal gestartet werden.
+
+Jonas Neugebauer
