@@ -123,7 +123,6 @@ https://github.com/htwg-in-schneider/frontend-puppyracer
 Backend:
 https://github.com/htwg-in-schneider/backend-puppyracer
 10. Fazit
-Die PuppyRacer Applikation erfüllt alle Anforderungen aus Aufgabenblatt 5 vollständig. Sie bietet einen funktionsfähigen Online-Shop mit moderner Technologie, professioneller Sicherheit und vollständigem Deployment.
-Die Anwendung ist funktionsbereit für Präsentationen und kann sowohl über die Live-URLs als auch lokal gestartet werden.
-
+Mir persönlich hat das Projekt viel Spaß bereitet und ich konnte viele neue Konzepte lernen! 
+Dadurch, dass ich alleine war war es allerdings auch sehr anspruchsvoll trotzdem hat es mir sehr viel Spaß gemacht!
 Jonas Neugebauer
